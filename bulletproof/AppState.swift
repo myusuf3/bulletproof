@@ -60,11 +60,18 @@ final class AppState {
 
     /// The single seam the service provider and UI use to get an engine.
     func makeEngine() -> any ProofreadingEngine {
+        #if DEBUG
+        // CI runners have no Apple Intelligence; end-to-end tests exercise the
+        // services pipeline against a deterministic engine instead.
+        if ProcessInfo.processInfo.environment["BULLETPROOF_FAKE_ENGINE"] == "1" {
+            return UppercasingFakeEngine()
+        }
+        #endif
         switch engineChoice {
         case .appleIntelligence:
-            AppleIntelligenceEngine()
+            return AppleIntelligenceEngine()
         case .local(let modelID):
-            LocalModelEngine(modelDirectory: store.directory(for: modelID))
+            return LocalModelEngine(modelDirectory: store.directory(for: modelID))
         }
     }
 
@@ -78,3 +85,11 @@ final class AppState {
         }
     }
 }
+
+#if DEBUG
+nonisolated struct UppercasingFakeEngine: ProofreadingEngine {
+    func proofread(_ text: String) async throws -> String {
+        text.uppercased()
+    }
+}
+#endif

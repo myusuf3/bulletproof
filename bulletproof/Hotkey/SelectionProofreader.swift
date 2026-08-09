@@ -1,23 +1,90 @@
 import AppKit
 import Carbon.HIToolbox
 
+/// The OS surface the hotkey flow drives - a seam so the orchestration
+/// (ordering, restore-on-failure, notifications) is unit-testable without
+/// posting real events.
+@MainActor protocol ProofreadingSurface {
+    var pasteboard: NSPasteboard { get }
+    var accessibilityTrusted: Bool { get }
+    func requestAccessibility()
+    func heldModifiers() -> NSEvent.ModifierFlags
+    func postCopy()
+    func postPaste()
+    func selectionRect() -> NSRect?
+    func showSuccess(over rect: NSRect?)
+    func notify(title: String, body: String)
+    func sleep(for duration: Duration) async
+}
+
+@MainActor struct SystemSurface: ProofreadingSurface {
+    private let notifier = UserNotifier()
+
+    var pasteboard: NSPasteboard { .general }
+    var accessibilityTrusted: Bool { AccessibilityPermission.isTrusted }
+
+    func requestAccessibility() {
+        AccessibilityPermission.requestWithPrompt()
+    }
+
+    func heldModifiers() -> NSEvent.ModifierFlags {
+        NSEvent.modifierFlags.intersection([.command, .shift, .option, .control])
+    }
+
+    func postCopy() {
+        KeyPoster.post(CGKeyCode(kVK_ANSI_C), flags: .maskCommand)
+    }
+
+    func postPaste() {
+        KeyPoster.post(CGKeyCode(kVK_ANSI_V), flags: .maskCommand)
+    }
+
+    func selectionRect() -> NSRect? {
+        SelectionLocator.selectionScreenRect()
+    }
+
+    func showSuccess(over rect: NSRect?) {
+        if let rect {
+            SuccessFlashController.shared.flash(over: rect)
+        } else {
+            SuccessFlashController.shared.flashChip(near: NSEvent.mouseLocation)
+        }
+    }
+
+    func notify(title: String, body: String) {
+        notifier.post(title: title, body: body)
+    }
+
+    func sleep(for duration: Duration) async {
+        try? await Task.sleep(for: duration)
+    }
+}
+
 /// The global hotkey flow: copy the frontmost app's selection with a synthetic
 /// ⌘C, proofread it, paste the correction with ⌘V, and put the user's original
 /// clipboard back.
 @MainActor final class SelectionProofreader {
-    private let appState: AppState
-    private let notifier = UserNotifier()
+    private let makeEngine: () -> any ProofreadingEngine
+    private let shortcutDisplay: () -> String
+    private let surface: any ProofreadingSurface
+    private let engineTimeout: TimeInterval
     private var isRunning = false
 
-    init(appState: AppState) {
-        self.appState = appState
+    init(makeEngine: @escaping () -> any ProofreadingEngine,
+         shortcutDisplay: @escaping () -> String,
+         surface: any ProofreadingSurface,
+         engineTimeout: TimeInterval = 55) {
+        self.makeEngine = makeEngine
+        self.shortcutDisplay = shortcutDisplay
+        self.surface = surface
+        self.engineTimeout = engineTimeout
     }
 
     func run() {
-        guard AccessibilityPermission.isTrusted else {
-            AccessibilityPermission.requestWithPrompt()
-            notifier.post(title: "Accessibility access needed",
-                          body: "Grant bulletproof access in System Settings > Privacy & Security > Accessibility, then try again.")
+        guard surface.accessibilityTrusted else {
+            surface.requestAccessibility()
+            surface.notify(title: "Accessibility access needed",
+                           body: "Grant bulletproof access in System Settings > Privacy & Security > Accessibility, then try again.")
             return
         }
         guard !isRunning else { return }
@@ -28,64 +95,60 @@ import Carbon.HIToolbox
         }
     }
 
-    private func performFlow() async {
-        let pboard = NSPasteboard.general
+    func performFlow() async {
+        let pboard = surface.pasteboard
         let snapshot = PasteboardSnapshot(pboard)
         let countBefore = pboard.changeCount
 
         // Wait for the user's physical chord to be released - a still-held
         // modifier can combine with the synthetic keystroke in the target app.
         await waitForModifierRelease()
-        try? await Task.sleep(for: .milliseconds(50))
-        KeyPoster.post(CGKeyCode(kVK_ANSI_C), flags: .maskCommand)
+        await surface.sleep(for: .milliseconds(50))
+        surface.postCopy()
 
         guard await changed(pboard, from: countBefore, within: .seconds(1)) else {
-            notifier.post(title: "Nothing to proofread",
-                          body: "Select some text first, then press \(appState.shortcut.displayString).")
+            surface.notify(title: "Nothing to proofread",
+                           body: "Select some text first, then press \(shortcutDisplay()).")
             return
         }
         guard let text = pboard.string(forType: .string),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            notifier.post(title: "Nothing to proofread",
-                          body: ProofreadingError.emptyInput.localizedDescription)
+            surface.notify(title: "Nothing to proofread",
+                           body: ProofreadingError.emptyInput.localizedDescription)
             snapshot.restore(to: pboard)
             return
         }
 
-        let engine = appState.makeEngine()
+        let engine = makeEngine()
+        let timeout = engineTimeout
         let corrected: String
         do {
-            corrected = try await withTimeout(seconds: 55) { try await engine.proofread(text) }
+            corrected = try await withTimeout(seconds: timeout) { try await engine.proofread(text) }
         } catch {
-            notifier.post(title: "Proofread failed", body: error.localizedDescription)
+            surface.notify(title: "Proofread failed", body: error.localizedDescription)
             snapshot.restore(to: pboard)
             return
         }
 
         // Read the selection bounds before ⌘V collapses the selection - the
         // corrected text lands exactly where the original sits.
-        let flashRect = SelectionLocator.selectionScreenRect()
+        let flashRect = surface.selectionRect()
 
         pboard.clearContents()
         pboard.setString(corrected, forType: .string)
-        KeyPoster.post(CGKeyCode(kVK_ANSI_V), flags: .maskCommand)
+        surface.postPaste()
 
         // Give the target app time to read the paste before restoring.
-        try? await Task.sleep(for: .milliseconds(300))
-        if let flashRect {
-            SuccessFlashController.shared.flash(over: flashRect)
-        } else {
-            SuccessFlashController.shared.flashChip(near: NSEvent.mouseLocation)
-        }
+        await surface.sleep(for: .milliseconds(300))
+        surface.showSuccess(over: flashRect)
         snapshot.restore(to: pboard)
     }
 
     private func waitForModifierRelease(budget: Duration = .seconds(1)) async {
         let deadline = ContinuousClock.now + budget
         while ContinuousClock.now < deadline {
-            let held = NSEvent.modifierFlags.intersection([.command, .shift, .option, .control])
-            if held.isEmpty { return }
-            try? await Task.sleep(for: .milliseconds(20))
+            if surface.heldModifiers().isEmpty { return }
+            await surface.sleep(for: .milliseconds(20))
         }
     }
 
@@ -93,7 +156,7 @@ import Carbon.HIToolbox
         let deadline = ContinuousClock.now + budget
         while ContinuousClock.now < deadline {
             if pboard.changeCount != count { return true }
-            try? await Task.sleep(for: .milliseconds(50))
+            await surface.sleep(for: .milliseconds(50))
         }
         return false
     }

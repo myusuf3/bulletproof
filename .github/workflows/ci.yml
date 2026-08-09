@@ -35,3 +35,11 @@ jobs:
           -only-testing:bulletproofTests
           -destination 'platform=macOS'
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Services end-to-end
+        run: |
+          BUILT=$(xcodebuild -project bulletproof.xcodeproj -scheme bulletproof -configuration Debug \
+            -destination 'platform=macOS' -showBuildSettings \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>/dev/null \
+            | awk '/ BUILT_PRODUCTS_DIR =/{print $3; exit}')
+          Scripts/services-e2e.sh "$BUILT/bulletproof.app"
