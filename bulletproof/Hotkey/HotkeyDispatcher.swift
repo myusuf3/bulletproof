@@ -7,7 +7,11 @@ import AppKit
     static let shared = HotkeyDispatcher()
 
     private let manager = HotkeyManager()
-    private lazy var proofreader = SelectionProofreader(appState: AppState.shared)
+    private lazy var proofreader = SelectionProofreader(
+        makeEngine: { AppState.shared.makeEngine() },
+        shortcutDisplay: { AppState.shared.shortcut.displayString },
+        surface: SystemSurface()
+    )
 
     /// Set by the onboarding practice step while visible; returns true when it
     /// consumed the press. Only consulted while our app is frontmost - a press
