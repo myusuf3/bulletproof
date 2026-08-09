@@ -40,4 +40,16 @@ struct PasteboardSnapshotTests {
 
         #expect(pboard.pasteboardItems?.isEmpty ?? true)
     }
+
+    @Test func failedSnapshotNeverWipesPasteboardOnRestore() {
+        // pasteboardItems returns nil on a retrieval ERROR - that must not be
+        // conflated with an empty clipboard, or restore destroys user data.
+        let pboard = makePasteboard()
+        pboard.clearContents()
+        pboard.setString("precious clipboard data", forType: .string)
+
+        PasteboardSnapshot(items: nil).restore(to: pboard)
+
+        #expect(pboard.string(forType: .string) == "precious clipboard data")
+    }
 }

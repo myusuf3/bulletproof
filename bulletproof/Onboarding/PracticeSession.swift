@@ -44,13 +44,14 @@ nonisolated enum PracticeReducer {
 
     /// Wired into HotkeyDispatcher.practiceHandler while the practice step is
     /// visible. Reads the editor text directly - no CGEvents - so practice
-    /// works even when Accessibility was denied.
-    func hotkeyFired(appState: AppState) -> Bool {
-        guard stage == .selectAll || stage == .chord else { return false }
+    /// works even when Accessibility was denied. Presses in other stages are
+    /// inert (the dispatcher already never falls through to the real flow).
+    @discardableResult
+    func hotkeyFired(engine: any ProofreadingEngine) -> Task<Void, Never>? {
+        guard stage == .selectAll || stage == .chord else { return nil }
         handle(.sawChord)
         let input = text
-        let engine = appState.makeEngine()
-        Task {
+        return Task {
             do {
                 let corrected = try await engine.proofread(input)
                 text = corrected
@@ -59,6 +60,5 @@ nonisolated enum PracticeReducer {
                 handle(.proofreadFailed(error.localizedDescription))
             }
         }
-        return true
     }
 }

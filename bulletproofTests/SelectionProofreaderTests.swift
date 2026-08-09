@@ -10,6 +10,10 @@ private final class FakeSurface: ProofreadingSurface {
     var trusted = true
     /// What the target app "does" when it receives the synthetic ⌘C.
     var onCopy: (NSPasteboard) -> Void = { _ in }
+    /// Simulates the user switching apps mid-flow.
+    var frontmostID: pid_t? = 100
+    /// Called with the running sleep count - lets tests script late events.
+    var onSleep: (Int) -> Void = { _ in }
 
     private(set) var requestedAccessibility = false
     private(set) var copyCount = 0
@@ -17,10 +21,12 @@ private final class FakeSurface: ProofreadingSurface {
     private(set) var pastedText: String?
     private(set) var notifications: [(title: String, body: String)] = []
     private(set) var flashed = false
+    private(set) var sleepCount = 0
 
     var accessibilityTrusted: Bool { trusted }
     func requestAccessibility() { requestedAccessibility = true }
     func heldModifiers() -> NSEvent.ModifierFlags { [] }
+    func frontmostAppID() -> pid_t? { frontmostID }
     func postCopy() {
         copyCount += 1
         onCopy(pasteboard)
@@ -32,7 +38,10 @@ private final class FakeSurface: ProofreadingSurface {
     func selectionRect() -> NSRect? { nil }
     func showSuccess(over rect: NSRect?) { flashed = true }
     func notify(title: String, body: String) { notifications.append((title, body)) }
-    func sleep(for duration: Duration) async {}
+    func sleep(for duration: Duration) async {
+        sleepCount += 1
+        onSleep(sleepCount)
+    }
 }
 
 private struct StubEngine: ProofreadingEngine {
@@ -49,11 +58,14 @@ private struct StubEngine: ProofreadingEngine {
 struct SelectionProofreaderTests {
     private let surface = FakeSurface()
 
-    private func makeProofreader(engine: StubEngine, timeout: TimeInterval = 55) -> SelectionProofreader {
+    private func makeProofreader(engine: StubEngine,
+                                 timeout: TimeInterval = 55,
+                                 copyTimeout: TimeInterval = 0.3) -> SelectionProofreader {
         SelectionProofreader(makeEngine: { engine },
                              shortcutDisplay: { "⇧⌘P" },
                              surface: surface,
-                             engineTimeout: timeout)
+                             engineTimeout: timeout,
+                             copyTimeout: copyTimeout)
     }
 
     @Test func missingAccessibilityPromptsAndStops() {
@@ -109,6 +121,44 @@ struct SelectionProofreaderTests {
         #expect(surface.flashed)
         #expect(surface.notifications.isEmpty)
         #expect(surface.pasteboard.string(forType: .string) == "user clipboard")
+    }
+
+    @Test func appSwitchMidFlowAbortsPasteAndLeavesCorrectionOnClipboard() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { [weak surface] pboard in
+            pboard.clearContents()
+            pboard.setString("teh cat", forType: .string)
+            // User switches apps while the model is thinking.
+            surface?.frontmostID = 200
+        }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        #expect(surface.pasteCount == 0)
+        #expect(surface.notifications.count == 1)
+        #expect(surface.notifications.first?.body.contains("clipboard") == true)
+        // The correction is deliberately left on the clipboard so it isn't lost.
+        #expect(surface.pasteboard.string(forType: .string) == "the cat")
+    }
+
+    @Test func slowCopyWithinBudgetStillSucceeds() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        // The target app services ⌘C late - a few poll ticks after posting.
+        surface.onSleep = { [weak surface] count in
+            if count == 3 {
+                surface?.pasteboard.clearContents()
+                surface?.pasteboard.setString("teh cat", forType: .string)
+            }
+        }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")), copyTimeout: 1)
+        await proofreader.performFlow()
+        #expect(surface.pasteCount == 1)
+        #expect(surface.pastedText == "the cat")
+    }
+
+    @Test func defaultCopyBudgetCoversSlowElectronApps() {
+        #expect(SelectionProofreader.defaultCopyTimeout == 3)
     }
 
     @Test func slowEngineTimesOutAndRestores() async {

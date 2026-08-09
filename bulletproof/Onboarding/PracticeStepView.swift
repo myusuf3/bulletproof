@@ -28,7 +28,7 @@ struct PracticeStepView: View {
         }
         .onAppear {
             installMonitor()
-            HotkeyDispatcher.shared.practiceHandler = { session.hotkeyFired(appState: appState) }
+            HotkeyDispatcher.shared.practiceHandler = { session.hotkeyFired(engine: appState.makeEngine()) }
         }
         .onDisappear {
             removeMonitor()

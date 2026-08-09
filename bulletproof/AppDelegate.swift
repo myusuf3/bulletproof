@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.servicesProvider = provider
         NSUpdateDynamicServices()
         HotkeyDispatcher.shared.start()
+        UserNotifier.requestAuthorizationAtLaunch()
         if !AppState.shared.hasSeenOnboarding {
             OnboardingWindowController.shared.show()
             Self.logger.info("onboarding show() called")
