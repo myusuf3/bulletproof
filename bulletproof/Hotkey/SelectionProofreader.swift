@@ -9,6 +9,7 @@ import Carbon.HIToolbox
     var accessibilityTrusted: Bool { get }
     func requestAccessibility()
     func heldModifiers() -> NSEvent.ModifierFlags
+    func frontmostAppID() -> pid_t?
     func postCopy()
     func postPaste()
     func selectionRect() -> NSRect?
@@ -29,6 +30,10 @@ import Carbon.HIToolbox
 
     func heldModifiers() -> NSEvent.ModifierFlags {
         NSEvent.modifierFlags.intersection([.command, .shift, .option, .control])
+    }
+
+    func frontmostAppID() -> pid_t? {
+        NSWorkspace.shared.frontmostApplication?.processIdentifier
     }
 
     func postCopy() {
@@ -64,20 +69,26 @@ import Carbon.HIToolbox
 /// ⌘C, proofread it, paste the correction with ⌘V, and put the user's original
 /// clipboard back.
 @MainActor final class SelectionProofreader {
+    /// Electron apps can take well over a second to service a synthetic ⌘C.
+    nonisolated static let defaultCopyTimeout: TimeInterval = 3
+
     private let makeEngine: () -> any ProofreadingEngine
     private let shortcutDisplay: () -> String
     private let surface: any ProofreadingSurface
     private let engineTimeout: TimeInterval
+    private let copyTimeout: TimeInterval
     private var isRunning = false
 
     init(makeEngine: @escaping () -> any ProofreadingEngine,
          shortcutDisplay: @escaping () -> String,
          surface: any ProofreadingSurface,
-         engineTimeout: TimeInterval = 55) {
+         engineTimeout: TimeInterval = 55,
+         copyTimeout: TimeInterval = SelectionProofreader.defaultCopyTimeout) {
         self.makeEngine = makeEngine
         self.shortcutDisplay = shortcutDisplay
         self.surface = surface
         self.engineTimeout = engineTimeout
+        self.copyTimeout = copyTimeout
     }
 
     func run() {
@@ -104,9 +115,10 @@ import Carbon.HIToolbox
         // modifier can combine with the synthetic keystroke in the target app.
         await waitForModifierRelease()
         await surface.sleep(for: .milliseconds(50))
+        let copyTargetApp = surface.frontmostAppID()
         surface.postCopy()
 
-        guard await changed(pboard, from: countBefore, within: .seconds(1)) else {
+        guard await changed(pboard, from: countBefore, within: .seconds(copyTimeout)) else {
             surface.notify(title: "Nothing to proofread",
                            body: "Select some text first, then press \(shortcutDisplay()).")
             return
@@ -136,6 +148,15 @@ import Carbon.HIToolbox
 
         pboard.clearContents()
         pboard.setString(corrected, forType: .string)
+
+        // Inference can take many seconds; if the user switched apps in the
+        // meantime, ⌘V would paste into the wrong window. Keep the correction
+        // on the clipboard instead of pasting blind.
+        guard surface.frontmostAppID() == copyTargetApp else {
+            surface.notify(title: "App changed during proofreading",
+                           body: "The corrected text is on your clipboard - press ⌘V to paste it.")
+            return
+        }
         surface.postPaste()
 
         // Give the target app time to read the paste before restoring.
@@ -176,15 +197,25 @@ nonisolated enum KeyPoster {
 /// Full-fidelity snapshot - every item, every type - so restoring doesn't
 /// downgrade rich clipboard contents (images, RTF) to plain text.
 nonisolated struct PasteboardSnapshot {
-    private let items: [[NSPasteboard.PasteboardType: Data]]
+    /// Nil means the snapshot itself failed (pasteboardItems returns nil on a
+    /// retrieval error) - distinct from a genuinely empty clipboard.
+    private let items: [[NSPasteboard.PasteboardType: Data]]?
 
     init(_ pboard: NSPasteboard) {
-        items = (pboard.pasteboardItems ?? []).map { item in
-            item.types.reduce(into: [:]) { $0[$1] = item.data(forType: $1) }
-        }
+        self.init(items: pboard.pasteboardItems.map { boardItems in
+            boardItems.map { item in
+                item.types.reduce(into: [:]) { $0[$1] = item.data(forType: $1) }
+            }
+        })
+    }
+
+    init(items: [[NSPasteboard.PasteboardType: Data]]?) {
+        self.items = items
     }
 
     func restore(to pboard: NSPasteboard) {
+        // Never wipe the clipboard to "restore" a snapshot we never captured.
+        guard let items else { return }
         pboard.clearContents()
         pboard.writeObjects(items.map { entry in
             let item = NSPasteboardItem()
