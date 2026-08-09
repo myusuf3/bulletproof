@@ -1,17 +1,17 @@
-//
-//  bulletproofApp.swift
-//  bulletproof
-//
-//  Created by Mahdi Yusuf on 2026-08-07.
-//
-
 import SwiftUI
 
 @main
-struct bulletproofApp: App {
+struct BulletproofApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra("bulletproof", systemImage: "checkmark.seal") {
+            MenuBarView()
+                .environment(AppState.shared)
+        }
+        Settings {
+            SettingsView()
+                .environment(AppState.shared)
         }
     }
 }
