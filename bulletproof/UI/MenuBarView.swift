@@ -11,6 +11,9 @@ struct MenuBarView: View {
         Button("How to Use bulletproof…") {
             OnboardingWindowController.shared.show()
         }
+        Button("Check for Updates…") {
+            UpdaterController.shared.checkForUpdates()
+        }
         Button("Settings…") {
             NSApp.activate()
             openSettings()
