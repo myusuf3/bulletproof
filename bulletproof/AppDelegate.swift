@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSUpdateDynamicServices()
         HotkeyDispatcher.shared.start()
         UserNotifier.requestAuthorizationAtLaunch()
+        _ = UpdaterController.shared  // start Sparkle's automatic update checks at launch
         if !AppState.shared.hasSeenOnboarding {
             OnboardingWindowController.shared.show()
             Self.logger.info("onboarding show() called")

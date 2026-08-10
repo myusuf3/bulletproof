@@ -4,6 +4,12 @@
 <dict>
 	<key>LSUIElement</key>
 	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/myusuf3/bulletproof/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>nl2RX586Y+ISKzPwZwcCyJztK5ZbifiyPpw4k7xUBQI=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>NSServices</key>
 	<array>
 		<dict>
