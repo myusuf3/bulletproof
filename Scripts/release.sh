@@ -27,15 +27,36 @@ else
 fi
 echo "==> Signing identity: $IDENTITY"
 
-echo "==> Building Release"
-xcodebuild -project "$ROOT/bulletproof.xcodeproj" \
-    -scheme bulletproof \
-    -configuration Release \
-    -derivedDataPath "$DERIVED" \
-    "${SIGN_ARGS[@]}" \
-    build | tail -3
-
-APP="$DERIVED/Build/Products/Release/bulletproof.app"
+if [ "$IDENTITY" = "Developer ID Application" ]; then
+    # Archive + export-for-Developer-ID is the only build path that satisfies
+    # notarization: it strips get-task-allow, signs with secure timestamps,
+    # and re-signs Sparkle's nested Updater.app/Autoupdate binaries.
+    echo "==> Archiving Release"
+    ARCHIVE="$DERIVED/bulletproof.xcarchive"
+    rm -rf "$ARCHIVE"
+    xcodebuild -project "$ROOT/bulletproof.xcodeproj" \
+        -scheme bulletproof \
+        -configuration Release \
+        -derivedDataPath "$DERIVED" \
+        -archivePath "$ARCHIVE" \
+        archive | tail -3
+    echo "==> Exporting with Developer ID signing"
+    rm -rf "$DERIVED/export"
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE" \
+        -exportOptionsPlist "$ROOT/Scripts/ExportOptions.plist" \
+        -exportPath "$DERIVED/export" | tail -3
+    APP="$DERIVED/export/bulletproof.app"
+else
+    echo "==> Building Release"
+    xcodebuild -project "$ROOT/bulletproof.xcodeproj" \
+        -scheme bulletproof \
+        -configuration Release \
+        -derivedDataPath "$DERIVED" \
+        "${SIGN_ARGS[@]}" \
+        build | tail -3
+    APP="$DERIVED/Build/Products/Release/bulletproof.app"
+fi
 [ -d "$APP" ] || fail "built app not found at $APP"
 
 echo "==> Verifying code signature"
@@ -48,6 +69,28 @@ MIN_OS="$(defaults read "$APP/Contents/Info" LSMinimumSystemVersion)"
 [ -n "$VERSION" ] || fail "could not read CFBundleShortVersionString"
 defaults read "$APP/Contents/Info" SUFeedURL >/dev/null || fail "SUFeedURL missing from app Info.plist"
 defaults read "$APP/Contents/Info" SUPublicEDKey >/dev/null || fail "SUPublicEDKey missing from app Info.plist"
+
+# Notarize + staple when Developer ID signed. Requires one-time credential
+# setup: xcrun notarytool store-credentials bulletproof-notary
+if [ "$IDENTITY" = "Developer ID Application" ]; then
+    NOTARY_PROFILE="${NOTARY_PROFILE:-bulletproof-notary}"
+    echo "==> Notarizing (keychain profile: $NOTARY_PROFILE)"
+    SUBMIT_ZIP="$(mktemp -d)/bulletproof-notarize.zip"
+    ditto -c -k --keepParent "$APP" "$SUBMIT_ZIP"
+    NOTARY_OUT="$(xcrun notarytool submit "$SUBMIT_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait 2>&1)" || {
+        echo "$NOTARY_OUT"
+        fail "notarytool submit failed"
+    }
+    echo "$NOTARY_OUT" | tail -4
+    echo "$NOTARY_OUT" | grep -q "status: Accepted" || {
+        SUBMISSION_ID="$(echo "$NOTARY_OUT" | awk '/^  id:/{print $2; exit}')"
+        fail "notarization not accepted - inspect with: xcrun notarytool log $SUBMISSION_ID --keychain-profile $NOTARY_PROFILE"
+    }
+    rm -f "$SUBMIT_ZIP"
+    echo "==> Stapling notarization ticket"
+    xcrun stapler staple "$APP" | tail -1
+    spctl --assess --type execute "$APP" && echo "    Gatekeeper assessment: accepted"
+fi
 
 echo "==> Zipping v$VERSION (build $BUILD)"
 mkdir -p "$DIST"
