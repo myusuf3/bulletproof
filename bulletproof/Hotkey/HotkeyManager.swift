@@ -7,7 +7,18 @@ import Carbon.HIToolbox
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
 
-    /// Returns false when the OS refuses the combo (e.g. taken by another app).
+    deinit {
+        if let hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+        }
+        if let eventHandlerRef {
+            RemoveEventHandler(eventHandlerRef)
+        }
+    }
+
+    /// Returns false when the combo is already claimed - registration is
+    /// exclusive, so a chord held by another app is genuinely refused rather
+    /// than silently shared.
     @discardableResult
     func register(_ combo: KeyCombo) -> Bool {
         unregister()
@@ -15,7 +26,8 @@ import Carbon.HIToolbox
         var ref: EventHotKeyRef?
         let hotKeyID = EventHotKeyID(signature: OSType(0x424C_5450) /* 'BLTP' */, id: 1)
         let status = RegisterEventHotKey(combo.keyCode, combo.carbonModifiers, hotKeyID,
-                                         GetEventDispatcherTarget(), 0, &ref)
+                                         GetEventDispatcherTarget(),
+                                         OptionBits(kEventHotKeyExclusive), &ref)
         hotKeyRef = ref
         return status == noErr
     }
@@ -34,9 +46,16 @@ import Carbon.HIToolbox
         // The handler must be a C function pointer; self travels via userData.
         InstallEventHandler(GetEventDispatcherTarget(), { _, _, userData in
             let manager = Unmanaged<HotkeyManager>.fromOpaque(userData!).takeUnretainedValue()
-            // Carbon dispatches hot key events on the main run loop.
-            MainActor.assumeIsolated {
-                manager.onHotkey?()
+            // Carbon dispatches on the main run loop, but assumeIsolated is a
+            // hard trap if that ever changes - fall back to a hop instead.
+            if Thread.isMainThread {
+                MainActor.assumeIsolated {
+                    manager.onHotkey?()
+                }
+            } else {
+                Task { @MainActor in
+                    manager.onHotkey?()
+                }
             }
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &eventHandlerRef)

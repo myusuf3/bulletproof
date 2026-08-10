@@ -4,14 +4,17 @@ import Carbon.HIToolbox
 nonisolated struct KeyCombo: Codable, Hashable {
     /// Carbon kVK virtual keycode.
     var keyCode: UInt32
-    /// NSEvent.ModifierFlags raw value, device-independent flags only.
+    /// NSEvent.ModifierFlags raw value, chord modifiers (⌘⇧⌥⌃) only.
     var modifierRawValue: UInt
 
     static let `default` = KeyCombo(keyCode: UInt32(kVK_ANSI_P), modifiers: [.command, .shift])
 
     init(keyCode: UInt32, modifiers: NSEvent.ModifierFlags) {
         self.keyCode = keyCode
-        self.modifierRawValue = modifiers.intersection(.deviceIndependentFlagsMask).rawValue
+        // Only the four chord modifiers: capsLock/function are device-independent
+        // flags too, and retaining them breaks equality against reserved combos
+        // and persisted values.
+        self.modifierRawValue = modifiers.intersection([.command, .shift, .option, .control]).rawValue
     }
 
     var modifiers: NSEvent.ModifierFlags {

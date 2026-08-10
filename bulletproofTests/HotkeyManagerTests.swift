@@ -23,4 +23,18 @@ struct HotkeyManagerTests {
         #expect(manager.register(KeyCombo(keyCode: UInt32(kVK_F15), modifiers: [.control, .option])))
         manager.unregister()
     }
+
+    @Test func duplicateChordIsRefusedExclusively() {
+        // Registration must be exclusive, or the "taken by another app"
+        // conflict message is a lie and chords get silently shared.
+        let first = HotkeyManager()
+        let second = HotkeyManager()
+        let combo = KeyCombo(keyCode: UInt32(kVK_F14), modifiers: [.control, .option, .shift])
+        #expect(first.register(combo))
+        #expect(!second.register(combo))
+        first.unregister()
+        // Once released, the chord is claimable again.
+        #expect(second.register(combo))
+        second.unregister()
+    }
 }

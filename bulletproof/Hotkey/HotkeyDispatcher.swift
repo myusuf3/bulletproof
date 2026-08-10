@@ -37,6 +37,10 @@ nonisolated enum HotkeyRoute {
         manager.register(combo)
     }
 
+    func unregister() {
+        manager.unregister()
+    }
+
     nonisolated static func route(isSuspended: Bool, appIsActive: Bool,
                                   hasPracticeHandler: Bool) -> HotkeyRoute {
         if isSuspended { return .ignored }

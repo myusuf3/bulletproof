@@ -62,6 +62,9 @@ struct ShortcutRecorderView: View {
         verdictMessage = nil
         heldModifiers = []
         HotkeyDispatcher.shared.isSuspended = true
+        // Release the current chord so pressing it lands in the local monitor
+        // (Carbon would otherwise consume it and the press would feel dead).
+        HotkeyDispatcher.shared.unregister()
         monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
             handle(event)
         }
@@ -75,6 +78,9 @@ struct ShortcutRecorderView: View {
         isRecording = false
         heldModifiers = []
         HotkeyDispatcher.shared.isSuspended = false
+        // Re-register whatever combo is current (the committed one on accept,
+        // the old one on cancel).
+        HotkeyDispatcher.shared.register(AppState.shared.shortcut)
     }
 
     /// Returns nil to swallow keystrokes while recording.

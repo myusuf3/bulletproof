@@ -39,6 +39,13 @@ struct KeyComboTests {
         let combo = KeyCombo(keyCode: 0, modifiers: raw)
         #expect(combo.modifiers == .command)
     }
+
+    @Test func stripsCapsLockAndFunctionFlags() {
+        // capsLock/function are device-independent but not chord modifiers;
+        // keeping them breaks reserved-combo equality and persisted equality.
+        let combo = KeyCombo(keyCode: 0, modifiers: [.command, .shift, .capsLock, .function])
+        #expect(combo.modifiers == [.command, .shift])
+    }
 }
 
 struct KeyComboValidatorTests {

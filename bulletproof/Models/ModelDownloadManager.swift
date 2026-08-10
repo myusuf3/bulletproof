@@ -98,6 +98,8 @@ final class ModelDownloadManager {
                 states[model.id] = .downloading(completedBytes: completedBytes, totalBytes: totalBytes)
             }
 
+            // A cancel during the last file's download must never install.
+            try Task.checkCancellation()
             try store.finalize(model.id)
             states[model.id] = .installed(bytes: store.sizeOnDisk(of: model.id))
         } catch {

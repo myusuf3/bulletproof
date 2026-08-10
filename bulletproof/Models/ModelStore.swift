@@ -50,8 +50,12 @@ nonisolated struct ModelStore: Sendable {
     }
 
     func availableDiskSpace() -> Int64? {
-        let values = try? root.deletingLastPathComponent()
-            .resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+        // The models root doesn't exist until the first download; capacity is
+        // per-volume, so any existing directory answers the same question.
+        let target = FileManager.default.fileExists(atPath: root.path)
+            ? root
+            : FileManager.default.homeDirectoryForCurrentUser
+        let values = try? target.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
         return values?.volumeAvailableCapacityForImportantUsage
     }
 
@@ -59,12 +63,18 @@ nonisolated struct ModelStore: Sendable {
         try FileManager.default.removeItem(at: directory(for: repoID))
     }
 
-    /// Atomically promotes a completed download; partials never masquerade as
-    /// installed models.
+    /// Promotes a completed download without a remove-then-move gap - a crash
+    /// there would strand the finished download as .partial for
+    /// cleanupPartials() to delete.
     func finalize(_ repoID: String) throws {
+        let fm = FileManager.default
         let final = directory(for: repoID)
-        try? FileManager.default.removeItem(at: final)
-        try FileManager.default.moveItem(at: partialDirectory(for: repoID), to: final)
+        let partial = partialDirectory(for: repoID)
+        if fm.fileExists(atPath: final.path) {
+            _ = try fm.replaceItemAt(final, withItemAt: partial)
+        } else {
+            try fm.moveItem(at: partial, to: final)
+        }
     }
 
     /// Removes leftovers from downloads interrupted by a crash or quit.
