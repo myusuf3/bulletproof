@@ -26,11 +26,15 @@ nonisolated enum ProofreadPrompt {
     }
 
     /// Strips marker echoes the model may leak, then restores the original's
-    /// edge whitespace.
+    /// edge whitespace. Only anchored markers are leaks - mid-content
+    /// occurrences are legitimate text the user is proofreading.
     static func cleanResponse(_ response: String, original: String) -> String {
-        var output = response
-        for marker in ["<text>", "</text>"] {
-            output = output.replacingOccurrences(of: marker, with: "")
+        var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
+        if output.hasPrefix("<text>") {
+            output.removeFirst("<text>".count)
+        }
+        if output.hasSuffix("</text>") {
+            output.removeLast("</text>".count)
         }
         return restoreEdgeWhitespace(of: original, onto: output)
     }

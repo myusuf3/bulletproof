@@ -42,6 +42,28 @@ struct ModelStoreTests {
         #expect(!FileManager.default.fileExists(atPath: store.partialDirectory(for: "org/model").path))
     }
 
+    @Test func finalizeReplacesExistingInstallWithoutDeleteWindow() throws {
+        // Re-downloading over an existing install must never pass through a
+        // "removed but not yet moved" state - a crash there strands the new
+        // download as .partial, which cleanupPartials() then deletes.
+        try makeDirectory("org/model", files: ["config.json": "old"])
+        try makeDirectory("org/model.partial", files: ["config.json": "new"])
+        try store.finalize("org/model")
+        let config = store.directory(for: "org/model").appendingPathComponent("config.json")
+        #expect(try String(contentsOf: config, encoding: .utf8) == "new")
+        #expect(!FileManager.default.fileExists(atPath: store.partialDirectory(for: "org/model").path))
+    }
+
+    @Test func availableDiskSpaceWorksBeforeFirstDownload() {
+        // The models root doesn't exist until the first download; disk space
+        // must still report (the Settings footer reads it on first launch).
+        // Parent missing too - mirrors Application Support/bulletproof/Models
+        // before anything is downloaded.
+        let virgin = ModelStore(root: FileManager.default.temporaryDirectory
+            .appendingPathComponent("never-created-\(UUID().uuidString)/Models", isDirectory: true))
+        #expect(virgin.availableDiskSpace() != nil)
+    }
+
     @Test func cleanupPartialsRemovesOnlyPartials() throws {
         try makeDirectory("org/done", files: ["config.json": "{}"])
         try makeDirectory("org/crashed.partial", files: ["chunk": "data"])

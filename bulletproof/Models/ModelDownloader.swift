@@ -29,6 +29,11 @@ nonisolated final class FileDownload: NSObject, URLSessionDownloadDelegate, @unc
                     $0.task = task
                     $0.continuation = continuation
                 }
+                // A cancel that raced in before the task existed found nil in
+                // onCancel and did nothing - honor it now.
+                if Task.isCancelled {
+                    task.cancel()
+                }
                 task.resume()
             }
         } onCancel: {

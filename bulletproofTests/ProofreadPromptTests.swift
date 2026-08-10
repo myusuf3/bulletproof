@@ -36,6 +36,19 @@ struct ProofreadPromptTests {
         #expect(result == "the cat")
     }
 
+    @Test func cleanResponseKeepsLiteralMarkersInsideContent() {
+        // Users legitimately proofread text ABOUT markup; mid-content markers
+        // are content, not leaks.
+        let result = ProofreadPrompt.cleanResponse("wrap it in <text> tags, then close with </text> at the end",
+                                                   original: "wrap it in <text> tags, then close with </text> at teh end")
+        #expect(result == "wrap it in <text> tags, then close with </text> at the end")
+    }
+
+    @Test func cleanResponseStripsOnlyAnchoredMarkers() {
+        let result = ProofreadPrompt.cleanResponse("<text>the <text> tag is common</text>", original: "x")
+        #expect(result == "the <text> tag is common")
+    }
+
     @Test func cleanResponseRestoresEdgeWhitespace() {
         let result = ProofreadPrompt.cleanResponse("the cat", original: " teh cat ")
         #expect(result == " the cat ")
