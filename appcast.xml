@@ -3,14 +3,14 @@
     <channel>
         <title>bulletproof</title>
         <item>
-            <title>Version 0.0.2</title>
-            <pubDate>Mon, 10 Aug 2026 20:09:36 +0000</pubDate>
-            <sparkle:version>2</sparkle:version>
-            <sparkle:shortVersionString>0.0.2</sparkle:shortVersionString>
+            <title>Version 0.0.3</title>
+            <pubDate>Tue, 11 Aug 2026 02:36:54 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>0.0.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/myusuf3/bulletproof/releases/download/v0.0.2/bulletproof-0.0.2.zip"
-                sparkle:edSignature="aWDO18FezgeW5VbLztqUgs9+kyWJ/Eo5vttGTtJ3y9etkgDMqyCXhujFKuXmcEeyCf0JmCkjCu2FWICTG8RUBw==" length="1490996"
+                url="https://github.com/myusuf3/bulletproof/releases/download/v0.0.3/bulletproof-0.0.3.zip"
+                sparkle:edSignature="6I4JQziUD5j304YyqzTOHlxdZ25CcYLhEG/DuASEHyVBtX9ChZoZBnAn6vdycf/e1FUk+AkcOmFQ3H89xr15Ag==" length="1524563"
                 type="application/octet-stream"/>
         </item>
     </channel>
