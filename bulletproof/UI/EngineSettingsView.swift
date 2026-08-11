@@ -7,15 +7,21 @@ struct EngineSettingsView: View {
         @Bindable var appState = appState
         Form {
             Section {
-                Picker("Proofreading engine", selection: $appState.engineChoice) {
-                    Text("Apple Intelligence (recommended)")
-                        .tag(EngineChoice.appleIntelligence)
-                    ForEach(appState.downloads.installedModelIDs, id: \.self) { id in
-                        Text(ModelCatalog.displayName(for: id))
-                            .tag(EngineChoice.local(modelID: id))
+                if appState.downloads.installedModelIDs.isEmpty {
+                    // A radio group with a single option reads as broken UI;
+                    // choices appear once a local model is installed.
+                    LabeledContent("Proofreading engine", value: "Apple Intelligence")
+                } else {
+                    Picker("Proofreading engine", selection: $appState.engineChoice) {
+                        Text("Apple Intelligence (recommended)")
+                            .tag(EngineChoice.appleIntelligence)
+                        ForEach(appState.downloads.installedModelIDs, id: \.self) { id in
+                            Text(ModelCatalog.displayName(for: id))
+                                .tag(EngineChoice.local(modelID: id))
+                        }
                     }
+                    .pickerStyle(.radioGroup)
                 }
-                .pickerStyle(.radioGroup)
             } footer: {
                 if appState.downloads.installedModelIDs.isEmpty {
                     Text("Download a local model in the Models tab to add backup engines.")
@@ -34,16 +40,27 @@ struct EngineSettingsView: View {
         switch appState.engineChoice {
         case .appleIntelligence:
             if let issue = appState.appleIntelligenceIssue {
-                Label(issue, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                Label {
+                    Text(issue)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                }
             } else {
-                Label("Apple Intelligence is ready.", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                Label {
+                    Text("Apple Intelligence is ready.")
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
             }
         case .local:
-            Label("This model is downloaded, but local inference support is coming in a future update. Proofreading will fail until then - Apple Intelligence is the working engine.",
-                  systemImage: "info.circle.fill")
-                .foregroundStyle(.secondary)
+            Label {
+                Text("This model is downloaded, but local inference support is coming in a future update. Proofreading will fail until then - Apple Intelligence is the working engine.")
+            } icon: {
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

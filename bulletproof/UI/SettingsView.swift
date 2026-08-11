@@ -3,15 +3,18 @@ import SwiftUI
 struct SettingsView: View {
     var body: some View {
         TabView {
-            EngineSettingsView()
-                .tabItem { Label("Engine", systemImage: "brain") }
-                .frame(width: 540)
-            ShortcutSettingsView()
-                .tabItem { Label("Shortcut", systemImage: "keyboard") }
-                .frame(width: 540)
-            ModelsSettingsView()
-                .tabItem { Label("Models", systemImage: "arrow.down.circle") }
-                .frame(width: 540, height: 420)
+            Tab("General", systemImage: "gearshape") {
+                GeneralSettingsView()
+                    .frame(width: 560)
+            }
+            Tab("Engine", systemImage: "brain") {
+                EngineSettingsView()
+                    .frame(width: 560)
+            }
+            Tab("Models", systemImage: "arrow.down.circle") {
+                ModelsSettingsView()
+                    .frame(width: 560, height: 400)
+            }
         }
     }
 }

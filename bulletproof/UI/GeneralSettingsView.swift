@@ -2,7 +2,7 @@ import ServiceManagement
 import SwiftUI
 import UserNotifications
 
-struct ShortcutSettingsView: View {
+struct GeneralSettingsView: View {
     @Environment(AppState.self) private var appState
     @State private var accessibilityGranted = false
     @State private var notificationsDenied = false
