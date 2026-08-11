@@ -1,25 +1,28 @@
 import SwiftUI
 
-/// The status item: pulses while a proofread is in flight, blips orange on
-/// failure. Fast operations never animate (see MenuBarActivity timings).
+/// The status item: blinks between outline and filled seal while a proofread
+/// is in flight, and shows an orange exclamation seal briefly on failure.
+/// The blink is state-driven (see MenuBarActivity.pulseTick) because SwiftUI
+/// animations never tick inside a MenuBarExtra label.
 struct MenuBarIcon: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let phase = AppState.shared.activity.phase
-        Image(systemName: symbolName(for: phase))
-            .symbolEffect(.variableColor.iterative,
-                          isActive: !reduceMotion && phase == .working)
-            .foregroundStyle(phase == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
-            .accessibilityLabel(accessibilityLabel(for: phase))
+        let activity = AppState.shared.activity
+        Image(systemName: symbolName(for: activity))
+            .foregroundStyle(activity.phase == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+            .accessibilityLabel(accessibilityLabel(for: activity.phase))
     }
 
-    private func symbolName(for phase: MenuBarActivity.Phase) -> String {
-        switch phase {
-        case .idle: "checkmark.seal"
-        // Filled variant carries the state change under Reduce Motion.
-        case .working: reduceMotion ? "checkmark.seal.fill" : "checkmark.seal"
-        case .failed: "exclamationmark.seal.fill"
+    private func symbolName(for activity: MenuBarActivity) -> String {
+        switch activity.phase {
+        case .idle:
+            "checkmark.seal"
+        case .working:
+            // Reduce Motion: steady filled seal instead of blinking.
+            reduceMotion || activity.pulseTick ? "checkmark.seal.fill" : "checkmark.seal"
+        case .failed:
+            "exclamationmark.seal.fill"
         }
     }
 
