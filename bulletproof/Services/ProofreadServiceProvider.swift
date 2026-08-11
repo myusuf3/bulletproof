@@ -45,10 +45,13 @@ final class ProofreadServiceProvider: NSObject {
             return nil
         }
         let engine = appState.makeEngine()
+        appState.activity.begin()
         switch SyncBridge.run(timeout: 55, { try await engine.proofread(text) }) {
         case .success(let corrected):
+            appState.activity.end(success: true)
             return corrected
         case .failure(let failure):
+            appState.activity.end(success: false)
             error.pointee = failure.localizedDescription as NSString
             notifier.post(title: "Proofread failed", body: failure.localizedDescription)
             return nil

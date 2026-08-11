@@ -15,6 +15,8 @@ import Carbon.HIToolbox
     func selectionRect() -> NSRect?
     func showSuccess(over rect: NSRect?)
     func notify(title: String, body: String)
+    func activityBegan()
+    func activityEnded(success: Bool)
     func sleep(for duration: Duration) async
 }
 
@@ -58,6 +60,14 @@ import Carbon.HIToolbox
 
     func notify(title: String, body: String) {
         notifier.post(title: title, body: body)
+    }
+
+    func activityBegan() {
+        AppState.shared.activity.begin()
+    }
+
+    func activityEnded(success: Bool) {
+        AppState.shared.activity.end(success: success)
     }
 
     func sleep(for duration: Duration) async {
@@ -107,6 +117,10 @@ import Carbon.HIToolbox
     }
 
     func performFlow() async {
+        var succeeded = false
+        surface.activityBegan()
+        defer { surface.activityEnded(success: succeeded) }
+
         let pboard = surface.pasteboard
         let snapshot = PasteboardSnapshot(pboard)
         let countBefore = pboard.changeCount
@@ -158,6 +172,7 @@ import Carbon.HIToolbox
             return
         }
         surface.postPaste()
+        succeeded = true
 
         // Give the target app time to read the paste before restoring.
         await surface.sleep(for: .milliseconds(300))

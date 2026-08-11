@@ -22,6 +22,7 @@ private final class FakeSurface: ProofreadingSurface {
     private(set) var notifications: [(title: String, body: String)] = []
     private(set) var flashed = false
     private(set) var sleepCount = 0
+    private(set) var activityEvents: [String] = []
 
     var accessibilityTrusted: Bool { trusted }
     func requestAccessibility() { requestedAccessibility = true }
@@ -38,6 +39,8 @@ private final class FakeSurface: ProofreadingSurface {
     func selectionRect() -> NSRect? { nil }
     func showSuccess(over rect: NSRect?) { flashed = true }
     func notify(title: String, body: String) { notifications.append((title, body)) }
+    func activityBegan() { activityEvents.append("began") }
+    func activityEnded(success: Bool) { activityEvents.append(success ? "ended-success" : "ended-failure") }
     func sleep(for duration: Duration) async {
         sleepCount += 1
         onSleep(sleepCount)
@@ -121,6 +124,16 @@ struct SelectionProofreaderTests {
         #expect(surface.flashed)
         #expect(surface.notifications.isEmpty)
         #expect(surface.pasteboard.string(forType: .string) == "user clipboard")
+        #expect(surface.activityEvents == ["began", "ended-success"])
+    }
+
+    @Test func failureReportsActivityAsFailed() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        let proofreader = makeProofreader(engine: StubEngine(result: .failure(.notImplemented("stub"))))
+        await proofreader.performFlow()
+        #expect(surface.activityEvents == ["began", "ended-failure"])
     }
 
     @Test func appSwitchMidFlowAbortsPasteAndLeavesCorrectionOnClipboard() async {
