@@ -12,10 +12,15 @@ final class MenuBarActivity {
     }
 
     private(set) var phase: Phase = .idle
+    /// Toggles while working. MenuBarExtra labels rasterize to a static image
+    /// per render, so the "pulse" must be driven by state changes - SwiftUI
+    /// animations never tick in the status bar.
+    private(set) var pulseTick = false
 
     let showDelay: Duration
     let minimumShow: Duration
     let failureShow: Duration
+    let pulseInterval: Duration
 
     private var running = false
     private var shownAt: ContinuousClock.Instant?
@@ -24,10 +29,12 @@ final class MenuBarActivity {
 
     init(showDelay: Duration = .milliseconds(400),
          minimumShow: Duration = .milliseconds(600),
-         failureShow: Duration = .seconds(2)) {
+         failureShow: Duration = .seconds(2),
+         pulseInterval: Duration = .milliseconds(500)) {
         self.showDelay = showDelay
         self.minimumShow = minimumShow
         self.failureShow = failureShow
+        self.pulseInterval = pulseInterval
     }
 
     func begin() {
@@ -41,6 +48,12 @@ final class MenuBarActivity {
             guard generation == expected, running else { return }
             phase = .working
             shownAt = ContinuousClock.now
+            pulseTick = true
+            while generation == expected {
+                try? await Task.sleep(for: pulseInterval)
+                guard generation == expected else { break }
+                pulseTick.toggle()
+            }
         }
     }
 
