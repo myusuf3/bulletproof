@@ -61,12 +61,12 @@ final class ModelDownloadManager {
         tasks[model.id]?.cancel()
     }
 
-    func delete(_ model: CatalogModel) {
+    func delete(id: String) {
         do {
-            try store.delete(model.id)
-            states[model.id] = .notInstalled
+            try store.delete(id)
+            states[id] = ModelCatalog.all.contains { $0.id == id } ? .notInstalled : nil
         } catch {
-            states[model.id] = .failed("Couldn't delete: \(error.localizedDescription)")
+            states[id] = .failed("Couldn't delete: \(error.localizedDescription)")
         }
     }
 

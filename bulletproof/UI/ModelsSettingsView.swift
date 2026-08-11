@@ -18,6 +18,19 @@ struct ModelsSettingsView: View {
                     }
                 }
             }
+
+            let orphans = ModelCatalog.orphanIDs(installed: appState.downloads.installedModelIDs)
+            if !orphans.isEmpty {
+                Section {
+                    ForEach(orphans, id: \.self) { id in
+                        OrphanRow(id: id, manager: appState.downloads, store: appState.store)
+                    }
+                } header: {
+                    Text("No longer offered")
+                } footer: {
+                    Text("These models were removed from the catalog. Delete them to reclaim disk space.")
+                }
+            }
         }
         .formStyle(.grouped)
         .onAppear { appState.downloads.refresh() }
@@ -37,7 +50,7 @@ private struct ModelRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(model.displayName)
-                Text(subtitle)
+                Text(model.blurb)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if case .failed(let message) = manager.state(of: model) {
@@ -53,19 +66,10 @@ private struct ModelRow: View {
         .padding(.vertical, 4)
         .confirmationDialog("Delete \(model.displayName)?",
                             isPresented: $confirmingDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { manager.delete(model) }
+            Button("Delete", role: .destructive) { manager.delete(id: model.id) }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This frees \(format(installedBytes)) of disk space. You can download the model again anytime.")
-        }
-    }
-
-    private var subtitle: String {
-        switch manager.state(of: model) {
-        case .installed:
-            "Ready to use as a backup engine"
-        default:
-            "\(format(model.approxDownloadBytes)) download"
         }
     }
 
@@ -77,7 +81,7 @@ private struct ModelRow: View {
     private var control: some View {
         switch manager.state(of: model) {
         case .notInstalled, .failed:
-            Button("Download") {
+            Button("Download (\(format(model.approxDownloadBytes)))") {
                 manager.download(model)
             }
         case .downloading(let completed, let total):
@@ -101,5 +105,28 @@ private struct ModelRow: View {
 
     private func format(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
+private struct OrphanRow: View {
+    let id: String
+    let manager: ModelDownloadManager
+    let store: ModelStore
+    @State private var confirmingDelete = false
+
+    var body: some View {
+        HStack {
+            Text(id)
+                .font(.caption)
+            Spacer()
+            Text(ByteCountFormatter.string(fromByteCount: store.sizeOnDisk(of: id), countStyle: .file))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button("Delete", role: .destructive) { confirmingDelete = true }
+        }
+        .confirmationDialog("Delete \(id)?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { manager.delete(id: id) }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 }
