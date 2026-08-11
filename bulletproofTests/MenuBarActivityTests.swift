@@ -3,20 +3,34 @@ import Testing
 @testable import bulletproof
 
 // Timings compressed for tests; production defaults are asserted separately.
+// Assertions poll rather than racing fixed sleeps - CI runners can delay
+// task scheduling by hundreds of milliseconds.
 @MainActor
 struct MenuBarActivityTests {
     private func makeActivity() -> MenuBarActivity {
         MenuBarActivity(showDelay: .milliseconds(30),
-                        minimumShow: .milliseconds(50),
+                        minimumShow: .milliseconds(300),
                         failureShow: .milliseconds(60),
                         pulseInterval: .milliseconds(20))
+    }
+
+    private func waitFor(_ condition: @autoclosure () -> Bool,
+                         timeout: Duration = .seconds(3)) async -> Bool {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if condition() { return true }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        return condition()
     }
 
     @Test func fastOperationNeverShowsWorking() async throws {
         let activity = makeActivity()
         activity.begin()
         activity.end(success: true)
-        try await Task.sleep(for: .milliseconds(60))
+        // end() invalidates the delayed-show task synchronously, so this holds
+        // no matter how late the scheduler runs it.
+        try await Task.sleep(for: .milliseconds(100))
         #expect(activity.phase == .idle)
     }
 
@@ -24,21 +38,18 @@ struct MenuBarActivityTests {
         let activity = makeActivity()
         activity.begin()
         #expect(activity.phase == .idle)
-        try await Task.sleep(for: .milliseconds(45))
-        #expect(activity.phase == .working)
+        #expect(await waitFor(activity.phase == .working))
         activity.end(success: true)
     }
 
     @Test func workingHoldsMinimumThenIdles() async throws {
         let activity = makeActivity()
         activity.begin()
-        try await Task.sleep(for: .milliseconds(45))
-        #expect(activity.phase == .working)
+        #expect(await waitFor(activity.phase == .working))
         activity.end(success: true)
         // Still visible immediately after end (minimum show).
         #expect(activity.phase == .working)
-        try await Task.sleep(for: .milliseconds(80))
-        #expect(activity.phase == .idle)
+        #expect(await waitFor(activity.phase == .idle))
     }
 
     @Test func failureShowsFailedThenIdles() async throws {
@@ -46,8 +57,7 @@ struct MenuBarActivityTests {
         activity.begin()
         activity.end(success: false)
         #expect(activity.phase == .failed)
-        try await Task.sleep(for: .milliseconds(90))
-        #expect(activity.phase == .idle)
+        #expect(await waitFor(activity.phase == .idle))
     }
 
     @Test func newBeginCancelsFailureTint() async throws {
@@ -56,9 +66,30 @@ struct MenuBarActivityTests {
         activity.end(success: false)
         #expect(activity.phase == .failed)
         activity.begin()
-        try await Task.sleep(for: .milliseconds(45))
-        #expect(activity.phase == .working)
+        #expect(await waitFor(activity.phase == .working))
         activity.end(success: true)
+    }
+
+    @Test func workingPulsesTheTick() async throws {
+        let activity = makeActivity()
+        activity.begin()
+        #expect(await waitFor(activity.phase == .working))
+        let initialTick = activity.pulseTick
+        #expect(await waitFor(activity.pulseTick != initialTick))
+        activity.end(success: true)
+    }
+
+    @Test func tickStopsAfterEnd() async throws {
+        let activity = makeActivity()
+        activity.begin()
+        #expect(await waitFor(activity.phase == .working))
+        activity.end(success: true)
+        #expect(await waitFor(activity.phase == .idle))
+        // end() cancels the ticker synchronously via the generation counter,
+        // so any further toggle would be a real bug, not a race.
+        let settledTick = activity.pulseTick
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(activity.pulseTick == settledTick)
     }
 
     @Test func productionTimingsAreSane() {
@@ -67,30 +98,5 @@ struct MenuBarActivityTests {
         #expect(activity.minimumShow == .milliseconds(600))
         #expect(activity.failureShow == .seconds(2))
         #expect(activity.pulseInterval == .milliseconds(500))
-    }
-
-    @Test func workingPulsesTheTick() async throws {
-        // MenuBarExtra labels rasterize per state change - animation must come
-        // from state toggles, not from SwiftUI animation.
-        let activity = makeActivity()
-        activity.begin()
-        try await Task.sleep(for: .milliseconds(45))
-        #expect(activity.phase == .working)
-        let initialTick = activity.pulseTick
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(activity.pulseTick != initialTick)
-        activity.end(success: true)
-    }
-
-    @Test func tickStopsAfterEnd() async throws {
-        let activity = makeActivity()
-        activity.begin()
-        try await Task.sleep(for: .milliseconds(45))
-        activity.end(success: true)
-        try await Task.sleep(for: .milliseconds(80))
-        let settledTick = activity.pulseTick
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(activity.pulseTick == settledTick)
-        #expect(activity.phase == .idle)
     }
 }
