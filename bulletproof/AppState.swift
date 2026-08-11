@@ -38,6 +38,7 @@ final class AppState {
 
     let store: ModelStore
     let downloads: ModelDownloadManager
+    let activity = MenuBarActivity()
 
     init(store: ModelStore = ModelStore()) {
         self.store = store
