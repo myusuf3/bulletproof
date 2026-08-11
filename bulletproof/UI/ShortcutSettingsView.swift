@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 import UserNotifications
 
@@ -5,6 +6,8 @@ struct ShortcutSettingsView: View {
     @Environment(AppState.self) private var appState
     @State private var accessibilityGranted = false
     @State private var notificationsDenied = false
+    @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var launchAtLoginError: String?
 
     var body: some View {
         Form {
@@ -52,6 +55,25 @@ struct ShortcutSettingsView: View {
             }
 
             Section {
+                Toggle("Launch at login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, wantsEnabled in
+                        do {
+                            if wantsEnabled {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                            launchAtLoginError = nil
+                        } catch {
+                            launchAtLogin = SMAppService.mainApp.status == .enabled
+                            launchAtLoginError = error.localizedDescription
+                        }
+                    }
+                if let launchAtLoginError {
+                    Text(launchAtLoginError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
                 Button("How to Use bulletproof…") {
                     OnboardingWindowController.shared.show()
                 }
