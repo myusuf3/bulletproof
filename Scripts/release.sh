@@ -34,7 +34,7 @@ if [ "$IDENTITY" = "Developer ID Application" ]; then
     echo "==> Archiving Release"
     ARCHIVE="$DERIVED/bulletproof.xcarchive"
     rm -rf "$ARCHIVE"
-    xcodebuild -project "$ROOT/bulletproof.xcodeproj" \
+    xcodebuild -project "$ROOT/bulletproof.xcodeproj"  -skipPackagePluginValidation -skipMacroValidation \
         -scheme bulletproof \
         -configuration Release \
         -derivedDataPath "$DERIVED" \
@@ -42,14 +42,14 @@ if [ "$IDENTITY" = "Developer ID Application" ]; then
         archive | tail -3
     echo "==> Exporting with Developer ID signing"
     rm -rf "$DERIVED/export"
-    xcodebuild -exportArchive \
+    xcodebuild -exportArchive  -skipPackagePluginValidation -skipMacroValidation \
         -archivePath "$ARCHIVE" \
         -exportOptionsPlist "$ROOT/Scripts/ExportOptions.plist" \
         -exportPath "$DERIVED/export" | tail -3
     APP="$DERIVED/export/bulletproof.app"
 else
     echo "==> Building Release"
-    xcodebuild -project "$ROOT/bulletproof.xcodeproj" \
+    xcodebuild -project "$ROOT/bulletproof.xcodeproj"  -skipPackagePluginValidation -skipMacroValidation \
         -scheme bulletproof \
         -configuration Release \
         -derivedDataPath "$DERIVED" \

@@ -20,6 +20,10 @@ final class AppState {
             if let data = try? JSONEncoder().encode(engineChoice) {
                 UserDefaults.standard.set(data, forKey: Self.engineChoiceKey)
             }
+            // Switching engines frees the ~3 GB resident model immediately
+            // instead of waiting out the idle timer.
+            let keep: URL? = if case .local(let id) = engineChoice { store.directory(for: id) } else { nil }
+            Task { await LocalModelRuntime.shared.retainOnly(keep) }
         }
     }
 
@@ -73,6 +77,19 @@ final class AppState {
             return AppleIntelligenceEngine()
         case .local(let modelID):
             return LocalModelEngine(modelDirectory: store.directory(for: modelID))
+        }
+    }
+
+    /// Fallback happens first so makeEngine() can never hand out an engine
+    /// pointing at a directory this method is about to remove.
+    func deleteAllModels() {
+        if case .local = engineChoice {
+            engineChoice = .appleIntelligence
+        } else {
+            Task { await LocalModelRuntime.shared.evictNow() }
+        }
+        for id in store.installedModelIDs() {
+            downloads.delete(id: id)
         }
     }
 

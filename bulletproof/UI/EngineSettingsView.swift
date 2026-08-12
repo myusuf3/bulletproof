@@ -54,12 +54,21 @@ struct EngineSettingsView: View {
                         .foregroundStyle(.green)
                 }
             }
-        case .local:
-            Label {
-                Text("This model is downloaded, but local inference support is coming in a future update. Proofreading will fail until then - Apple Intelligence is the working engine.")
-            } icon: {
-                Image(systemName: "info.circle.fill")
-                    .foregroundStyle(.secondary)
+        case .local(let modelID):
+            if appState.store.isInstalled(modelID) {
+                Label {
+                    Text("\(ModelCatalog.displayName(for: modelID)) runs entirely on this Mac. The first proofread after switching loads the model and takes a few extra seconds.")
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+            } else {
+                Label {
+                    Text("This model's files are missing. Re-download it in the Models tab, or switch to Apple Intelligence.")
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                }
             }
         }
     }

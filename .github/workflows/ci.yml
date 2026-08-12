@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-test:
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -18,6 +18,11 @@ jobs:
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           "$DEVELOPER_DIR/usr/bin/xcodebuild" -version
 
+      # MLX compiles its Metal kernels from source; the toolchain component is
+      # not preinstalled on runner images.
+      - name: Install Metal toolchain
+        run: xcodebuild -downloadComponent MetalToolchain | tail -1
+
       - name: Build
         run: >
           xcodebuild build
@@ -25,6 +30,7 @@ jobs:
           -scheme bulletproof
           -configuration Debug
           -destination 'platform=macOS'
+          -skipPackagePluginValidation -skipMacroValidation
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
       - name: Test
@@ -34,12 +40,14 @@ jobs:
           -scheme bulletproof
           -only-testing:bulletproofTests
           -destination 'platform=macOS'
+          -skipPackagePluginValidation -skipMacroValidation
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
       - name: Services end-to-end
         run: |
           BUILT=$(xcodebuild -project bulletproof.xcodeproj -scheme bulletproof -configuration Debug \
             -destination 'platform=macOS' -showBuildSettings \
+            -skipPackagePluginValidation -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>/dev/null \
             | awk '/ BUILT_PRODUCTS_DIR =/{print $3; exit}')
           Scripts/services-e2e.sh "$BUILT/bulletproof.app"

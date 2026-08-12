@@ -83,4 +83,13 @@ struct ModelStoreTests {
         try makeDirectory("org/model", files: ["a": String(repeating: "x", count: 1000)])
         #expect(store.sizeOnDisk(of: "org/model") >= 1000)
     }
+
+    @Test @MainActor func deleteAllModelsFallsBackToAppleIntelligence() throws {
+        try makeDirectory("mlx-community/model-x", files: ["config.json": "{}"])
+        let appState = AppState(store: store)
+        appState.engineChoice = .local(modelID: "mlx-community/model-x")
+        appState.deleteAllModels()
+        #expect(appState.engineChoice == .appleIntelligence)
+        #expect(store.installedModelIDs().isEmpty)
+    }
 }

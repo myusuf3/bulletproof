@@ -65,6 +65,10 @@ final class ModelDownloadManager {
         do {
             try store.delete(id)
             states[id] = ModelCatalog.all.contains { $0.id == id } ? .notInstalled : nil
+            // A deleted model may be the one currently loaded (targeted, so
+            // deleting one model never dumps another that's resident).
+            let directory = store.directory(for: id)
+            Task { await LocalModelRuntime.shared.evict(directory: directory) }
         } catch {
             states[id] = .failed("Couldn't delete: \(error.localizedDescription)")
         }
