@@ -63,19 +63,30 @@ struct ResidencyCacheTests {
 
     @Test func idleTimeoutEvicts() async throws {
         let loader = FakeLoader()
-        let cache = makeCache(loader, idleTimeout: .milliseconds(30))
+        let evicted = Mutex(false)
+        let cache = makeCache(loader, idleTimeout: .milliseconds(30)) {
+            evicted.withLock { $0 = true }
+        }
         _ = try await cache.resource(for: dirA)
-        try await Task.sleep(for: .milliseconds(150))
+        // Poll for the eviction instead of racing a fixed sleep - CI runners
+        // can delay task scheduling by hundreds of milliseconds.
+        let deadline = ContinuousClock.now + .seconds(3)
+        while !evicted.withLock({ $0 }), ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(evicted.withLock { $0 })
         _ = try await cache.resource(for: dirA)
         #expect(loader.loads == 2)
     }
 
     @Test func touchResetsIdleClock() async throws {
         let loader = FakeLoader()
-        let cache = makeCache(loader, idleTimeout: .milliseconds(200))
+        // Wide margin: touches land every ~150ms against a 3s timeout, so only
+        // a multi-second scheduler stall between statements could flake this.
+        let cache = makeCache(loader, idleTimeout: .seconds(3))
         _ = try await cache.resource(for: dirA)
         for _ in 0..<3 {
-            try await Task.sleep(for: .milliseconds(80))
+            try await Task.sleep(for: .milliseconds(150))
             await cache.touch()
         }
         _ = try await cache.resource(for: dirA)
