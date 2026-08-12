@@ -43,6 +43,7 @@ final class AppState {
     let store: ModelStore
     let downloads: ModelDownloadManager
     let activity = MenuBarActivity()
+    let history = CorrectionHistory()
 
     init(store: ModelStore = ModelStore()) {
         self.store = store
@@ -74,9 +75,9 @@ final class AppState {
         #endif
         switch engineChoice {
         case .appleIntelligence:
-            return AppleIntelligenceEngine()
+            return RecordingEngine(wrapped: AppleIntelligenceEngine())
         case .local(let modelID):
-            return LocalModelEngine(modelDirectory: store.directory(for: modelID))
+            return RecordingEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID)))
         }
     }
 
