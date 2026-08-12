@@ -7,6 +7,25 @@ struct MenuBarView: View {
     var body: some View {
         Text(engineStatus)
         Text("Proofread selection: \(appState.shortcut.displayString)")
+        if appState.history.wordsProofread > 0 {
+            Text("\(appState.history.wordsProofread.formatted()) words proofread - all on-device")
+        }
+        if !appState.history.entries.isEmpty {
+            Divider()
+            Menu("Recent Corrections") {
+                ForEach(appState.history.entries) { entry in
+                    Button(CorrectionHistory.menuPreview(entry.corrected)) {
+                        let pboard = NSPasteboard.general
+                        pboard.clearContents()
+                        pboard.setString(entry.corrected, forType: .string)
+                    }
+                }
+                Divider()
+                Button("Clear History") {
+                    appState.history.clear()
+                }
+            }
+        }
         Divider()
         Button("How to Use bulletproof…") {
             OnboardingWindowController.shared.show()
