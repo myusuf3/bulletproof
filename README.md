@@ -7,7 +7,7 @@ bulletproof is a macOS menu bar app that proofreads selected text in any app:
 - **Global hotkey** (default ⌘⇧P): select text anywhere, press the shortcut, and the corrected text replaces your selection in place, with a green flash showing exactly what changed.
 - **Right-click**: select text, then Services > Proofread. Works in every app, no permissions needed.
 - **On-device**: powered by Apple Intelligence (Foundation Models). Your text never leaves your Mac.
-- **Backup engines**: download ~8B open models (Gemma, Qwen) from Hugging Face for local inference (coming soon).
+- **Backup engines**: download open 4B models (Qwen3, Gemma 3) from Hugging Face and run them fully on-device via MLX - useful on Macs without Apple Intelligence.
 
 ## Requirements
 

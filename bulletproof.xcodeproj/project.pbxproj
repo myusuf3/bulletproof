@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		5AC0FFEE0000000000000003 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE0000000000000002 /* Sparkle */; };
+		5AC0FFEE0000000000000006 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE0000000000000005 /* MLXLLM */; };
+		5AC0FFEE0000000000000008 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE0000000000000007 /* MLXLMCommon */; };
+		5AC0FFEE000000000000000A /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE0000000000000009 /* MLXHuggingFace */; };
+		5AC0FFEE000000000000000D /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE000000000000000C /* Tokenizers */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +74,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				5AC0FFEE0000000000000003 /* Sparkle in Frameworks */,
+				5AC0FFEE0000000000000006 /* MLXLLM in Frameworks */,
+				5AC0FFEE0000000000000008 /* MLXLMCommon in Frameworks */,
+				5AC0FFEE000000000000000A /* MLXHuggingFace in Frameworks */,
+				5AC0FFEE000000000000000D /* Tokenizers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +139,10 @@
 			name = bulletproof;
 			packageProductDependencies = (
 				5AC0FFEE0000000000000002 /* Sparkle */,
+				5AC0FFEE0000000000000005 /* MLXLLM */,
+				5AC0FFEE0000000000000007 /* MLXLMCommon */,
+				5AC0FFEE0000000000000009 /* MLXHuggingFace */,
+				5AC0FFEE000000000000000C /* Tokenizers */,
 			);
 			productName = bulletproof;
 			productReference = 5AED82243026BC0800F87BBB /* bulletproof.app */;
@@ -216,6 +228,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				5AC0FFEE0000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				5AC0FFEE000000000000000B /* XCRemoteSwiftPackageReference "swift-transformers" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5AED82253026BC0800F87BBB /* Products */;
@@ -611,6 +625,22 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.31.3;
+			};
+		};
+		5AC0FFEE000000000000000B /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -618,6 +648,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5AC0FFEE0000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
+		};
+		5AC0FFEE0000000000000005 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+		5AC0FFEE0000000000000007 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		5AC0FFEE0000000000000009 /* MLXHuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXHuggingFace;
+		};
+		5AC0FFEE000000000000000C /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5AC0FFEE000000000000000B /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

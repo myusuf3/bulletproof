@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ModelsSettingsView: View {
     @Environment(AppState.self) private var appState
+    @State private var confirmingDeleteAll = false
 
     var body: some View {
         Form {
@@ -31,9 +32,23 @@ struct ModelsSettingsView: View {
                     Text("These models were removed from the catalog. Delete them to reclaim disk space.")
                 }
             }
+            if !appState.downloads.installedModelIDs.isEmpty {
+                Section {
+                    Button("Delete All Models…", role: .destructive) {
+                        confirmingDeleteAll = true
+                    }
+                }
+            }
         }
         .formStyle(.grouped)
         .onAppear { appState.downloads.refresh() }
+        .confirmationDialog("Delete all downloaded models?",
+                            isPresented: $confirmingDeleteAll, titleVisibility: .visible) {
+            Button("Delete All", role: .destructive) { appState.deleteAllModels() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This frees \(format(appState.downloads.totalInstalledBytes)) of disk space. If a local model is selected, proofreading switches back to Apple Intelligence. You can download models again anytime.")
+        }
     }
 
     private func format(_ bytes: Int64) -> String {

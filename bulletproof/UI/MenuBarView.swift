@@ -35,7 +35,7 @@ struct MenuBarView: View {
                 "Engine: Apple Intelligence"
             }
         case .local(let modelID):
-            "Engine: \(ModelCatalog.displayName(for: modelID)) - not active yet"
+            "Engine: \(ModelCatalog.displayName(for: modelID))"
         }
     }
 }
