@@ -25,6 +25,10 @@ and the zip itself is attached to a GitHub release.
    xcodebuild test -project bulletproof.xcodeproj -scheme bulletproof \
        -only-testing:bulletproofTests -destination 'platform=macOS'
    ```
+   Then push the release commit and **wait for CI to pass before publishing**
+   (`gh run watch`). Local green is not sufficient - CI has caught
+   environment-specific failures local runs missed, and a published release
+   cannot be un-shipped.
 3. Package. This builds Release, verifies the signature, zips, signs the zip
    with the Sparkle key, and rewrites `appcast.xml` at the repo root:
    ```sh
