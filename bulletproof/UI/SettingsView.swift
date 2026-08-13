@@ -57,8 +57,12 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
-    @State private var selection: SettingsPane? = .general
+    @State private var selection: SettingsPane?
     @State private var query = ""
+
+    init(initialSelection: SettingsPane = .general) {
+        _selection = State(initialValue: initialSelection)
+    }
 
     var body: some View {
         NavigationSplitView {
@@ -157,7 +161,7 @@ struct SettingRow<Control: View>: View {
                 Text(title)
                 if let description {
                     Text(description)
-                        .font(.callout)
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
