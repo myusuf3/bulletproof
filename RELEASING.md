@@ -33,7 +33,7 @@ and the zip itself is attached to a GitHub release.
 4. Create the GitHub release (the appcast enclosure URL points at this exact
    tag and asset name, so do not rename either):
    ```sh
-   gh release create vX.Y.Z dist/bulletproof-X.Y.Z.zip \
+   gh release create vX.Y.Z dist/bulletproof-X.Y.Z.dmg \
        --title "bulletproof vX.Y.Z" \
        --notes-file Scripts/RELEASE_NOTES_vX.Y.Z.md
    ```
@@ -75,12 +75,12 @@ available:
 2. Notarize after packaging, then re-run the appcast signing (the stapled
    zip differs from the unstapled one):
    ```sh
-   xcrun notarytool submit dist/bulletproof-X.Y.Z.zip \
+   xcrun notarytool submit dist/bulletproof-X.Y.Z.dmg \
        --keychain-profile "notary" --wait
    # staple the ticket to the app, then re-zip and re-sign:
-   ditto -x -k dist/bulletproof-X.Y.Z.zip /tmp/staple
+   ditto -x -k dist/bulletproof-X.Y.Z.dmg /tmp/staple
    xcrun stapler staple /tmp/staple/bulletproof.app
-   ditto -c -k --keepParent /tmp/staple/bulletproof.app dist/bulletproof-X.Y.Z.zip
+   ditto -c -k --keepParent /tmp/staple/bulletproof.app dist/bulletproof-X.Y.Z.dmg
    ```
    (Set up the keychain profile once with `xcrun notarytool store-credentials`.)
    Easiest path: fold these steps into `release.sh` at that point so the
