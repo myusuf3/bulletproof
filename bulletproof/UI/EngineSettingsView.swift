@@ -5,69 +5,68 @@ struct EngineSettingsView: View {
 
     var body: some View {
         @Bindable var appState = appState
-        Form {
-            Section {
-                if appState.downloads.installedModelIDs.isEmpty {
-                    // A radio group with a single option reads as broken UI;
-                    // choices appear once a local model is installed.
-                    LabeledContent("Proofreading engine", value: "Apple Intelligence")
-                } else {
-                    Picker("Proofreading engine", selection: $appState.engineChoice) {
-                        Text("Apple Intelligence (recommended)")
-                            .tag(EngineChoice.appleIntelligence)
-                        ForEach(appState.downloads.installedModelIDs, id: \.self) { id in
-                            Text(ModelCatalog.displayName(for: id))
-                                .tag(EngineChoice.local(modelID: id))
+        VStack(alignment: .leading, spacing: 0) {
+            SettingsCard {
+                SettingRow(title: "Proofreading engine",
+                           description: appState.downloads.installedModelIDs.isEmpty
+                               ? "Download a local model in Models to add backup engines."
+                               : "Local models run fully on this Mac; the first proofread after switching loads the model.") {
+                    if appState.downloads.installedModelIDs.isEmpty {
+                        Text("Apple Intelligence")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Picker("", selection: $appState.engineChoice) {
+                            Text("Apple Intelligence").tag(EngineChoice.appleIntelligence)
+                            ForEach(appState.downloads.installedModelIDs, id: \.self) { id in
+                                Text(ModelCatalog.displayName(for: id))
+                                    .tag(EngineChoice.local(modelID: id))
+                            }
                         }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .fixedSize()
                     }
-                    .pickerStyle(.radioGroup)
-                }
-            } footer: {
-                if appState.downloads.installedModelIDs.isEmpty {
-                    Text("Download a local model in the Models tab to add backup engines.")
                 }
             }
 
-            Section {
-                statusCallout
+            SettingsCard(header: "Status") {
+                statusRow
             }
         }
-        .formStyle(.grouped)
     }
 
     @ViewBuilder
-    private var statusCallout: some View {
+    private var statusRow: some View {
         switch appState.engineChoice {
         case .appleIntelligence:
             if let issue = appState.appleIntelligenceIssue {
-                Label {
-                    Text(issue)
-                } icon: {
+                SettingRow(title: "Apple Intelligence", description: issue) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
+                        .font(.title3)
                 }
             } else {
-                Label {
-                    Text("Apple Intelligence is ready.")
-                } icon: {
+                SettingRow(title: "Apple Intelligence",
+                           description: "Ready. Corrections run on the system model, on-device.") {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
+                        .font(.title3)
                 }
             }
         case .local(let modelID):
             if appState.store.isInstalled(modelID) {
-                Label {
-                    Text("\(ModelCatalog.displayName(for: modelID)) runs entirely on this Mac. The first proofread after switching loads the model and takes a few extra seconds.")
-                } icon: {
+                SettingRow(title: ModelCatalog.displayName(for: modelID),
+                           description: "Runs entirely on this Mac. Unloads after 5 idle minutes to free memory.") {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
+                        .font(.title3)
                 }
             } else {
-                Label {
-                    Text("This model's files are missing. Re-download it in the Models tab, or switch to Apple Intelligence.")
-                } icon: {
+                SettingRow(title: ModelCatalog.displayName(for: modelID),
+                           description: "This model's files are missing. Re-download it in Models, or switch to Apple Intelligence.") {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
+                        .font(.title3)
                 }
             }
         }
