@@ -15,10 +15,10 @@ struct ShortcutRecorderView: View {
         VStack(alignment: .leading, spacing: 6) {
             Button(action: toggleRecording) {
                 Text(capsuleText)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .frame(minWidth: 130)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 14)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .frame(minWidth: 76)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 12)
                     .background(
                         Capsule().fill(isRecording ? Color.accentColor.opacity(0.15)
                                                    : Color(nsColor: .controlBackgroundColor))
@@ -30,6 +30,9 @@ struct ShortcutRecorderView: View {
                     .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            // The pill must hug its label - inside a settings row the layout
+            // otherwise stretches it to fill the trailing space.
+            .fixedSize()
             .animation(.easeInOut(duration: 0.15), value: isRecording)
 
             if let verdictMessage {

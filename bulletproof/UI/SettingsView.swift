@@ -93,17 +93,18 @@ struct SettingsView: View {
                 }
                 .listStyle(.sidebar)
             }
-            .padding(.top, 10)
             .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
         } detail: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(selection?.title ?? "")
                         .font(.title2.bold())
-                        .padding(.bottom, 12)
+                        .padding(.bottom, 10)
                     detailPane
                 }
-                .padding(20)
+                .padding(.horizontal, 20)
+                .padding(.top, 4)
+                .padding(.bottom, 20)
                 .frame(maxWidth: 680, alignment: .leading)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
