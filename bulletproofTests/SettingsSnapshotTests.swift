@@ -5,6 +5,9 @@ import Testing
 
 /// Renders the settings window to PNGs so layout can be reviewed without
 /// launching the app. Files land in /tmp/bulletproof-snapshots/.
+/// Local-only: rendering hogs the main actor and starves parallel
+/// main-actor tests on slow CI runners (and nobody reads the PNGs there).
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["CI"] == nil))
 @MainActor
 struct SettingsSnapshotTests {
     private static let outputDir = URL(fileURLWithPath: "/tmp/bulletproof-snapshots")
