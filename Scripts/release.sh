@@ -1,9 +1,9 @@
 #!/bin/bash
-# Builds a signed Release, zips it, signs the zip with Sparkle's EdDSA key
+# Builds a signed Release, packages a notarized DMG, signs it with Sparkle's
 # (from the login Keychain), and regenerates appcast.xml at the repo root.
 #
 # Usage: Scripts/release.sh
-# Output: dist/bulletproof-<version>.zip and appcast.xml
+# Output: dist/bulletproof-<version>.dmg and appcast.xml
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -13,17 +13,18 @@ REPO_SLUG="myusuf3/bulletproof"
 
 fail() { echo "error: $*" >&2; exit 1; }
 
-# Prefer Developer ID for distribution; fall back to Apple Development until
-# portal access is restored (see RELEASING.md for the Gatekeeper caveat).
+# Releases must be Developer ID signed + notarized - a silent fallback to
+# development signing ships an artifact Gatekeeper blocks on every download.
+# Set ALLOW_DEV_SIGNING=1 only for local pipeline testing, never to publish.
 if security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
     IDENTITY="Developer ID Application"
     SIGN_ARGS=(CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=$IDENTITY")
-else
+elif [ "${ALLOW_DEV_SIGNING:-0}" = "1" ]; then
     IDENTITY="Apple Development"
     SIGN_ARGS=("CODE_SIGN_IDENTITY=$IDENTITY")
-    echo "warning: no Developer ID Application certificate found."
-    echo "warning: signing with '$IDENTITY' - downloads will be blocked by Gatekeeper"
-    echo "warning: until the app is Developer ID signed and notarized."
+    echo "warning: ALLOW_DEV_SIGNING=1 - this artifact must not be published."
+else
+    fail "no Developer ID Application certificate in the keychain - unlock it or fix the cert. Refusing to build a Gatekeeper-blocked release."
 fi
 echo "==> Signing identity: $IDENTITY"
 
@@ -92,11 +93,29 @@ if [ "$IDENTITY" = "Developer ID Application" ]; then
     spctl --assess --type execute "$APP" && echo "    Gatekeeper assessment: accepted"
 fi
 
-echo "==> Zipping v$VERSION (build $BUILD)"
+# DMG for both the release download (drag-to-Applications guides users to
+# replace stale copies) and the Sparkle enclosure (Sparkle 2 mounts DMGs).
+echo "==> Building DMG for v$VERSION (build $BUILD)"
 mkdir -p "$DIST"
-ZIP="$DIST/bulletproof-$VERSION.zip"
-rm -f "$ZIP"
-ditto -c -k --keepParent "$APP" "$ZIP"
+DMG="$DIST/bulletproof-$VERSION.dmg"
+rm -f "$DMG"
+STAGING="$(mktemp -d)"
+cp -R "$APP" "$STAGING/"
+ln -s /Applications "$STAGING/Applications"
+hdiutil create -volname "bulletproof" -srcfolder "$STAGING" -ov -format UDZO -quiet "$DMG"
+rm -rf "$STAGING"
+
+if [ "$IDENTITY" = "Developer ID Application" ]; then
+    echo "==> Signing and notarizing DMG"
+    codesign --sign "Developer ID Application" --timestamp "$DMG"
+    DMG_NOTARY_OUT="$(xcrun notarytool submit "$DMG" --keychain-profile "${NOTARY_PROFILE:-bulletproof-notary}" --wait 2>&1)" || {
+        echo "$DMG_NOTARY_OUT"
+        fail "DMG notarization submit failed"
+    }
+    echo "$DMG_NOTARY_OUT" | grep -q "status: Accepted" || fail "DMG notarization not accepted"
+    xcrun stapler staple "$DMG" | tail -1
+    spctl --assess --type open --context context:primary-signature "$DMG" && echo "    DMG Gatekeeper assessment: accepted"
+fi
 
 SIGN_UPDATE="$(find "$DERIVED/SourcePackages/artifacts" -type f -name sign_update -not -path "*old_dsa*" | head -1)"
 [ -x "$SIGN_UPDATE" ] || fail "sign_update not found under $DERIVED/SourcePackages (run xcodebuild -resolvePackageDependencies first)"
@@ -105,17 +124,17 @@ SIGN_UPDATE="$(find "$DERIVED/SourcePackages/artifacts" -type f -name sign_updat
 # allow sign_update on first use). Non-interactive runs can export the key
 # with `generate_keys -x <file>` and point SPARKLE_ED_KEY_FILE at it.
 if [ -n "${SPARKLE_ED_KEY_FILE:-}" ]; then
-    echo "==> Signing zip with Sparkle EdDSA key file"
-    SIG_ATTRS="$("$SIGN_UPDATE" --ed-key-file "$SPARKLE_ED_KEY_FILE" "$ZIP")"
+    echo "==> Signing DMG with Sparkle EdDSA key file"
+    SIG_ATTRS="$("$SIGN_UPDATE" --ed-key-file "$SPARKLE_ED_KEY_FILE" "$DMG")"
 else
-    echo "==> Signing zip with Sparkle EdDSA key (login Keychain)"
-    SIG_ATTRS="$("$SIGN_UPDATE" "$ZIP")"
+    echo "==> Signing DMG with Sparkle EdDSA key (login Keychain)"
+    SIG_ATTRS="$("$SIGN_UPDATE" "$DMG")"
 fi
 echo "    $SIG_ATTRS"
 echo "$SIG_ATTRS" | grep -q 'sparkle:edSignature="' || fail "sign_update did not produce an EdDSA signature"
 
 echo "==> Writing appcast.xml"
-DOWNLOAD_URL="https://github.com/$REPO_SLUG/releases/download/v$VERSION/bulletproof-$VERSION.zip"
+DOWNLOAD_URL="https://github.com/$REPO_SLUG/releases/download/v$VERSION/bulletproof-$VERSION.dmg"
 PUB_DATE="$(LC_ALL=en_US date -u '+%a, %d %b %Y %H:%M:%S +0000')"
 cat > "$ROOT/appcast.xml" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
@@ -138,8 +157,8 @@ cat > "$ROOT/appcast.xml" <<EOF
 EOF
 
 echo "==> Done"
-echo "    artifact: $ZIP"
+echo "    artifact: $DMG"
 echo "    appcast:  $ROOT/appcast.xml"
 echo ""
-echo "Next: gh release create v$VERSION \"$ZIP\" --title \"bulletproof v$VERSION\" --notes-file <notes>"
+echo "Next: gh release create v$VERSION \"$DMG\" --title \"bulletproof v$VERSION\" --notes-file <notes>"
 echo "Then commit appcast.xml to main (the feed URL points at main)."
