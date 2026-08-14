@@ -73,11 +73,12 @@ final class AppState {
             return UppercasingFakeEngine()
         }
         #endif
+        // Gate inside the recorder so history only ever holds accepted output.
         switch engineChoice {
         case .appleIntelligence:
-            return RecordingEngine(wrapped: AppleIntelligenceEngine())
+            return RecordingEngine(wrapped: OutputGatedEngine(wrapped: AppleIntelligenceEngine()))
         case .local(let modelID):
-            return RecordingEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID)))
+            return RecordingEngine(wrapped: OutputGatedEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID))))
         }
     }
 
