@@ -40,6 +40,12 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
         }
     }
 
+    /// The residency cache is single-flight, so this coalesces with the real
+    /// request that follows it.
+    func prewarm() async {
+        _ = try? await runtime.resource(for: modelDirectory)
+    }
+
     /// Corrections are roughly input-sized; 2x plus slack absorbs expansion
     /// without letting a runaway generation eat the 55s budget. ~3 chars per
     /// token is conservative for prose on these tokenizers.

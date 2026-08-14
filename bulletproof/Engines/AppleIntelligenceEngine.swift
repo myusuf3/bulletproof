@@ -50,6 +50,12 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         }
     }
 
+    func prewarm() async {
+        guard case .available = Self.model.availability else { return }
+        LanguageModelSession(model: Self.model,
+                             instructions: ProofreadPrompt.instructions).prewarm()
+    }
+
     /// Every GenerationError becomes user vocabulary - the raw messages talk
     /// about prompts and guardrails, not about the user's selection.
     static func mapped(_ error: LanguageModelSession.GenerationError) -> ProofreadingError {

@@ -65,4 +65,8 @@ nonisolated struct RecordingEngine: ProofreadingEngine {
         }
         return corrected
     }
+
+    func prewarm() async {
+        await wrapped.prewarm()
+    }
 }

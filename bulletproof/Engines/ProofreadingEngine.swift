@@ -2,6 +2,13 @@ import Foundation
 
 nonisolated protocol ProofreadingEngine: Sendable {
     func proofread(_ text: String) async throws -> String
+    /// Warm-up fired while the copy round-trip burns wall-clock. Failures
+    /// stay silent here and surface on the real request.
+    func prewarm() async
+}
+
+extension ProofreadingEngine {
+    func prewarm() async {}
 }
 
 nonisolated enum ProofreadingError: LocalizedError {
