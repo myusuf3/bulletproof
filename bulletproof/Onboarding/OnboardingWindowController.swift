@@ -18,7 +18,7 @@ import SwiftUI
         let hosting = NSHostingController(rootView: OnboardingView().environment(AppState.shared))
         let window = NSWindow(contentViewController: hosting)
         window.title = "Welcome to bulletproof"
-        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true

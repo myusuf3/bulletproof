@@ -53,24 +53,27 @@ struct OnboardingView: View {
     }
 
     private var footer: some View {
-        HStack {
-            Button("Back") { advance(by: -1) }
-                .opacity(step == .welcome || step == .done ? 0 : 1)
-                .disabled(step == .welcome || step == .done)
-
-            Spacer()
+        // Dots overlay the full width so they center on the window,
+        // not between the unequal-width Back and Continue buttons.
+        ZStack {
             stepDots
-            Spacer()
+            HStack {
+                Button("Back") { advance(by: -1) }
+                    .opacity(step == .welcome || step == .done ? 0 : 1)
+                    .disabled(step == .welcome || step == .done)
 
-            if step == .done {
-                Button("Start Proofreading") { OnboardingWindowController.shared.close() }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-            } else {
-                Button("Continue") { advance(by: 1) }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(!canContinue)
+                Spacer()
+
+                if step == .done {
+                    Button("Start Proofreading") { OnboardingWindowController.shared.close() }
+                        .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Continue") { advance(by: 1) }
+                        .buttonStyle(.borderedProminent)
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(!canContinue)
+                }
             }
         }
     }
