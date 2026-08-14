@@ -37,7 +37,7 @@ import Carbon.HIToolbox
     }
 
     func frontmostAppID() -> pid_t? {
-        NSWorkspace.shared.frontmostApplication?.processIdentifier
+        SelectionReader.focusedAppPid() ?? NSWorkspace.shared.frontmostApplication?.processIdentifier
     }
 
     func focusBlockReason() -> FocusGuard.BlockReason? {

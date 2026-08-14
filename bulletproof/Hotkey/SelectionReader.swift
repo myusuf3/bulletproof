@@ -24,6 +24,24 @@ import ApplicationServices
         return selectedTextViaTextMarkers(of: element)
     }
 
+    /// Raycast and Spotlight hold keyboard focus while leaving the previous
+    /// app frontmost - the focused element's pid is where a paste actually
+    /// lands, not NSWorkspace's frontmostApplication.
+    static func focusedAppPid() -> pid_t? {
+        let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, 0.25)
+        var focusedRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedUIElementAttribute as CFString, &focusedRef) == .success,
+              let focusedRef, CFGetTypeID(focusedRef) == AXUIElementGetTypeID() else {
+            return nil
+        }
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(focusedRef as! AXUIElement, &pid) == .success, pid > 0 else {
+            return nil
+        }
+        return pid
+    }
+
     /// Chromium builds its AX tree lazily. AXManualAccessibility asks for it
     /// without AXEnhancedUserInterface's window-manager glitches, and is
     /// re-asserted every flow because Electron editors drop it on

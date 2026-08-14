@@ -12,6 +12,7 @@ nonisolated enum OutputGate {
         case introducedControlCharacters
         case overExpansion
         case lowOverlap
+        case introducedMisspelling
     }
 
     /// Ratio rules only apply above these floors - short inputs legitimately
@@ -50,6 +51,30 @@ nonisolated enum OutputGate {
         return nil
     }
 
+    /// Case-preserved words the output contains that the original didn't -
+    /// the candidates for the spell-check gate. Whole alphabetic words of 3+
+    /// letters only: numbers and fragments have no spelling to check.
+    /// Contractions stay whole - splitting "shouldn't" would hand the spell
+    /// checker the non-word fragment "shouldn" and reject a real correction.
+    static func introducedWords(original: String, output: String) -> [String] {
+        let originalWords = Set(contractionTokens(of: original).map { $0.lowercased() })
+        var seen = Set<String>()
+        return contractionTokens(of: output).filter { word in
+            let bare = word.filter { !"''".contains($0) }
+            let key = word.lowercased()
+            guard bare.count >= 3, bare.allSatisfy(\.isLetter),
+                  !originalWords.contains(key), !seen.contains(key) else { return false }
+            seen.insert(key)
+            return true
+        }
+    }
+
+    private static func contractionTokens(of text: String) -> [String] {
+        text.split(whereSeparator: { !$0.isLetter && !$0.isNumber && !"''".contains($0) })
+            .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "''")) }
+            .filter { !$0.isEmpty }
+    }
+
     private static func words(of text: String) -> Set<String> {
         Set(text.lowercased()
             .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
@@ -68,6 +93,11 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         if let rejection = OutputGate.rejection(original: text, output: output) {
             Self.logger.warning("rejected model output: \(String(describing: rejection), privacy: .public)")
             throw ProofreadingError.unusableOutput(rejection)
+        }
+        if let misspelled = await SpellCheckGate.firstMisspelled(
+                in: OutputGate.introducedWords(original: text, output: output)) {
+            Self.logger.warning("rejected model output: introduced misspelling \(misspelled, privacy: .private)")
+            throw ProofreadingError.unusableOutput(.introducedMisspelling)
         }
         return output
     }
