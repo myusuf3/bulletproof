@@ -162,6 +162,7 @@ import Carbon.HIToolbox
 
         pboard.clearContents()
         pboard.setString(corrected, forType: .string)
+        let correctionCount = pboard.changeCount
 
         // Inference can take many seconds; if the user switched apps in the
         // meantime, ⌘V would paste into the wrong window. Keep the correction
@@ -177,7 +178,11 @@ import Carbon.HIToolbox
         // Give the target app time to read the paste before restoring.
         await surface.sleep(for: .milliseconds(300))
         surface.showSuccess(over: flashRect)
-        snapshot.restore(to: pboard)
+        // A ⌘C during the settle window means the clipboard now holds the
+        // user's own copy - restoring the snapshot would destroy it.
+        if pboard.changeCount == correctionCount {
+            snapshot.restore(to: pboard)
+        }
     }
 
     private func waitForModifierRelease(budget: Duration = .seconds(1)) async {

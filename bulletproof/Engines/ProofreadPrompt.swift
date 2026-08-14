@@ -25,6 +25,18 @@ nonisolated enum ProofreadPrompt {
         "<text>\n\(text)\n</text>"
     }
 
+    /// Largest input whose instructions + wrapped text + a full input-sized
+    /// regeneration (2x + slack, matching the engines' generation budgets)
+    /// still fit in a context window of `contextTokens`, at the engines'
+    /// conservative ~3 chars/token estimate. The 64-character allowance
+    /// covers the <text> markers and chat template.
+    static func maxInputCharacters(contextTokens: Int) -> Int {
+        let overheadTokens = (instructions.count + 64) / 3
+        // inputTokens + (inputTokens * 2 + 128) + overhead <= contextTokens
+        let maxInputTokens = (contextTokens - 128 - overheadTokens) / 3
+        return maxInputTokens * 3
+    }
+
     /// Strips marker echoes the model may leak, then restores the original's
     /// edge whitespace. Only anchored markers are leaks - mid-content
     /// occurrences are legitimate text the user is proofreading.

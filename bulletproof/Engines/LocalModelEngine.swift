@@ -9,6 +9,11 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
     var runtime: ResidencyCache<ModelContainer> = LocalModelRuntime.shared
 
     func proofread(_ text: String) async throws -> String {
+        // Checked before the model load - an oversized selection must not
+        // cost a multi-gigabyte load it can never use.
+        guard text.count <= Self.maxInputCharacters else {
+            throw ProofreadingError.inputTooLong
+        }
         let container: ModelContainer
         do {
             container = try await runtime.resource(for: modelDirectory)
@@ -40,13 +45,24 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
     /// token is conservative for prose on these tokenizers.
     static func maxTokens(forInputLength characters: Int) -> Int {
         let estimatedInputTokens = max(16, characters / 3)
-        return min(4096, estimatedInputTokens * 2 + 128)
+        return min(maxKVSize, estimatedInputTokens * 2 + 128)
+    }
+
+    /// The KV cache holds the whole exchange - instructions, wrapped input,
+    /// and every generated token. Past this size the cache rotates and the
+    /// model loses the start of the text it is rewriting.
+    static let maxKVSize = 4096
+
+    /// Largest input whose instructions + prompt + full generation budget
+    /// still fit in the KV cache.
+    static var maxInputCharacters: Int {
+        ProofreadPrompt.maxInputCharacters(contextTokens: maxKVSize)
     }
 
     static func parameters(for text: String) -> GenerateParameters {
         var params = GenerateParameters(temperature: 0)
         params.maxTokens = maxTokens(forInputLength: text.count)
-        params.maxKVSize = 4096
+        params.maxKVSize = maxKVSize
         return params
     }
 }

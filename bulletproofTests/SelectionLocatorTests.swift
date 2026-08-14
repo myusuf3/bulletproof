@@ -22,6 +22,18 @@ struct SelectionLocatorTests {
         let flipped = SelectionLocator.flipped(CGRect(x: -800, y: 100, width: 100, height: 20), primaryHeight: 1000)
         #expect(flipped.minX == -800)
     }
+
+    @Test func finiteRectIsAccepted() {
+        #expect(SelectionLocator.hasFiniteComponents(CGRect(x: 50, y: 100, width: 200, height: 20)))
+    }
+
+    @Test func nanAndInfiniteRectsAreRejected() {
+        #expect(!SelectionLocator.hasFiniteComponents(CGRect(x: CGFloat.nan, y: 100, width: 200, height: 20)))
+        #expect(!SelectionLocator.hasFiniteComponents(CGRect(x: 50, y: CGFloat.nan, width: 200, height: 20)))
+        #expect(!SelectionLocator.hasFiniteComponents(CGRect(x: 50, y: 100, width: CGFloat.nan, height: 20)))
+        #expect(!SelectionLocator.hasFiniteComponents(CGRect(x: 50, y: 100, width: 200, height: CGFloat.infinity)))
+        #expect(!SelectionLocator.hasFiniteComponents(CGRect(x: -CGFloat.infinity, y: 100, width: 200, height: 20)))
+    }
 }
 
 struct ChipFrameTests {
