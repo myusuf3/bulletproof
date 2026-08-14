@@ -12,6 +12,8 @@ private final class FakeSurface: ProofreadingSurface {
     var onCopy: (NSPasteboard) -> Void = { _ in }
     /// Simulates the user switching apps mid-flow.
     var frontmostID: pid_t? = 100
+    /// Simulates focus sitting in a secure field or terminal.
+    var blockReason: FocusGuard.BlockReason?
     /// Called with the running sleep count - lets tests script late events.
     var onSleep: (Int) -> Void = { _ in }
 
@@ -28,6 +30,7 @@ private final class FakeSurface: ProofreadingSurface {
     func requestAccessibility() { requestedAccessibility = true }
     func heldModifiers() -> NSEvent.ModifierFlags { [] }
     func frontmostAppID() -> pid_t? { frontmostID }
+    func focusBlockReason() -> FocusGuard.BlockReason? { blockReason }
     func postCopy() {
         copyCount += 1
         onCopy(pasteboard)
@@ -198,6 +201,27 @@ struct SelectionProofreaderTests {
 
     @Test func defaultCopyBudgetCoversSlowElectronApps() {
         #expect(SelectionProofreader.defaultCopyTimeout == 3)
+    }
+
+    @Test func secureFieldFocusRefusesBeforeAnyCopy() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.blockReason = .secureField
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("unused")))
+        await proofreader.performFlow()
+        #expect(surface.copyCount == 0)
+        #expect(surface.pasteCount == 0)
+        #expect(surface.notifications.count == 1)
+        #expect(surface.pasteboard.string(forType: .string) == "user clipboard")
+        #expect(surface.activityEvents == ["began", "ended-failure"])
+    }
+
+    @Test func terminalFocusRefusesBeforeAnyCopy() async {
+        surface.blockReason = .terminal
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("unused")))
+        await proofreader.performFlow()
+        #expect(surface.copyCount == 0)
+        #expect(surface.notifications.first?.body == FocusGuard.BlockReason.terminal.message)
     }
 
     @Test func prewarmFiresDuringTheCopyRoundTrip() async {
