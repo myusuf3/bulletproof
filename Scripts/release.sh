@@ -136,9 +136,12 @@ if [ "$IDENTITY" = "Developer ID Application" ]; then
     echo "==> Sweeping Sparkle.framework for non-Developer-ID binaries"
     SPARKLE_FW="$APP/Contents/Frameworks/Sparkle.framework"
     [ -d "$SPARKLE_FW" ] || fail "Sparkle.framework missing from the built app"
+    # No pipes here: with pipefail, grep -q's early exit SIGPIPEs the writer
+    # and a *matching* signature still reads as failure.
     while IFS= read -r -d '' bin; do
-        file -b "$bin" | grep -q 'Mach-O' || continue
-        codesign -dvv "$bin" 2>&1 | grep -q '^Authority=Developer ID Application' \
+        [[ "$(file -b "$bin")" == *Mach-O* ]] || continue
+        SIGNATURE="$(codesign -dvv "$bin" 2>&1 || true)"
+        [[ "$SIGNATURE" == *"Authority=Developer ID Application"* ]] \
             || fail "not Developer ID signed: ${bin#"$APP"/}"
     done < <(find "$SPARKLE_FW" -type f -print0)
     echo "    all Sparkle binaries Developer ID signed"
