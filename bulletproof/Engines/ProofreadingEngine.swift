@@ -10,6 +10,7 @@ nonisolated enum ProofreadingError: LocalizedError {
     case emptyInput
     case inputTooLong
     case guardrailViolation
+    case unusableOutput(OutputGate.Rejection)
     case timedOut
     case inferenceFailed(underlying: Error)
 
@@ -25,6 +26,15 @@ nonisolated enum ProofreadingError: LocalizedError {
             "The selection is too long to proofread. Try a shorter selection."
         case .guardrailViolation:
             "Apple Intelligence declined to proofread this text. Try a local model instead (Settings > Engine)."
+        case .unusableOutput(let reason):
+            switch reason {
+            case .emptyOutput:
+                "The model returned nothing, so your text was left unchanged."
+            case .replacementCharacter, .introducedControlCharacters:
+                "The model returned garbled text, so your selection was left unchanged."
+            case .overExpansion, .lowOverlap:
+                "The model rewrote instead of correcting, so your selection was left unchanged."
+            }
         case .timedOut:
             "Proofreading took too long. Try a shorter selection."
         case .inferenceFailed(let underlying):

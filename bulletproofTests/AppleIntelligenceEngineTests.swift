@@ -16,6 +16,7 @@ struct AppleIntelligenceEngineTests {
         case .emptyInput: "emptyInput"
         case .inputTooLong: "inputTooLong"
         case .guardrailViolation: "guardrailViolation"
+        case .unusableOutput: "unusableOutput"
         case .timedOut: "timedOut"
         case .inferenceFailed: "inferenceFailed"
         }
