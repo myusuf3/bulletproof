@@ -4,7 +4,10 @@ import Testing
 
 // Timings compressed for tests; production defaults are asserted separately.
 // Assertions poll rather than racing fixed sleeps - CI runners can delay
-// task scheduling by hundreds of milliseconds.
+// task scheduling by hundreds of milliseconds. Serialized because parallel
+// main-actor tests starve each other on slow runners: three consecutive CI
+// runs timed out waiting on 30ms tasks with the suite parallel.
+@Suite(.serialized)
 @MainActor
 struct MenuBarActivityTests {
     private func makeActivity() -> MenuBarActivity {
@@ -15,7 +18,7 @@ struct MenuBarActivityTests {
     }
 
     private func waitFor(_ condition: @autoclosure () -> Bool,
-                         timeout: Duration = .seconds(3)) async -> Bool {
+                         timeout: Duration = .seconds(15)) async -> Bool {
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
             if condition() { return true }
