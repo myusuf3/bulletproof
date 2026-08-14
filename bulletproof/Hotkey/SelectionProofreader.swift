@@ -44,11 +44,21 @@ import Carbon.HIToolbox
     }
 
     func postCopy() {
-        KeyPoster.post(CGKeyCode(kVK_ANSI_C), flags: .maskCommand)
+        post(keyEquivalent: "C", fallbackKey: CGKeyCode(kVK_ANSI_C))
     }
 
     func postPaste() {
-        KeyPoster.post(CGKeyCode(kVK_ANSI_V), flags: .maskCommand)
+        post(keyEquivalent: "V", fallbackKey: CGKeyCode(kVK_ANSI_V))
+    }
+
+    /// Menu press first (immune to held modifiers, localization-proof);
+    /// synthetic keystroke only when the host exposes no matching item.
+    private func post(keyEquivalent: String, fallbackKey: CGKeyCode) {
+        if let pid = frontmostAppID(),
+           MenuActionPoster.shared.press(keyEquivalent: keyEquivalent, pid: pid) {
+            return
+        }
+        KeyPoster.post(fallbackKey, flags: .maskCommand)
     }
 
     func selectionRect() -> NSRect? {
@@ -221,10 +231,16 @@ import Carbon.HIToolbox
 nonisolated enum KeyPoster {
     static func post(_ key: CGKeyCode, flags: CGEventFlags) {
         let source = CGEventSource(stateID: .combinedSessionState)
+        // Physically held keys otherwise merge into the synthetic event and
+        // strip its ⌘ flag; suppressing local keyboard events plus posting
+        // at the annotated session tap keeps the event's own flags intact.
+        source?.setLocalEventsFilterDuringSuppressionState(
+            [.permitLocalMouseEvents, .permitSystemDefinedEvents],
+            state: .eventSuppressionStateSuppressionInterval)
         for keyDown in [true, false] {
             let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: keyDown)
             event?.flags = flags
-            event?.post(tap: .cghidEventTap)
+            event?.post(tap: .cgAnnotatedSessionEventTap)
         }
     }
 }
