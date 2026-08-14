@@ -136,6 +136,22 @@ struct SelectionProofreaderTests {
         #expect(surface.activityEvents == ["began", "ended-failure"])
     }
 
+    @Test func copyDuringSettleWindowIsNotClobberedByRestore() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        // User hits ⌘C in the settle window between paste and restore.
+        surface.onSleep = { [weak surface] _ in
+            guard let surface, surface.pasteCount == 1 else { return }
+            surface.pasteboard.clearContents()
+            surface.pasteboard.setString("fresh user copy", forType: .string)
+        }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        #expect(surface.pastedText == "the cat")
+        #expect(surface.pasteboard.string(forType: .string) == "fresh user copy")
+    }
+
     @Test func appSwitchMidFlowAbortsPasteAndLeavesCorrectionOnClipboard() async {
         surface.pasteboard.clearContents()
         surface.pasteboard.setString("user clipboard", forType: .string)

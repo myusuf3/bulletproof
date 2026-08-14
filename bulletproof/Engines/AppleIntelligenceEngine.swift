@@ -10,8 +10,24 @@ nonisolated struct Correction {
 }
 
 nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
+    /// Default guardrails throw guardrailViolation on the user's own words
+    /// (profanity, heated messages, legal text); the permissive set exists
+    /// exactly for transforming user-provided text.
+    static let model = SystemLanguageModel(useCase: .general,
+                                           guardrails: .permissiveContentTransformations)
+
+    /// Apple's on-device model has a 4,096-token context window.
+    static let contextTokens = 4096
+
+    static var maxInputCharacters: Int {
+        ProofreadPrompt.maxInputCharacters(contextTokens: contextTokens)
+    }
+
     func proofread(_ text: String) async throws -> String {
-        switch SystemLanguageModel.default.availability {
+        guard text.count <= Self.maxInputCharacters else {
+            throw ProofreadingError.inputTooLong
+        }
+        switch Self.model.availability {
         case .available:
             break
         case .unavailable(let reason):
@@ -19,15 +35,41 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         }
         // Fresh session per request: proofreading is stateless, and a shared
         // transcript would grow and bleed context between selections.
-        let session = LanguageModelSession(instructions: ProofreadPrompt.instructions)
+        let session = LanguageModelSession(model: Self.model,
+                                           instructions: ProofreadPrompt.instructions)
         do {
             let response = try await session.respond(
                 to: ProofreadPrompt.userPrompt(for: text),
                 generating: Correction.self
             )
             return ProofreadPrompt.cleanResponse(response.content.correctedText, original: text)
+        } catch let error as LanguageModelSession.GenerationError {
+            throw Self.mapped(error)
         } catch {
             throw ProofreadingError.inferenceFailed(underlying: error)
+        }
+    }
+
+    /// Every GenerationError becomes user vocabulary - the raw messages talk
+    /// about prompts and guardrails, not about the user's selection.
+    static func mapped(_ error: LanguageModelSession.GenerationError) -> ProofreadingError {
+        switch error {
+        case .exceededContextWindowSize:
+            .inputTooLong
+        case .guardrailViolation, .refusal:
+            .guardrailViolation
+        case .assetsUnavailable:
+            .engineUnavailable(reason: "The Apple Intelligence model isn't available right now. Try again in a few minutes.")
+        case .rateLimited:
+            .engineUnavailable(reason: "Apple Intelligence is temporarily busy. Try again in a moment.")
+        case .concurrentRequests:
+            .engineUnavailable(reason: "Another proofread is still running. Try again in a moment.")
+        case .unsupportedLanguageOrLocale:
+            .engineUnavailable(reason: "Apple Intelligence doesn't support this language. Try a local model instead (Settings > Engine).")
+        case .decodingFailure, .unsupportedGuide:
+            .inferenceFailed(underlying: error)
+        @unknown default:
+            .inferenceFailed(underlying: error)
         }
     }
 

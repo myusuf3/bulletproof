@@ -32,7 +32,7 @@ final class AppState {
             if let data = try? JSONEncoder().encode(shortcut) {
                 UserDefaults.standard.set(data, forKey: Self.shortcutKey)
             }
-            HotkeyDispatcher.shared.register(shortcut)
+            HotkeyDispatcher.shared.registerOrNotify(shortcut)
         }
     }
 
@@ -96,7 +96,7 @@ final class AppState {
 
     /// Nil when Apple Intelligence is ready; otherwise an actionable reason.
     var appleIntelligenceIssue: String? {
-        switch SystemLanguageModel.default.availability {
+        switch AppleIntelligenceEngine.model.availability {
         case .available:
             nil
         case .unavailable(let reason):
