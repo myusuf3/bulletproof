@@ -19,13 +19,21 @@ import ApplicationServices
         let element = focusedRef as! AXUIElement
         AXUIElementSetMessagingTimeout(element, 0.25)
 
-        guard let axRect = selectionBounds(of: element) ?? plausibleFieldFrame(of: element) else {
+        guard let axRect = selectionBounds(of: element) ?? plausibleFieldFrame(of: element),
+              hasFiniteComponents(axRect) else {
             return nil
         }
         let rect = flipped(axRect, primaryHeight: primaryHeight)
         // A selection scrolled offscreen can report bounds on no display.
         guard NSScreen.screens.contains(where: { $0.frame.intersects(rect) }) else { return nil }
         return rect
+    }
+
+    /// Chromium/Electron apps can report NaN or infinite AX bounds mid-scroll,
+    /// and AppKit raises on a non-finite window frame.
+    nonisolated static func hasFiniteComponents(_ rect: CGRect) -> Bool {
+        rect.origin.x.isFinite && rect.origin.y.isFinite
+            && rect.width.isFinite && rect.height.isFinite
     }
 
     /// AX y grows downward from the top of the primary display; AppKit y grows

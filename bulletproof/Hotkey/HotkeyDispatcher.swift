@@ -11,6 +11,8 @@ nonisolated enum HotkeyRoute {
     static let shared = HotkeyDispatcher()
 
     private let manager = HotkeyManager()
+    /// Injectable so tests can observe the registration-failure notification.
+    var notifier = UserNotifier()
     private lazy var proofreader = SelectionProofreader(
         makeEngine: { AppState.shared.makeEngine() },
         shortcutDisplay: { AppState.shared.shortcut.displayString },
@@ -29,12 +31,25 @@ nonisolated enum HotkeyRoute {
 
     func start() {
         manager.onHotkey = { [weak self] in self?.dispatch() }
-        register(AppState.shared.shortcut)
+        registerOrNotify(AppState.shared.shortcut)
     }
 
     @discardableResult
     func register(_ combo: KeyCombo) -> Bool {
         manager.register(combo)
+    }
+
+    /// Registration is exclusive, so a chord claimed by another app since the
+    /// last launch is refused - and the shortcut would silently never fire.
+    func registerOrNotify(_ combo: KeyCombo) {
+        if !register(combo) {
+            notifier.post(title: "Shortcut unavailable",
+                          body: Self.registrationFailureBody(for: combo))
+        }
+    }
+
+    nonisolated static func registrationFailureBody(for combo: KeyCombo) -> String {
+        "Another app is using \(combo.displayString). Choose a different shortcut in bulletproof's settings."
     }
 
     func unregister() {

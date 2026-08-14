@@ -22,6 +22,35 @@ struct LocalModelEngineTests {
         #expect(params.temperature == 0)
     }
 
+    @Test func inputCapKeepsFullExchangeInsideKVCache() {
+        let cap = LocalModelEngine.maxInputCharacters
+        let inputTokens = max(16, cap / 3)
+        let instructionTokens = ProofreadPrompt.instructions.count / 3
+        #expect(inputTokens + LocalModelEngine.maxTokens(forInputLength: cap) + instructionTokens
+                <= LocalModelEngine.maxKVSize)
+        // The cap must stay roomy enough for real selections (a few paragraphs).
+        #expect(cap > 2000)
+    }
+
+    @Test func oversizedInputThrowsBeforeTouchingTheModel() async {
+        // A nonexistent directory would throw engineUnavailable if the load
+        // ran first - inputTooLong proves the cap is checked pre-load.
+        let engine = LocalModelEngine(modelDirectory: URL(
+            fileURLWithPath: "/nonexistent/\(UUID().uuidString)"))
+        let text = String(repeating: "a", count: LocalModelEngine.maxInputCharacters + 1)
+        do {
+            _ = try await engine.proofread(text)
+            Issue.record("expected inputTooLong")
+        } catch let error as ProofreadingError {
+            guard case .inputTooLong = error else {
+                Issue.record("expected inputTooLong, got \(error)")
+                return
+            }
+        } catch {
+            Issue.record("unexpected error type: \(error)")
+        }
+    }
+
     @Test func missingModelDirectoryThrowsEngineUnavailable() async {
         let engine = LocalModelEngine(modelDirectory: URL(
             fileURLWithPath: "/nonexistent/\(UUID().uuidString)"))

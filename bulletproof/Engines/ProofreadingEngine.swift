@@ -8,6 +8,8 @@ nonisolated enum ProofreadingError: LocalizedError {
     case engineUnavailable(reason: String)
     case notImplemented(String)
     case emptyInput
+    case inputTooLong
+    case guardrailViolation
     case timedOut
     case inferenceFailed(underlying: Error)
 
@@ -19,6 +21,10 @@ nonisolated enum ProofreadingError: LocalizedError {
             message
         case .emptyInput:
             "No text was selected."
+        case .inputTooLong:
+            "The selection is too long to proofread. Try a shorter selection."
+        case .guardrailViolation:
+            "Apple Intelligence declined to proofread this text. Try a local model instead (Settings > Engine)."
         case .timedOut:
             "Proofreading took too long. Try a shorter selection."
         case .inferenceFailed(let underlying):
