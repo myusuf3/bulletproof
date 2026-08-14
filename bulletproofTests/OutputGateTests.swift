@@ -68,6 +68,27 @@ struct OutputGateTests {
         #expect(OutputGate.rejection(original: original, output: output) == .lowOverlap)
     }
 
+    @Test func introducedWordsAreCasePreservedNewWholeWords() {
+        let introduced = OutputGate.introducedWords(original: "can u chnage teh plan",
+                                                    output: "Can you change the plan?")
+        #expect(Set(introduced) == ["you", "change", "the"])
+        #expect(OutputGate.introducedWords(original: "teh cat", output: "The cat") == ["The"])
+    }
+
+    @Test func introducedWordsSkipNumbersFragmentsAndRepeats() {
+        let introduced = OutputGate.introducedWords(original: "meet at 3pm",
+                                                    output: "Meet Bob at 3pm, Bob won't be up")
+        // "Bob" once; "won't" stays whole (never the fragment "won" + "t");
+        // "3pm" has a digit; "be"/"up" are under 3 letters.
+        #expect(introduced == ["Bob", "won't"])
+    }
+
+    @Test func introducedContractionsStayWholeForTheSpellChecker() {
+        let introduced = OutputGate.introducedWords(original: "he wouldnt say",
+                                                    output: "He shouldn't say")
+        #expect(introduced == ["shouldn't"])
+    }
+
     @Test func everyRejectionHasUserMessage() {
         for reason in OutputGate.Rejection.allCases {
             #expect(!ProofreadingError.unusableOutput(reason).localizedDescription.isEmpty)
@@ -80,10 +101,40 @@ private struct CannedEngine: ProofreadingEngine {
     func proofread(_ text: String) async throws -> String { output }
 }
 
+@MainActor
+struct SpellCheckGateTests {
+    @Test func realWordsPass() {
+        #expect(SpellCheckGate.firstMisspelled(in: ["change", "The", "meeting", "shouldn't"],
+                                               language: "en") == nil)
+    }
+
+    @Test func gibberishIsCaught() {
+        #expect(SpellCheckGate.firstMisspelled(in: ["xqzzrtl"], language: "en") == "xqzzrtl")
+    }
+}
+
 struct OutputGatedEngineTests {
     @Test func passesAcceptedOutputThrough() async throws {
         let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the cat"))
         #expect(try await engine.proofread("teh cat") == "the cat")
+    }
+
+    @Test func introducedMisspellingIsRejected() async {
+        // A "correction" that injects a non-word the original never had is a
+        // hallucination - a proofread must never make spelling worse.
+        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the xqzzrtl cat"))
+        do {
+            _ = try await engine.proofread("teh cat")
+            Issue.record("expected unusableOutput")
+        } catch let error as ProofreadingError {
+            guard case .unusableOutput(let reason) = error else {
+                Issue.record("expected unusableOutput, got \(error)")
+                return
+            }
+            #expect(reason == .introducedMisspelling)
+        } catch {
+            Issue.record("unexpected error type: \(error)")
+        }
     }
 
     @Test func throwsUnusableOutputOnRejection() async {
