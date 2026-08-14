@@ -8,3 +8,5 @@
 - Fixed the Settings window opening at a squished size with the
   minimize and zoom buttons disabled; it now opens as a normal,
   centered window.
+- The welcome and How to Use screens lost their title bar for a
+  cleaner, edge-to-edge look.
