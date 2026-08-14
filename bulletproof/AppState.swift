@@ -13,7 +13,6 @@ final class AppState {
 
     private static let engineChoiceKey = "engineChoice"
     private static let shortcutKey = "proofreadShortcut"
-    static let onboardingKey = "hasSeenOnboarding"
 
     var engineChoice: EngineChoice {
         didSet {
@@ -36,10 +35,7 @@ final class AppState {
         }
     }
 
-    var hasSeenOnboarding: Bool {
-        didSet { UserDefaults.standard.set(hasSeenOnboarding, forKey: Self.onboardingKey) }
-    }
-
+    let onboarding = OnboardingProgress()
     let store: ModelStore
     let downloads: ModelDownloadManager
     let activity = MenuBarActivity()
@@ -60,7 +56,6 @@ final class AppState {
         } else {
             shortcut = .default
         }
-        hasSeenOnboarding = UserDefaults.standard.bool(forKey: Self.onboardingKey)
         store.cleanupPartials()
     }
 

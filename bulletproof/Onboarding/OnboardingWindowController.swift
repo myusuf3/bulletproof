@@ -31,7 +31,6 @@ import SwiftUI
             forName: NSWindow.willCloseNotification, object: window, queue: .main
         ) { _ in
             MainActor.assumeIsolated {
-                AppState.shared.hasSeenOnboarding = true
                 OnboardingWindowController.shared.window = nil
             }
         }
