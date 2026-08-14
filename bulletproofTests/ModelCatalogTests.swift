@@ -10,6 +10,8 @@ struct ModelCatalogTests {
             #expect(!model.displayName.isEmpty)
             #expect(!model.blurb.isEmpty)
             #expect(model.approxDownloadBytes > 0)
+            #expect((1...5).contains(model.speed))
+            #expect((1...5).contains(model.accuracy))
         }
     }
 

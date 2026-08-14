@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @Environment(AppState.self) private var appState
-    @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Text(engineStatus)
@@ -35,7 +35,7 @@ struct MenuBarView: View {
         }
         Button("Settings…") {
             NSApp.activate()
-            openSettings()
+            openWindow(id: "settings")
         }
         .keyboardShortcut(",", modifiers: .command)
         Divider()
