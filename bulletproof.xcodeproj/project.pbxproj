@@ -36,26 +36,26 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5ADE00000000000000000001 /* bulletproof-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "bulletproof-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AED82243026BC0800F87BBB /* bulletproof.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bulletproof.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AED82313026BC0900F87BBB /* bulletproofTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bulletproofTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AED823B3026BC0900F87BBB /* bulletproofUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bulletproofUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5ADE00000000000000000001 /* bulletproof-dev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "bulletproof-dev.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5AED9F013026BC0900F87BBB /* Exceptions for "bulletproof" folder in "bulletproof" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 5AED82233026BC0800F87BBB /* bulletproof */;
-		};
 		5ADE00000000000000000002 /* Exceptions for "bulletproof" folder in "bulletproof-dev" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 5ADE00000000000000000003 /* bulletproof-dev */;
+		};
+		5AED9F013026BC0900F87BBB /* Exceptions for "bulletproof" folder in "bulletproof" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5AED82233026BC0800F87BBB /* bulletproof */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -82,6 +82,17 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5ADE00000000000000000011 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5ADE00000000000000000101 /* MLXLLM in Frameworks */,
+				5ADE00000000000000000102 /* MLXLMCommon in Frameworks */,
+				5ADE00000000000000000103 /* MLXHuggingFace in Frameworks */,
+				5ADE00000000000000000104 /* Tokenizers in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5AED82213026BC0800F87BBB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -91,17 +102,6 @@
 				5AC0FFEE0000000000000008 /* MLXLMCommon in Frameworks */,
 				5AC0FFEE000000000000000A /* MLXHuggingFace in Frameworks */,
 				5AC0FFEE000000000000000D /* Tokenizers in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		5ADE00000000000000000011 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				5ADE00000000000000000101 /* MLXLLM in Frameworks */,
-				5ADE00000000000000000102 /* MLXLMCommon in Frameworks */,
-				5ADE00000000000000000103 /* MLXHuggingFace in Frameworks */,
-				5ADE00000000000000000104 /* Tokenizers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -146,6 +146,32 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5ADE00000000000000000003 /* bulletproof-dev */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5ADE00000000000000000020 /* Build configuration list for PBXNativeTarget "bulletproof-dev" */;
+			buildPhases = (
+				5ADE00000000000000000010 /* Sources */,
+				5ADE00000000000000000011 /* Frameworks */,
+				5ADE00000000000000000012 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5AED82263026BC0800F87BBB /* bulletproof */,
+			);
+			name = "bulletproof-dev";
+			packageProductDependencies = (
+				5ADE00000000000000000201 /* MLXLLM */,
+				5ADE00000000000000000202 /* MLXLMCommon */,
+				5ADE00000000000000000203 /* MLXHuggingFace */,
+				5ADE00000000000000000204 /* Tokenizers */,
+			);
+			productName = "bulletproof-dev";
+			productReference = 5ADE00000000000000000001 /* bulletproof-dev.app */;
+			productType = "com.apple.product-type.application";
+		};
 		5AED82233026BC0800F87BBB /* bulletproof */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5AED82453026BC0900F87BBB /* Build configuration list for PBXNativeTarget "bulletproof" */;
@@ -171,32 +197,6 @@
 			);
 			productName = bulletproof;
 			productReference = 5AED82243026BC0800F87BBB /* bulletproof.app */;
-			productType = "com.apple.product-type.application";
-		};
-		5ADE00000000000000000003 /* bulletproof-dev */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5ADE00000000000000000020 /* Build configuration list for PBXNativeTarget "bulletproof-dev" */;
-			buildPhases = (
-				5ADE00000000000000000010 /* Sources */,
-				5ADE00000000000000000011 /* Frameworks */,
-				5ADE00000000000000000012 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				5AED82263026BC0800F87BBB /* bulletproof */,
-			);
-			name = "bulletproof-dev";
-			packageProductDependencies = (
-				5ADE00000000000000000201 /* MLXLLM */,
-				5ADE00000000000000000202 /* MLXLMCommon */,
-				5ADE00000000000000000203 /* MLXHuggingFace */,
-				5ADE00000000000000000204 /* Tokenizers */,
-			);
-			productName = "bulletproof-dev";
-			productReference = 5ADE00000000000000000001 /* bulletproof-dev.app */;
 			productType = "com.apple.product-type.application";
 		};
 		5AED82303026BC0900F87BBB /* bulletproofTests */ = {
@@ -255,10 +255,10 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
-					5AED82233026BC0800F87BBB = {
+					5ADE00000000000000000003 = {
 						CreatedOnToolsVersion = 26.6;
 					};
-					5ADE00000000000000000003 = {
+					5AED82233026BC0800F87BBB = {
 						CreatedOnToolsVersion = 26.6;
 					};
 					5AED82303026BC0900F87BBB = {
@@ -299,14 +299,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		5AED82223026BC0800F87BBB /* Resources */ = {
+		5ADE00000000000000000012 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5ADE00000000000000000012 /* Resources */ = {
+		5AED82223026BC0800F87BBB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -330,14 +330,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		5AED82203026BC0800F87BBB /* Sources */ = {
+		5ADE00000000000000000010 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5ADE00000000000000000010 /* Sources */ = {
+		5AED82203026BC0800F87BBB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -374,6 +374,78 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		5ADE00000000000000000021 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = bulletproof/bulletproof.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = HJX8526WJL;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = bulletproof/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.13;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mahdiyusuf.bulletproof.dev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BULLETPROOF_DEV";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5ADE00000000000000000022 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = bulletproof/bulletproof.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = HJX8526WJL;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = bulletproof/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.0.13;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mahdiyusuf.bulletproof.dev;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BULLETPROOF_DEV";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		5AED82433026BC0900F87BBB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -564,78 +636,6 @@
 			};
 			name = Release;
 		};
-		5ADE00000000000000000021 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = bulletproof/bulletproof.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13;
-				DEVELOPMENT_TEAM = HJX8526WJL;
-				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = bulletproof/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MARKETING_VERSION = 0.0.13;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mahdiyusuf.bulletproof.dev;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BULLETPROOF_DEV";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		5ADE00000000000000000022 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = bulletproof/bulletproof.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 13;
-				DEVELOPMENT_TEAM = HJX8526WJL;
-				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = bulletproof/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MARKETING_VERSION = 0.0.13;
-				PRODUCT_BUNDLE_IDENTIFIER = com.mahdiyusuf.bulletproof.dev;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) BULLETPROOF_DEV";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 		5AED82493026BC0900F87BBB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -719,6 +719,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5ADE00000000000000000020 /* Build configuration list for PBXNativeTarget "bulletproof-dev" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5ADE00000000000000000021 /* Debug */,
+				5ADE00000000000000000022 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5AED821F3026BC0800F87BBB /* Build configuration list for PBXProject "bulletproof" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -733,15 +742,6 @@
 			buildConfigurations = (
 				5AED82463026BC0900F87BBB /* Debug */,
 				5AED82473026BC0900F87BBB /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		5ADE00000000000000000020 /* Build configuration list for PBXNativeTarget "bulletproof-dev" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				5ADE00000000000000000021 /* Debug */,
-				5ADE00000000000000000022 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

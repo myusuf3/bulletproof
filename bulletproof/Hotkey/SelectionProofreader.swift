@@ -11,6 +11,7 @@ import Carbon.HIToolbox
     func heldModifiers() -> NSEvent.ModifierFlags
     func frontmostAppID() -> pid_t?
     func focusBlockReason() -> FocusGuard.BlockReason?
+    func readSelection() -> String?
     func postCopy()
     func postPaste()
     func selectionRect() -> NSRect?
@@ -41,6 +42,10 @@ import Carbon.HIToolbox
 
     func focusBlockReason() -> FocusGuard.BlockReason? {
         FocusGuard.blockReason()
+    }
+
+    func readSelection() -> String? {
+        SelectionReader.selectedText()
     }
 
     func postCopy() {
@@ -149,26 +154,36 @@ import Carbon.HIToolbox
 
         let pboard = surface.pasteboard
         let snapshot = PasteboardSnapshot(pboard)
-        let countBefore = pboard.changeCount
 
-        // Wait for the user's physical chord to be released - a still-held
-        // modifier can combine with the synthetic keystroke in the target app.
-        await waitForModifierRelease()
-        await surface.sleep(for: .milliseconds(50))
-        let copyTargetApp = surface.frontmostAppID()
-        surface.postCopy()
+        let text: String
+        let copyTargetApp: pid_t?
+        if let axText = surface.readSelection(),
+           !axText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // AX read: no synthetic ⌘C, no pasteboard poll, no timeout.
+            text = axText
+            copyTargetApp = surface.frontmostAppID()
+        } else {
+            let countBefore = pboard.changeCount
+            // Wait for the user's physical chord to be released - a still-held
+            // modifier can combine with the synthetic keystroke in the target app.
+            await waitForModifierRelease()
+            await surface.sleep(for: .milliseconds(50))
+            copyTargetApp = surface.frontmostAppID()
+            surface.postCopy()
 
-        guard await changed(pboard, from: countBefore, within: .seconds(copyTimeout)) else {
-            surface.notify(title: "Nothing to proofread",
-                           body: "Select some text first, then press \(shortcutDisplay()).")
-            return
-        }
-        guard let text = pboard.string(forType: .string),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            surface.notify(title: "Nothing to proofread",
-                           body: ProofreadingError.emptyInput.localizedDescription)
-            snapshot.restore(to: pboard)
-            return
+            guard await changed(pboard, from: countBefore, within: .seconds(copyTimeout)) else {
+                surface.notify(title: "Nothing to proofread",
+                               body: "Select some text first, then press \(shortcutDisplay()).")
+                return
+            }
+            guard let copied = pboard.string(forType: .string),
+                  !copied.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                surface.notify(title: "Nothing to proofread",
+                               body: ProofreadingError.emptyInput.localizedDescription)
+                snapshot.restore(to: pboard)
+                return
+            }
+            text = copied
         }
 
         let timeout = engineTimeout
