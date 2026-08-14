@@ -10,6 +10,7 @@ import Carbon.HIToolbox
     func requestAccessibility()
     func heldModifiers() -> NSEvent.ModifierFlags
     func frontmostAppID() -> pid_t?
+    func focusBlockReason() -> FocusGuard.BlockReason?
     func postCopy()
     func postPaste()
     func selectionRect() -> NSRect?
@@ -36,6 +37,10 @@ import Carbon.HIToolbox
 
     func frontmostAppID() -> pid_t? {
         NSWorkspace.shared.frontmostApplication?.processIdentifier
+    }
+
+    func focusBlockReason() -> FocusGuard.BlockReason? {
+        FocusGuard.blockReason()
     }
 
     func postCopy() {
@@ -120,6 +125,11 @@ import Carbon.HIToolbox
         var succeeded = false
         surface.activityBegan()
         defer { surface.activityEnded(success: succeeded) }
+
+        if let blocked = surface.focusBlockReason() {
+            surface.notify(title: "Not proofread", body: blocked.message)
+            return
+        }
 
         // The model load takes seconds and the copy round-trip has free
         // wall-clock. Unstructured on purpose: an early flow exit must not
