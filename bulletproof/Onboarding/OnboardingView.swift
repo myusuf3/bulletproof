@@ -28,8 +28,13 @@ struct OnboardingView: View {
                 .padding(.bottom, 16)
         }
         .frame(width: 640, height: 480)
-        .onAppear { NSApp.activate() }
-        .onDisappear { appState.hasSeenOnboarding = true }
+        .onAppear {
+            NSApp.activate()
+            // Resume where a mid-flow close (or the Accessibility-grant
+            // relaunch) left off.
+            step = OnboardingStep(rawValue: min(appState.onboarding.resumeStep,
+                                                OnboardingStep.done.rawValue)) ?? .welcome
+        }
         .onExitCommand { OnboardingWindowController.shared.close() }
     }
 
@@ -65,7 +70,10 @@ struct OnboardingView: View {
                 Spacer()
 
                 if step == .done {
-                    Button("Start Proofreading") { OnboardingWindowController.shared.close() }
+                    Button("Start Proofreading") {
+                        appState.onboarding.complete()
+                        OnboardingWindowController.shared.close()
+                    }
                         .buttonStyle(.borderedProminent)
                         .keyboardShortcut(.defaultAction)
                 } else {
@@ -99,6 +107,7 @@ struct OnboardingView: View {
 
     private func advance(by delta: Int) {
         guard let next = OnboardingStep(rawValue: step.rawValue + delta) else { return }
+        appState.onboarding.advance(to: next.rawValue)
         direction = delta > 0 ? .trailing : .leading
         withAnimation(reduceMotion ? .easeInOut(duration: 0.15)
                                    : .spring(duration: 0.35, bounce: 0.15)) {

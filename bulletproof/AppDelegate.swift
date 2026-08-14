@@ -6,7 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var serviceProvider: ProofreadServiceProvider?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Self.logger.info("didFinishLaunching, hasSeenOnboarding=\(AppState.shared.hasSeenOnboarding)")
+        Self.logger.info("didFinishLaunching, needsOnboarding=\(AppState.shared.onboarding.needsOnboarding)")
         let provider = ProofreadServiceProvider(appState: AppState.shared)
         serviceProvider = provider
         NSApp.servicesProvider = provider
@@ -14,9 +14,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HotkeyDispatcher.shared.start()
         UserNotifier.requestAuthorizationAtLaunch()
         _ = UpdaterController.shared  // start Sparkle's automatic update checks at launch
-        if !AppState.shared.hasSeenOnboarding {
+        if AppState.shared.onboarding.needsOnboarding {
             OnboardingWindowController.shared.show()
             Self.logger.info("onboarding show() called")
+        } else if !AccessibilityPermission.isTrusted {
+            // The grant was revoked or invalidated by an app update - the
+            // hotkey would otherwise just silently stop working.
+            PermissionReminderWindowController.shared.show()
+            Self.logger.info("accessibility reminder show() called")
         }
     }
 }
