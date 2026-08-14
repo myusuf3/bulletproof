@@ -121,6 +121,12 @@ import Carbon.HIToolbox
         surface.activityBegan()
         defer { surface.activityEnded(success: succeeded) }
 
+        // The model load takes seconds and the copy round-trip has free
+        // wall-clock. Unstructured on purpose: an early flow exit must not
+        // cancel a load future requests need.
+        let engine = makeEngine()
+        Task { await engine.prewarm() }
+
         let pboard = surface.pasteboard
         let snapshot = PasteboardSnapshot(pboard)
         let countBefore = pboard.changeCount
@@ -145,7 +151,6 @@ import Carbon.HIToolbox
             return
         }
 
-        let engine = makeEngine()
         let timeout = engineTimeout
         let corrected: String
         do {

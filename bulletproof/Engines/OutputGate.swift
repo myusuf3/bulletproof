@@ -71,4 +71,8 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         }
         return output
     }
+
+    func prewarm() async {
+        await wrapped.prewarm()
+    }
 }

@@ -80,6 +80,23 @@ nonisolated final class FileDownload: NSObject, URLSessionDownloadDelegate, @unc
     }
 }
 
+/// Catches transfers that end cleanly early (HTTP/2 reset, proxy close) -
+/// they return 200 with fewer bytes and would otherwise install a corrupt
+/// shard that only fails much later, at MLX load time.
+nonisolated enum DownloadIntegrity {
+    /// Nil when the file matches the expected size, or no size is known.
+    static func sizeMismatch(at url: URL, expected: Int64?) -> String? {
+        guard let expected else { return nil }
+        let actual = (try? FileManager.default
+            .attributesOfItem(atPath: url.path)[.size] as? Int64) ?? nil
+        guard let actual else {
+            return "\(url.lastPathComponent) is missing after download."
+        }
+        guard actual != expected else { return nil }
+        return "\(url.lastPathComponent) is incomplete (\(actual) of \(expected) bytes). Check your connection and try again."
+    }
+}
+
 /// Rate-limits delegate-thread progress callbacks before they hop to the main
 /// actor for UI updates.
 nonisolated final class ByteProgressThrottle: Sendable {
