@@ -7,6 +7,10 @@ nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
     /// One-line description shown under the name in the Models tab.
     let blurb: String
     let approxDownloadBytes: Int64
+    /// Relative ratings on a 1...5 scale, shown as segment bars in the
+    /// Models tab. Judged against the other catalog entries, not absolutes.
+    let speed: Int
+    let accuracy: Int
 }
 
 /// Curated local backups for Apple Intelligence. Capped at 4B parameters so
@@ -20,13 +24,17 @@ nonisolated enum ModelCatalog {
             id: "mlx-community/Qwen3-4B-Instruct-2507-4bit",
             displayName: "Qwen3 4B Instruct (4-bit)",
             blurb: "Fast and capable - runs on any Apple silicon Mac",
-            approxDownloadBytes: 2_280_000_000
+            approxDownloadBytes: 2_280_000_000,
+            speed: 4,
+            accuracy: 3
         ),
         CatalogModel(
             id: "mlx-community/gemma-3-4b-it-4bit",
             displayName: "Gemma 3 4B Instruct (4-bit)",
             blurb: "Strong in 140+ languages - best for non-English text",
-            approxDownloadBytes: 3_440_000_000
+            approxDownloadBytes: 3_440_000_000,
+            speed: 3,
+            accuracy: 4
         ),
     ]
 

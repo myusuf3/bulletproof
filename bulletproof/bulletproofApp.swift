@@ -11,9 +11,13 @@ struct BulletproofApp: App {
         } label: {
             MenuBarIcon()
         }
-        Settings {
+        // A plain Window instead of the Settings scene: Settings windows
+        // disable minimize/zoom and restore odd frames under LSUIElement.
+        Window("Settings", id: "settings") {
             SettingsView()
                 .environment(AppState.shared)
         }
+        .defaultSize(width: 940, height: 620)
+        .defaultPosition(.center)
     }
 }

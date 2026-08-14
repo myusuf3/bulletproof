@@ -1,49 +1,39 @@
 import SwiftUI
 
-/// Models pane: a library table with aligned columns (icon + name, size,
-/// action), Superwhisper-style, rather than generic settings rows.
+/// Models pane: a Superwhisper-style library table sitting directly on the
+/// window background - icon + name, speed/accuracy segment bars, and a
+/// Cloud/Offline column (size + trash when installed, cloud to download).
 struct ModelsSettingsView: View {
     @Environment(AppState.self) private var appState
     @State private var confirmingDeleteAll = false
 
-    private static let sizeColumnWidth: CGFloat = 96
-    private static let actionColumnWidth: CGFloat = 76
+    private static let ratingColumnWidth: CGFloat = 110
+    private static let statusColumnWidth: CGFloat = 140
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SettingsCard {
-                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 0) {
-                    GridRow {
-                        Text("Model name")
-                        Text("Size")
-                            .gridColumnAlignment(.trailing)
-                        Text("")
-                            .frame(width: Self.actionColumnWidth)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-
-                    ForEach(ModelCatalog.all) { model in
-                        Divider()
-                            .gridCellColumns(3)
-                            .padding(.leading, 14)
-                        ModelGridRow(model: model, manager: appState.downloads,
-                                     sizeWidth: Self.sizeColumnWidth,
-                                     actionWidth: Self.actionColumnWidth)
-                    }
-
-                    ForEach(ModelCatalog.orphanIDs(installed: appState.downloads.installedModelIDs), id: \.self) { id in
-                        Divider()
-                            .gridCellColumns(3)
-                            .padding(.leading, 14)
-                        OrphanGridRow(id: id, manager: appState.downloads, store: appState.store,
-                                      sizeWidth: Self.sizeColumnWidth,
-                                      actionWidth: Self.actionColumnWidth)
-                    }
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 0) {
+                GridRow {
+                    Text("Model name")
+                    Text("Speed / Accuracy")
+                        .frame(width: Self.ratingColumnWidth, alignment: .leading)
+                    Text("Cloud/Offline")
+                        .frame(width: Self.statusColumnWidth, alignment: .trailing)
                 }
-                .padding(.vertical, 2)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.bottom, 6)
+
+                ForEach(ModelCatalog.all) { model in
+                    ModelGridRow(model: model, manager: appState.downloads,
+                                 statusWidth: Self.statusColumnWidth)
+                }
+
+                ForEach(ModelCatalog.orphanIDs(installed: appState.downloads.installedModelIDs), id: \.self) { id in
+                    OrphanGridRow(id: id, manager: appState.downloads, store: appState.store,
+                                  statusWidth: Self.statusColumnWidth)
+                }
             }
 
             SettingsCard(header: "Storage") {
@@ -85,7 +75,7 @@ private struct ModelIcon: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 7)
             .fill(color.gradient)
-            .frame(width: 28, height: 28)
+            .frame(width: 30, height: 30)
             .overlay(
                 Image(systemName: "cpu")
                     .font(.system(size: 13, weight: .semibold))
@@ -94,11 +84,50 @@ private struct ModelIcon: View {
     }
 }
 
+/// Two stacked five-segment bars, each led by an SF Symbol and tinted so
+/// the rows read at a glance: blue speedometer = speed, orange target =
+/// accuracy (blue/orange stays distinguishable for color-blind users).
+private struct RatingBars: View {
+    let speed: Int
+    let accuracy: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            SegmentBar(symbol: "speedometer", tint: .blue, filled: speed)
+            SegmentBar(symbol: "target", tint: .orange, filled: accuracy)
+        }
+        .help("Speed \(speed) of 5, accuracy \(accuracy) of 5")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Speed \(speed) of 5, accuracy \(accuracy) of 5")
+    }
+
+    private struct SegmentBar: View {
+        let symbol: String
+        let tint: Color
+        let filled: Int
+
+        var body: some View {
+            HStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 12)
+                HStack(spacing: 3) {
+                    ForEach(0..<5, id: \.self) { index in
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(index < filled ? AnyShapeStyle(tint) : AnyShapeStyle(.quaternary))
+                            .frame(width: 13, height: 3)
+                    }
+                }
+            }
+        }
+    }
+}
+
 private struct ModelGridRow: View {
     let model: CatalogModel
     let manager: ModelDownloadManager
-    let sizeWidth: CGFloat
-    let actionWidth: CGFloat
+    let statusWidth: CGFloat
     @State private var confirmingDelete = false
 
     var body: some View {
@@ -112,16 +141,15 @@ private struct ModelGridRow: View {
                         .foregroundStyle(isFailed ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
                 }
             }
-            .padding(.leading, 14)
+            .padding(.leading, 6)
             .help(model.id)
 
-            sizeCell
-                .gridColumnAlignment(.trailing)
+            RatingBars(speed: model.speed, accuracy: model.accuracy)
 
-            actionCell
-                .frame(width: actionWidth)
+            statusCell
+                .frame(width: statusWidth, alignment: .trailing)
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 10)
         .confirmationDialog("Delete \(model.displayName)?",
                             isPresented: $confirmingDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { manager.delete(id: model.id) }
@@ -146,41 +174,34 @@ private struct ModelGridRow: View {
     }
 
     @ViewBuilder
-    private var sizeCell: some View {
-        switch manager.state(of: model) {
-        case .downloading(let completed, let total):
-            VStack(alignment: .trailing, spacing: 3) {
-                ProgressView(value: total > 0 ? Double(completed) / Double(total) : 0)
-                    .frame(width: sizeWidth)
-                Text("\(format(completed)) / \(format(total))")
-                    .font(.system(size: 10))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
-        case .installed(let bytes):
-            Text(format(bytes))
-                .monospacedDigit()
-        case .notInstalled, .failed:
-            Text(format(model.approxDownloadBytes))
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var actionCell: some View {
+    private var statusCell: some View {
         switch manager.state(of: model) {
         case .notInstalled, .failed:
-            CircleIconButton(symbol: "arrow.down.circle.fill", label: "Download \(model.displayName)") {
+            CircleIconButton(symbol: "cloud", label: "Download \(model.displayName) (\(format(model.approxDownloadBytes)))") {
                 manager.download(model)
             }
-        case .downloading:
-            CircleIconButton(symbol: "xmark.circle.fill", label: "Cancel download") {
-                manager.cancel(model)
+            .help("Download (\(format(model.approxDownloadBytes)))")
+        case .downloading(let completed, let total):
+            HStack(spacing: 8) {
+                VStack(alignment: .trailing, spacing: 3) {
+                    ProgressView(value: total > 0 ? Double(completed) / Double(total) : 0)
+                        .frame(width: 72)
+                    Text("\(format(completed)) / \(format(total))")
+                        .font(.system(size: 10))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                CircleIconButton(symbol: "xmark", label: "Cancel download") {
+                    manager.cancel(model)
+                }
             }
-        case .installed:
-            CircleIconButton(symbol: "trash", label: "Delete \(model.displayName)") {
-                confirmingDelete = true
+        case .installed(let bytes):
+            HStack(spacing: 8) {
+                Text(format(bytes))
+                    .monospacedDigit()
+                CircleIconButton(symbol: "trash", label: "Delete \(model.displayName)") {
+                    confirmingDelete = true
+                }
             }
         }
     }
@@ -194,8 +215,7 @@ private struct OrphanGridRow: View {
     let id: String
     let manager: ModelDownloadManager
     let store: ModelStore
-    let sizeWidth: CGFloat
-    let actionWidth: CGFloat
+    let statusWidth: CGFloat
     @State private var confirmingDelete = false
 
     var body: some View {
@@ -209,18 +229,20 @@ private struct OrphanGridRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.leading, 14)
+            .padding(.leading, 6)
 
-            Text(ByteCountFormatter.string(fromByteCount: store.sizeOnDisk(of: id), countStyle: .file))
-                .monospacedDigit()
-                .gridColumnAlignment(.trailing)
+            Text("")
 
-            CircleIconButton(symbol: "trash", label: "Delete \(id)") {
-                confirmingDelete = true
+            HStack(spacing: 8) {
+                Text(ByteCountFormatter.string(fromByteCount: store.sizeOnDisk(of: id), countStyle: .file))
+                    .monospacedDigit()
+                CircleIconButton(symbol: "trash", label: "Delete \(id)") {
+                    confirmingDelete = true
+                }
             }
-            .frame(width: actionWidth)
+            .frame(width: statusWidth, alignment: .trailing)
         }
-        .padding(.vertical, 9)
+        .padding(.vertical, 10)
         .confirmationDialog("Delete \(id)?", isPresented: $confirmingDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) { manager.delete(id: id) }
             Button("Cancel", role: .cancel) {}
