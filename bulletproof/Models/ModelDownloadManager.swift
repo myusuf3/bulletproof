@@ -98,6 +98,10 @@ final class ModelDownloadManager {
                     onBytesWritten: { throttle.update($0) }
                 )
                 try await download.run(from: HuggingFaceClient.downloadURL(repo: model.id, file: file.rfilename))
+                if let mismatch = DownloadIntegrity.sizeMismatch(
+                        at: partial.appendingPathComponent(file.rfilename), expected: file.size) {
+                    throw URLError(.cannotWriteToFile, userInfo: [NSLocalizedDescriptionKey: mismatch])
+                }
                 completedBytes += file.size ?? 0
                 states[model.id] = .downloading(completedBytes: completedBytes, totalBytes: totalBytes)
             }

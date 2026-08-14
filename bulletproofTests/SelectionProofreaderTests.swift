@@ -47,13 +47,23 @@ private final class FakeSurface: ProofreadingSurface {
     }
 }
 
+private final class PrewarmCounter: @unchecked Sendable {
+    private(set) var count = 0
+    func increment() { count += 1 }
+}
+
 private struct StubEngine: ProofreadingEngine {
     var result: Result<String, ProofreadingError>
     var delay: Duration = .zero
+    var prewarms = PrewarmCounter()
 
     func proofread(_ text: String) async throws -> String {
         try await Task.sleep(for: delay)
         return try result.get()
+    }
+
+    func prewarm() async {
+        prewarms.increment()
     }
 }
 
@@ -188,6 +198,21 @@ struct SelectionProofreaderTests {
 
     @Test func defaultCopyBudgetCoversSlowElectronApps() {
         #expect(SelectionProofreader.defaultCopyTimeout == 3)
+    }
+
+    @Test func prewarmFiresDuringTheCopyRoundTrip() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        let engine = StubEngine(result: .success("the cat"))
+        let proofreader = makeProofreader(engine: engine)
+        await proofreader.performFlow()
+        // Prewarm runs in an unstructured task; give it a beat to land.
+        for _ in 0..<100 where engine.prewarms.count == 0 {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(engine.prewarms.count == 1)
+        #expect(surface.pastedText == "the cat")
     }
 
     @Test func slowEngineTimesOutAndRestores() async {
