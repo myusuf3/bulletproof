@@ -14,6 +14,8 @@ private final class FakeSurface: ProofreadingSurface {
     var frontmostID: pid_t? = 100
     /// Simulates focus sitting in a secure field or terminal.
     var blockReason: FocusGuard.BlockReason?
+    /// Simulates what the AX selection read returns (nil = host exposes nothing).
+    var selectionText: String?
     /// Called with the running sleep count - lets tests script late events.
     var onSleep: (Int) -> Void = { _ in }
 
@@ -31,6 +33,7 @@ private final class FakeSurface: ProofreadingSurface {
     func heldModifiers() -> NSEvent.ModifierFlags { [] }
     func frontmostAppID() -> pid_t? { frontmostID }
     func focusBlockReason() -> FocusGuard.BlockReason? { blockReason }
+    func readSelection() -> String? { selectionText }
     func postCopy() {
         copyCount += 1
         onCopy(pasteboard)
@@ -201,6 +204,31 @@ struct SelectionProofreaderTests {
 
     @Test func defaultCopyBudgetCoversSlowElectronApps() {
         #expect(SelectionProofreader.defaultCopyTimeout == 3)
+    }
+
+    @Test func axSelectionReadSkipsSyntheticCopyEntirely() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.selectionText = "teh cat"
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        // No ⌘C, no pasteboard poll - straight to the engine and the paste.
+        #expect(surface.copyCount == 0)
+        #expect(surface.pastedText == "the cat")
+        #expect(surface.pasteboard.string(forType: .string) == "user clipboard")
+        #expect(surface.activityEvents == ["began", "ended-success"])
+    }
+
+    @Test func whitespaceAXSelectionFallsBackToSyntheticCopy() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.selectionText = "  \n "
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        #expect(surface.copyCount == 1)
+        #expect(surface.pastedText == "the cat")
+        #expect(surface.pasteboard.string(forType: .string) == "user clipboard")
     }
 
     @Test func secureFieldFocusRefusesBeforeAnyCopy() async {
