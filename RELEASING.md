@@ -19,6 +19,13 @@ and the zip itself is attached to a GitHub release.
    - `MARKETING_VERSION` = the new `X.Y.Z`
    - `CURRENT_PROJECT_VERSION` = previous value + 1 (Sparkle compares this
      build number, so it must strictly increase every release)
+
+   Alternatively, skip the hand edit and pass both values to the script:
+   `Scripts/release.sh X.Y.Z <build>` - it forwards them to xcodebuild and
+   asserts the built app actually carries them (xcodebuild has silently
+   ignored overrides before). Either way the script refuses to run if the
+   `vX.Y.Z` tag or GitHub release already exists, and checks the Keychain's
+   Sparkle key against `SUPublicEDKey` before archiving.
 2. Verify build and tests are green:
    ```sh
    xcodebuild -project bulletproof.xcodeproj -scheme bulletproof -configuration Debug build
