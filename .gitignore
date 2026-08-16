@@ -13,3 +13,6 @@ dist/
 # Profiling
 *.profraw
 .claude/
+
+# Local research notes, not for the repo
+research/

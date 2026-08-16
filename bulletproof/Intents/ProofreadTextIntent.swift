@@ -19,8 +19,23 @@ struct ProofreadTextIntent: AppIntent {
             throw ProofreadingError.emptyInput
         }
         let engine = await AppState.shared.makeEngine()
-        let corrected = try await engine.proofread(text)
-        return .result(value: corrected)
+        let engineLabel = await AppState.shared.engineChoice.telemetryLabel
+        let start = ContinuousClock.now
+        func record(_ outcome: ProofreadOutcome, outputChars: Int? = nil) {
+            ProofreadTelemetry.shared.record(ProofreadEvent(
+                entryPoint: .intent, engine: engineLabel,
+                inputChars: text.count, outputChars: outputChars,
+                outcome: outcome, phases: [],
+                totalMs: (ContinuousClock.now - start) / .milliseconds(1)))
+        }
+        do {
+            let corrected = try await engine.proofread(text)
+            record(corrected == text ? .unchanged : .applied, outputChars: corrected.count)
+            return .result(value: corrected)
+        } catch {
+            record(.from(error))
+            throw error
+        }
     }
 }
 

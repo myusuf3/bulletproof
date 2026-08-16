@@ -17,6 +17,13 @@ nonisolated enum FocusGuard {
                 "Proofreading a shell command could change what it runs, so terminals are left untouched."
             }
         }
+
+        var telemetryReason: String {
+            switch self {
+            case .secureField: "secure-field"
+            case .terminal: "terminal"
+            }
+        }
     }
 
     private static let secureMarkers = [

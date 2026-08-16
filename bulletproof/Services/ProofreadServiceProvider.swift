@@ -45,15 +45,26 @@ final class ProofreadServiceProvider: NSObject {
             return nil
         }
         let engine = appState.makeEngine()
+        let engineLabel = appState.engineChoice.telemetryLabel
+        let start = ContinuousClock.now
+        func record(_ outcome: ProofreadOutcome, outputChars: Int? = nil) {
+            ProofreadTelemetry.shared.record(ProofreadEvent(
+                entryPoint: .service, engine: engineLabel,
+                inputChars: text.count, outputChars: outputChars,
+                outcome: outcome, phases: [],
+                totalMs: (ContinuousClock.now - start) / .milliseconds(1)))
+        }
         appState.activity.begin()
         switch SyncBridge.run(timeout: 55, { try await engine.proofread(text) }) {
         case .success(let corrected):
             appState.activity.end(success: true)
+            record(corrected == text ? .unchanged : .applied, outputChars: corrected.count)
             return corrected
         case .failure(let failure):
             appState.activity.end(success: false)
             error.pointee = failure.localizedDescription as NSString
             notifier.post(title: "Proofread failed", body: failure.localizedDescription)
+            record(.from(failure))
             return nil
         }
     }
