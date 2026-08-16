@@ -17,6 +17,7 @@ import Carbon.HIToolbox
     func selectionRect() -> NSRect?
     func showSuccess(over rect: NSRect?)
     func notify(title: String, body: String)
+    func recordTelemetry(_ event: ProofreadEvent)
     func activityBegan()
     func activityEnded(success: Bool)
     func sleep(for duration: Duration) async
@@ -82,6 +83,10 @@ import Carbon.HIToolbox
         notifier.post(title: title, body: body)
     }
 
+    func recordTelemetry(_ event: ProofreadEvent) {
+        ProofreadTelemetry.shared.record(event)
+    }
+
     func activityBegan() {
         AppState.shared.activity.begin()
     }
@@ -104,6 +109,7 @@ import Carbon.HIToolbox
 
     private let makeEngine: () -> any ProofreadingEngine
     private let shortcutDisplay: () -> String
+    private let engineLabel: () -> String
     private let surface: any ProofreadingSurface
     private let engineTimeout: TimeInterval
     private let copyTimeout: TimeInterval
@@ -111,11 +117,13 @@ import Carbon.HIToolbox
 
     init(makeEngine: @escaping () -> any ProofreadingEngine,
          shortcutDisplay: @escaping () -> String,
+         engineLabel: @escaping () -> String,
          surface: any ProofreadingSurface,
          engineTimeout: TimeInterval = 55,
          copyTimeout: TimeInterval = SelectionProofreader.defaultCopyTimeout) {
         self.makeEngine = makeEngine
         self.shortcutDisplay = shortcutDisplay
+        self.engineLabel = engineLabel
         self.surface = surface
         self.engineTimeout = engineTimeout
         self.copyTimeout = copyTimeout
@@ -141,8 +149,19 @@ import Carbon.HIToolbox
         surface.activityBegan()
         defer { surface.activityEnded(success: succeeded) }
 
+        let flowStart = ContinuousClock.now
+        var phases: [ProofreadEvent.Phase] = []
+        func record(_ outcome: ProofreadOutcome, inputChars: Int = 0, outputChars: Int? = nil) {
+            surface.recordTelemetry(ProofreadEvent(
+                entryPoint: .hotkey, engine: engineLabel(),
+                inputChars: inputChars, outputChars: outputChars,
+                outcome: outcome, phases: phases,
+                totalMs: Self.ms(since: flowStart)))
+        }
+
         if let blocked = surface.focusBlockReason() {
             surface.notify(title: "Not proofread", body: blocked.message)
+            record(.aborted(blocked.telemetryReason))
             return
         }
 
@@ -155,6 +174,7 @@ import Carbon.HIToolbox
         let pboard = surface.pasteboard
         let snapshot = PasteboardSnapshot(pboard)
 
+        let readStart = ContinuousClock.now
         let text: String
         let copyTargetApp: pid_t?
         if let axText = surface.readSelection(),
@@ -174,6 +194,7 @@ import Carbon.HIToolbox
             guard await changed(pboard, from: countBefore, within: .seconds(copyTimeout)) else {
                 surface.notify(title: "Nothing to proofread",
                                body: "Select some text first, then press \(shortcutDisplay()).")
+                record(.aborted("no-selection"))
                 return
             }
             guard let copied = pboard.string(forType: .string),
@@ -181,20 +202,26 @@ import Carbon.HIToolbox
                 surface.notify(title: "Nothing to proofread",
                                body: ProofreadingError.emptyInput.localizedDescription)
                 snapshot.restore(to: pboard)
+                record(.aborted("empty-selection"))
                 return
             }
             text = copied
         }
+        phases.append(.init(name: "read", ms: Self.ms(since: readStart)))
 
         let timeout = engineTimeout
+        let engineStart = ContinuousClock.now
         let corrected: String
         do {
             corrected = try await withTimeout(seconds: timeout) { try await engine.proofread(text) }
         } catch {
+            phases.append(.init(name: "engine", ms: Self.ms(since: engineStart)))
             surface.notify(title: "Proofread failed", body: error.localizedDescription)
             snapshot.restore(to: pboard)
+            record(.from(error), inputChars: text.count)
             return
         }
+        phases.append(.init(name: "engine", ms: Self.ms(since: engineStart)))
 
         // Read the selection bounds before ⌘V collapses the selection - the
         // corrected text lands exactly where the original sits.
@@ -210,8 +237,10 @@ import Carbon.HIToolbox
         guard surface.frontmostAppID() == copyTargetApp else {
             surface.notify(title: "App changed during proofreading",
                            body: "The corrected text is on your clipboard - press ⌘V to paste it.")
+            record(.aborted("app-changed"), inputChars: text.count, outputChars: corrected.count)
             return
         }
+        let pasteStart = ContinuousClock.now
         surface.postPaste()
         succeeded = true
 
@@ -223,6 +252,13 @@ import Carbon.HIToolbox
         if pboard.changeCount == correctionCount {
             snapshot.restore(to: pboard)
         }
+        phases.append(.init(name: "paste", ms: Self.ms(since: pasteStart)))
+        record(corrected == text ? .unchanged : .applied,
+               inputChars: text.count, outputChars: corrected.count)
+    }
+
+    private nonisolated static func ms(since start: ContinuousClock.Instant) -> Double {
+        (ContinuousClock.now - start) / .milliseconds(1)
     }
 
     private func waitForModifierRelease(budget: Duration = .seconds(1)) async {
