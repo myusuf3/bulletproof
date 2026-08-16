@@ -85,6 +85,46 @@ nonisolated enum LatencyStats {
         let rank = Int((p / 100 * Double(sorted.count)).rounded(.up))
         return sorted[max(0, min(sorted.count - 1, rank - 1))]
     }
+
+    static func display(_ ms: Double) -> String {
+        ms < 1000 ? "\(Int(ms.rounded())) ms" : String(format: "%.1f s", ms / 1000)
+    }
+}
+
+/// The per-engine view of the outcome counters, for the Statistics pane.
+nonisolated struct EngineOutcomeSummary: Equatable, Sendable, Identifiable {
+    let engine: String
+    var applied = 0
+    var unchanged = 0
+    var gateRejected = 0
+    var errors = 0
+    var aborted = 0
+
+    var id: String { engine }
+    var total: Int { applied + unchanged + gateRejected + errors + aborted }
+
+    static func summaries(from snapshot: ProofreadStats.Snapshot) -> [EngineOutcomeSummary] {
+        var byEngine: [String: EngineOutcomeSummary] = [:]
+        for (key, count) in snapshot.outcomeCounts {
+            guard let separator = key.firstIndex(of: "|") else { continue }
+            let engine = String(key[..<separator])
+            let label = String(key[key.index(after: separator)...])
+            var summary = byEngine[engine] ?? EngineOutcomeSummary(engine: engine)
+            if label == "APPLIED" {
+                summary.applied += count
+            } else if label == "UNCHANGED" {
+                summary.unchanged += count
+            } else if label.hasPrefix("GATE_REJECT") {
+                summary.gateRejected += count
+            } else if label.hasPrefix("ENGINE_ERROR") {
+                summary.errors += count
+            } else if label.hasPrefix("ABORTED") {
+                summary.aborted += count
+            }
+            byEngine[engine] = summary
+        }
+        return byEngine.values.sorted { $0.engine < $1.engine }
+    }
 }
 
 /// Counters persist across launches; latency samples are per-launch and come
@@ -193,10 +233,13 @@ nonisolated final class ProofreadLog: Sendable {
 nonisolated final class ProofreadTelemetry: Sendable {
     static let shared = ProofreadTelemetry()
 
+    static let logDirectory = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("bulletproof/Logs")
+    static var logFileURL: URL { logDirectory.appendingPathComponent("proofreads.log") }
+
     let stats = ProofreadStats()
-    private let log = ProofreadLog(
-        directory: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("bulletproof/Logs"))
+    private let log = ProofreadLog(directory: ProofreadTelemetry.logDirectory)
 
     func record(_ event: ProofreadEvent) {
         log.append(event.logDescription)
