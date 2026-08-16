@@ -1,7 +1,7 @@
 import SwiftUI
 
 nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
-    case general, shortcut, engine, models, about
+    case general, shortcut, engine, models, statistics, about
 
     nonisolated var id: String { rawValue }
 
@@ -11,6 +11,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: "Shortcut"
         case .engine: "Engine"
         case .models: "Models"
+        case .statistics: "Statistics"
         case .about: "About"
         }
     }
@@ -21,6 +22,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: "command"
         case .engine: "brain.fill"
         case .models: "arrow.down.circle.fill"
+        case .statistics: "chart.bar.fill"
         case .about: "info"
         }
     }
@@ -31,6 +33,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: .blue
         case .engine: .purple
         case .models: .green
+        case .statistics: .orange
         case .about: .indigo
         }
     }
@@ -42,6 +45,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: ["hotkey", "keyboard", "record", "permission", "accessibility", "notifications"]
         case .engine: ["apple intelligence", "proofreading", "local", "on-device"]
         case .models: ["download", "gemma", "qwen", "disk", "delete", "storage"]
+        case .statistics: ["latency", "telemetry", "diagnostics", "log", "rejections", "outcomes", "history"]
         case .about: ["version", "update", "sparkle", "github", "release"]
         }
     }
@@ -85,7 +89,7 @@ struct SettingsView: View {
                         }
                     }
                     Section("Proofreading") {
-                        ForEach([SettingsPane.engine, .models].filter(visible.contains)) { pane in
+                        ForEach([SettingsPane.engine, .models, .statistics].filter(visible.contains)) { pane in
                             PaneRow(pane: pane)
                         }
                     }
@@ -124,6 +128,7 @@ struct SettingsView: View {
         case .shortcut: ShortcutSettingsPane()
         case .engine: EngineSettingsView()
         case .models: ModelsSettingsView()
+        case .statistics: StatisticsSettingsView()
         case .about: AboutSettingsView()
         }
     }
