@@ -133,6 +133,43 @@ struct ProofreadStatsTests {
     }
 }
 
+struct EngineOutcomeSummaryTests {
+    @Test func groupsOutcomeCountsByEngine() {
+        var snapshot = ProofreadStats.Snapshot()
+        snapshot.outcomeCounts = [
+            "appleIntelligence|APPLIED": 5,
+            "appleIntelligence|GATE_REJECT(lowOverlap)": 2,
+            "appleIntelligence|GATE_REJECT(emptyOutput)": 1,
+            "local(qwen)|UNCHANGED": 3,
+            "local(qwen)|ENGINE_ERROR(timeout)": 1,
+            "local(qwen)|ABORTED(app-changed)": 4,
+        ]
+        let summaries = EngineOutcomeSummary.summaries(from: snapshot)
+        #expect(summaries.map(\.engine) == ["appleIntelligence", "local(qwen)"])
+        #expect(summaries[0].applied == 5)
+        #expect(summaries[0].gateRejected == 3)
+        #expect(summaries[1].unchanged == 3)
+        #expect(summaries[1].errors == 1)
+        #expect(summaries[1].aborted == 4)
+        #expect(summaries[1].total == 8)
+    }
+
+    @Test func emptySnapshotHasNoSummaries() {
+        #expect(EngineOutcomeSummary.summaries(from: ProofreadStats.Snapshot()).isEmpty)
+    }
+}
+
+struct LatencyDisplayTests {
+    @Test func millisecondsReadAsMSBelowASecond() {
+        #expect(LatencyStats.display(142.6) == "143 ms")
+    }
+
+    @Test func aSecondAndUpReadsAsSeconds() {
+        #expect(LatencyStats.display(1440) == "1.4 s")
+        #expect(LatencyStats.display(12_600) == "12.6 s")
+    }
+}
+
 struct ProofreadLogTests {
     @Test func writesHeaderAppendsLinesAndTruncatesOnNewLaunch() throws {
         let dir = FileManager.default.temporaryDirectory
