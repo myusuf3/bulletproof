@@ -27,6 +27,7 @@ private final class FakeSurface: ProofreadingSurface {
     private(set) var flashed = false
     private(set) var sleepCount = 0
     private(set) var activityEvents: [String] = []
+    private(set) var recordedEvents: [ProofreadEvent] = []
 
     var accessibilityTrusted: Bool { trusted }
     func requestAccessibility() { requestedAccessibility = true }
@@ -45,6 +46,7 @@ private final class FakeSurface: ProofreadingSurface {
     func selectionRect() -> NSRect? { nil }
     func showSuccess(over rect: NSRect?) { flashed = true }
     func notify(title: String, body: String) { notifications.append((title, body)) }
+    func recordTelemetry(_ event: ProofreadEvent) { recordedEvents.append(event) }
     func activityBegan() { activityEvents.append("began") }
     func activityEnded(success: Bool) { activityEvents.append(success ? "ended-success" : "ended-failure") }
     func sleep(for duration: Duration) async {
@@ -82,6 +84,7 @@ struct SelectionProofreaderTests {
                                  copyTimeout: TimeInterval = 0.3) -> SelectionProofreader {
         SelectionProofreader(makeEngine: { engine },
                              shortcutDisplay: { "⇧⌘P" },
+                             engineLabel: { "appleIntelligence" },
                              surface: surface,
                              engineTimeout: timeout,
                              copyTimeout: copyTimeout)
@@ -204,6 +207,48 @@ struct SelectionProofreaderTests {
 
     @Test func defaultCopyBudgetCoversSlowElectronApps() {
         #expect(SelectionProofreader.defaultCopyTimeout == 3)
+    }
+
+    @Test func successRecordsAppliedEventWithPhases() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        #expect(surface.recordedEvents.count == 1)
+        let event = surface.recordedEvents.first
+        #expect(event?.entryPoint == .hotkey)
+        #expect(event?.outcome == .applied)
+        #expect(event?.inputChars == 7)
+        #expect(event?.outputChars == 7)
+        #expect(event?.phases.map(\.name) == ["read", "engine", "paste"])
+    }
+
+    @Test func identicalCorrectionRecordsUnchanged() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("the cat", forType: .string) }
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("the cat")))
+        await proofreader.performFlow()
+        #expect(surface.recordedEvents.first?.outcome == .unchanged)
+    }
+
+    @Test func gateRejectionRecordsTheReason() async {
+        surface.pasteboard.clearContents()
+        surface.pasteboard.setString("user clipboard", forType: .string)
+        surface.onCopy = { $0.clearContents(); $0.setString("teh cat", forType: .string) }
+        let proofreader = makeProofreader(
+            engine: StubEngine(result: .failure(.unusableOutput(.emptyOutput))))
+        await proofreader.performFlow()
+        #expect(surface.recordedEvents.first?.outcome == .gateRejected("emptyOutput"))
+    }
+
+    @Test func blockedFocusRecordsAbortedEvent() async {
+        surface.blockReason = .secureField
+        let proofreader = makeProofreader(engine: StubEngine(result: .success("unused")))
+        await proofreader.performFlow()
+        #expect(surface.recordedEvents.first?.outcome == .aborted("secure-field"))
+        #expect(surface.recordedEvents.first?.inputChars == 0)
     }
 
     @Test func axSelectionReadSkipsSyntheticCopyEntirely() async {

@@ -16,6 +16,7 @@ nonisolated enum HotkeyRoute {
     private lazy var proofreader = SelectionProofreader(
         makeEngine: { AppState.shared.makeEngine() },
         shortcutDisplay: { AppState.shared.shortcut.displayString },
+        engineLabel: { AppState.shared.engineChoice.telemetryLabel },
         surface: SystemSurface()
     )
 
