@@ -25,4 +25,11 @@ struct SettingsPaneTests {
     @Test func gibberishMatchesNothing() {
         #expect(SettingsPane.matching("xyzzy").isEmpty)
     }
+
+    @Test func statisticsPaneIsSearchable() {
+        #expect(SettingsPane.matching("statistics").contains(.statistics))
+        #expect(SettingsPane.matching("latency").contains(.statistics))
+        #expect(SettingsPane.matching("rejections").contains(.statistics))
+        #expect(SettingsPane.matching("log").contains(.statistics))
+    }
 }
