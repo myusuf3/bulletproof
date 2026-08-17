@@ -15,6 +15,11 @@ struct GeneralSettingsView: View {
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .onChange(of: launchAtLogin) { _, wantsEnabled in
+                            // The failure revert below re-fires this handler;
+                            // when the toggle already matches reality there is
+                            // nothing to do (and unregistering a service that
+                            // never registered throws a second error).
+                            guard wantsEnabled != (SMAppService.mainApp.status == .enabled) else { return }
                             do {
                                 if wantsEnabled {
                                     try SMAppService.mainApp.register()
@@ -24,7 +29,9 @@ struct GeneralSettingsView: View {
                                 launchAtLoginError = nil
                             } catch {
                                 launchAtLogin = SMAppService.mainApp.status == .enabled
-                                launchAtLoginError = error.localizedDescription
+                                launchAtLoginError = Self.launchAtLoginFailureMessage(
+                                    error: error.localizedDescription,
+                                    bundlePath: Bundle.main.bundlePath)
                             }
                         }
                 }
@@ -54,5 +61,13 @@ struct GeneralSettingsView: View {
                 }
             }
         }
+    }
+
+    /// macOS only registers login items for apps in stable locations;
+    /// "Operation not permitted" from a dev build, DMG, or Downloads copy is
+    /// that rule, not an actionable error - say so instead of echoing it.
+    nonisolated static func launchAtLoginFailureMessage(error: String, bundlePath: String) -> String {
+        guard !bundlePath.hasPrefix("/Applications") else { return error }
+        return "macOS only allows launch at login for apps installed in /Applications. This copy is running from \(URL(fileURLWithPath: bundlePath).deletingLastPathComponent().path)."
     }
 }
