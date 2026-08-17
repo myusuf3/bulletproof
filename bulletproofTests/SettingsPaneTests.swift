@@ -26,6 +26,23 @@ struct SettingsPaneTests {
         #expect(SettingsPane.matching("xyzzy").isEmpty)
     }
 
+    @Test func launchAtLoginFailureExplainsDevBuilds() {
+        // "Operation not permitted" from SMAppService almost always means the
+        // app isn't running from /Applications (dev builds, DMG, Downloads).
+        let message = GeneralSettingsView.launchAtLoginFailureMessage(
+            error: "The operation couldn't be completed. Operation not permitted",
+            bundlePath: "/Users/me/Library/Developer/Xcode/DerivedData/x/Build/Products/Debug/bulletproof.app")
+        #expect(message.contains("/Applications"))
+        #expect(!message.contains("Operation not permitted"))
+    }
+
+    @Test func launchAtLoginFailureFromInstalledAppKeepsTheSystemError() {
+        let message = GeneralSettingsView.launchAtLoginFailureMessage(
+            error: "Something specific from macOS",
+            bundlePath: "/Applications/bulletproof.app")
+        #expect(message == "Something specific from macOS")
+    }
+
     @Test func statisticsPaneIsSearchable() {
         #expect(SettingsPane.matching("statistics").contains(.statistics))
         #expect(SettingsPane.matching("latency").contains(.statistics))
