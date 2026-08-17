@@ -25,6 +25,9 @@ struct ModelsSettingsView: View {
                 .padding(.horizontal, 6)
                 .padding(.bottom, 6)
 
+                BuiltInEngineRow(issue: appState.appleIntelligenceIssue,
+                                 statusWidth: Self.statusColumnWidth)
+
                 ForEach(ModelCatalog.all) { model in
                     ModelGridRow(model: model, manager: appState.downloads,
                                  statusWidth: Self.statusColumnWidth)
@@ -59,6 +62,48 @@ struct ModelsSettingsView: View {
 
     private func format(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
+/// Apple Intelligence is *chosen* in Engine, but users look here to answer
+/// "what AI does this app have" - so the built-in engine is listed alongside
+/// the downloadable ones, minus the download/delete affordances.
+private struct BuiltInEngineRow: View {
+    let issue: String?
+    let statusWidth: CGFloat
+
+    var body: some View {
+        GridRow {
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(Color.indigo.gradient)
+                    .frame(width: 30, height: 30)
+                    .overlay(
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white)
+                    )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Apple Intelligence")
+                    Text(issue ?? "Built into macOS - nothing to download")
+                        .font(.system(size: 11))
+                        .foregroundStyle(issue == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
+                }
+            }
+            .padding(.leading, 6)
+
+            RatingBars(speed: 5, accuracy: 3)
+
+            HStack(spacing: 8) {
+                Text("Built in")
+                    .foregroundStyle(.secondary)
+                Image(systemName: issue == nil ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(issue == nil ? AnyShapeStyle(.green) : AnyShapeStyle(.orange))
+                    .font(.title3)
+            }
+            .frame(width: statusWidth, alignment: .trailing)
+        }
+        .padding(.vertical, 10)
     }
 }
 
