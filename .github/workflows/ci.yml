@@ -38,6 +38,10 @@ jobs:
           -skipPackagePluginValidation -skipMacroValidation
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
+      # Parallel test workers intermittently crash at bootstrap on these
+      # runners (whole worker's tests fail at 0.000s, no diagnostics, rerun
+      # passes). The suite runs in ~40s, so parallelism buys nothing - run
+      # one worker, and keep the result bundle for a crash report.
       - name: Test
         run: >
           xcodebuild test
@@ -45,8 +49,18 @@ jobs:
           -scheme bulletproof
           -only-testing:bulletproofTests
           -destination 'platform=macOS'
+          -parallel-testing-enabled NO
+          -resultBundlePath TestResults.xcresult
           -skipPackagePluginValidation -skipMacroValidation
           CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-results
+          path: TestResults.xcresult
+          retention-days: 7
 
       - name: Services end-to-end
         run: |
