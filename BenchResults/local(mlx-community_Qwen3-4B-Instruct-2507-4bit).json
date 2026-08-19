@@ -1,0 +1,22 @@
+{
+  "categoryCounts" : {
+    "correctFix" : 22,
+    "correctReject" : 1,
+    "preserved" : 18,
+    "safeEcho" : 2
+  },
+  "engine" : "local(mlx-community\/Qwen3-4B-Instruct-2507-4bit)",
+  "failures" : [
+
+  ],
+  "fixRate" : 1,
+  "gateRejections" : {
+    "lowOverlap" : 1
+  },
+  "p50Ms" : 731.857334,
+  "p95Ms" : 908.446667,
+  "precisionWhenChanged" : 1,
+  "qualityScore" : 1,
+  "totalCases" : 43,
+  "unchangedPreservation" : 1
+}
