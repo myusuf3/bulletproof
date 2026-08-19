@@ -86,16 +86,32 @@ nonisolated enum OutputGate {
 /// the same output validation, surfaced through the normal error path.
 nonisolated struct OutputGatedEngine: ProofreadingEngine {
     let wrapped: any ProofreadingEngine
+    /// Nil resolves to the shared vocabulary at call time - a test seam.
+    private let vocabularyOverride: PersonalVocabulary?
     private static let logger = Logger(subsystem: "com.mahdiyusuf.bulletproof", category: "output-gate")
 
+    init(wrapped: any ProofreadingEngine, vocabulary: PersonalVocabulary? = nil) {
+        self.wrapped = wrapped
+        self.vocabularyOverride = vocabulary
+    }
+
     func proofread(_ text: String) async throws -> String {
+        // Learn from what the user types regardless of outcome - names and
+        // jargon they use repeatedly are intentional, and must never be
+        // "corrected" away or flagged as model hallucinations.
+        let vocabulary = await MainActor.run { [vocabularyOverride] in
+            let vocab = vocabularyOverride ?? PersonalVocabulary.shared
+            vocab.observe(text)
+            return vocab.words
+        }
         let output = try await wrapped.proofread(text)
         if let rejection = OutputGate.rejection(original: text, output: output) {
             Self.logger.warning("rejected model output: \(String(describing: rejection), privacy: .public)")
             throw ProofreadingError.unusableOutput(rejection)
         }
-        if let misspelled = await SpellCheckGate.firstMisspelled(
-                in: OutputGate.introducedWords(original: text, output: output)) {
+        let introduced = OutputGate.introducedWords(original: text, output: output)
+            .filter { !vocabulary.contains($0.lowercased()) }
+        if let misspelled = await SpellCheckGate.firstMisspelled(in: introduced) {
             Self.logger.warning("rejected model output: introduced misspelling \(misspelled, privacy: .private)")
             throw ProofreadingError.unusableOutput(.introducedMisspelling)
         }
