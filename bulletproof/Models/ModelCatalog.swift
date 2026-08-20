@@ -23,10 +23,12 @@ nonisolated enum ModelCatalog {
         CatalogModel(
             id: "mlx-community/Qwen3-4B-Instruct-2507-4bit",
             displayName: "Qwen3 4B Instruct (4-bit)",
-            blurb: "Fast and capable - runs on any Apple silicon Mac",
+            blurb: "Top benchmark scores - runs on any Apple silicon Mac",
             approxDownloadBytes: 2_280_000_000,
             speed: 4,
-            accuracy: 3
+            // Measured, not vibes: 1.000 on the proofreading benchmark
+            // across four runs vs Apple Intelligence's 0.84 (BenchResults/).
+            accuracy: 4
         ),
         CatalogModel(
             id: "mlx-community/gemma-3-4b-it-4bit",
