@@ -62,11 +62,9 @@ import Foundation
     /// Same shape the spell-check gate checks: whole alphabetic words of 3+
     /// letters, contractions intact.
     private static func candidateWords(in text: String) -> [String] {
-        text.split(whereSeparator: { !$0.isLetter && !$0.isNumber && !"''".contains($0) })
-            .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "''")) }
-            .filter { word in
-                let bare = word.filter { !"''".contains($0) }
-                return bare.count >= 3 && bare.allSatisfy(\.isLetter)
-            }
+        OutputGate.wordTokens(in: text).filter { word in
+            let bare = word.filter { !"''".contains($0) }
+            return bare.count >= 3 && bare.allSatisfy(\.isLetter)
+        }
     }
 }

@@ -98,6 +98,46 @@ struct VocabularyGateIntegrationTests {
         #expect(try await engine.proofread("move the kanbn card") == "move the Kanban card")
     }
 
+    @Test func removingAProtectedWordIsRejected() async {
+        // The "Jon -> John" class, caught deterministically: the model
+        // rewrote away a word the user demonstrably types on purpose.
+        let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
+        let vocab = await MainActor.run {
+            PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
+        }
+        await MainActor.run {
+            vocab.observe("ping Jon today")
+            vocab.observe("Jon is out")
+        }
+        let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "We hired John yesterday."),
+                                       vocabulary: vocab)
+        do {
+            _ = try await engine.proofread("We hired Jon yesterday.")
+            Issue.record("expected unusableOutput")
+        } catch let error as ProofreadingError {
+            guard case .unusableOutput(.protectedWordRemoved) = error else {
+                Issue.record("expected protectedWordRemoved, got \(error)")
+                return
+            }
+        } catch {
+            Issue.record("unexpected error type: \(error)")
+        }
+    }
+
+    @Test func keepingAProtectedWordPassesEvenWhenCaseChanges() async throws {
+        let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
+        let vocab = await MainActor.run {
+            PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
+        }
+        await MainActor.run {
+            vocab.observe("the kanban board")
+            vocab.observe("a kanban column")
+        }
+        let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "Move the Kanban card."),
+                                       vocabulary: vocab)
+        #expect(try await engine.proofread("move the kanban card") == "Move the Kanban card.")
+    }
+
     @Test func unknownIntroducedGibberishIsStillRejected() async {
         let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
         let vocab = await MainActor.run {

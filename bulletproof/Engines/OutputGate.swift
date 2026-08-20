@@ -13,6 +13,7 @@ nonisolated enum OutputGate {
         case overExpansion
         case lowOverlap
         case introducedMisspelling
+        case protectedWordRemoved
     }
 
     /// Ratio rules only apply above these floors - short inputs legitimately
@@ -57,9 +58,9 @@ nonisolated enum OutputGate {
     /// Contractions stay whole - splitting "shouldn't" would hand the spell
     /// checker the non-word fragment "shouldn" and reject a real correction.
     static func introducedWords(original: String, output: String) -> [String] {
-        let originalWords = Set(contractionTokens(of: original).map { $0.lowercased() })
+        let originalWords = Set(wordTokens(in: original).map { $0.lowercased() })
         var seen = Set<String>()
-        return contractionTokens(of: output).filter { word in
+        return wordTokens(in: output).filter { word in
             let bare = word.filter { !"''".contains($0) }
             let key = word.lowercased()
             guard bare.count >= 3, bare.allSatisfy(\.isLetter),
@@ -69,7 +70,9 @@ nonisolated enum OutputGate {
         }
     }
 
-    private static func contractionTokens(of text: String) -> [String] {
+    /// Shared word tokenizer: contractions stay whole, edge apostrophes
+    /// stripped. Also used by the vocabulary and the protected-word rule.
+    static func wordTokens(in text: String) -> [String] {
         text.split(whereSeparator: { !$0.isLetter && !$0.isNumber && !"''".contains($0) })
             .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "''")) }
             .filter { !$0.isEmpty }
@@ -108,6 +111,17 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         if let rejection = OutputGate.rejection(original: text, output: output) {
             Self.logger.warning("rejected model output: \(String(describing: rejection), privacy: .public)")
             throw ProofreadingError.unusableOutput(rejection)
+        }
+        // A vocabulary word present in the input but gone from the output
+        // means the model rewrote away something the user types on purpose
+        // ("Jon" -> "John") - deterministic, no scoring needed.
+        let outputWords = Set(OutputGate.wordTokens(in: output).map { $0.lowercased() })
+        if let removed = OutputGate.wordTokens(in: text).first(where: { word in
+            let key = word.lowercased()
+            return vocabulary.contains(key) && !outputWords.contains(key)
+        }) {
+            Self.logger.warning("rejected model output: removed protected word \(removed, privacy: .private)")
+            throw ProofreadingError.unusableOutput(.protectedWordRemoved)
         }
         let introduced = OutputGate.introducedWords(original: text, output: output)
             .filter { !vocabulary.contains($0.lowercased()) }
