@@ -16,23 +16,23 @@ struct PersonalVocabularyTests {
 
     @Test func unknownWordIsLearnedOnSecondSighting() {
         let vocab = vocabulary(defaults: freshDefaults())
-        vocab.observe("ping Priya about the launch")
+        vocab.observe(input: "ping Priya about the launch", keptIn: "ping Priya about the launch")
         #expect(!vocab.contains("Priya"))
-        vocab.observe("Priya says hi")
+        vocab.observe(input: "Priya says hi", keptIn: "Priya says hi")
         #expect(vocab.contains("Priya"))
     }
 
     @Test func repeatsWithinOneObservationCountOnce() {
         // "Priya Priya Priya" in one paste is one sighting, not three.
         let vocab = vocabulary(defaults: freshDefaults())
-        vocab.observe("Priya Priya Priya")
+        vocab.observe(input: "Priya Priya Priya", keptIn: "Priya Priya Priya")
         #expect(!vocab.contains("Priya"))
     }
 
     @Test func dictionaryWordsAreNeverLearned() {
         let vocab = vocabulary(defaults: freshDefaults(), unknown: { $0.lowercased() == "kanban" })
-        vocab.observe("move the kanban card today")
-        vocab.observe("the kanban card moved today")
+        vocab.observe(input: "move the kanban card today", keptIn: "move the kanban card today")
+        vocab.observe(input: "the kanban card moved today", keptIn: "the kanban card moved today")
         #expect(vocab.contains("kanban"))
         #expect(!vocab.contains("card"))
         #expect(!vocab.contains("today"))
@@ -40,8 +40,8 @@ struct PersonalVocabularyTests {
 
     @Test func matchingIsCaseInsensitive() {
         let vocab = vocabulary(defaults: freshDefaults())
-        vocab.observe("the KANBAN board")
-        vocab.observe("a kanban column")
+        vocab.observe(input: "the KANBAN board", keptIn: "the KANBAN board")
+        vocab.observe(input: "a kanban column", keptIn: "a kanban column")
         #expect(vocab.contains("Kanban"))
         #expect(vocab.contains("kanban"))
     }
@@ -49,15 +49,15 @@ struct PersonalVocabularyTests {
     @Test func learnedWordsSurviveRelaunch() {
         let defaults = freshDefaults()
         let first = vocabulary(defaults: defaults)
-        first.observe("ask Priya")
-        first.observe("tell Priya")
+        first.observe(input: "ask Priya", keptIn: "ask Priya")
+        first.observe(input: "tell Priya", keptIn: "tell Priya")
         #expect(vocabulary(defaults: defaults).contains("Priya"))
     }
 
     @Test func shortAndNumericTokensAreIgnored() {
         let vocab = vocabulary(defaults: freshDefaults())
-        vocab.observe("at 3pm we go")
-        vocab.observe("at 3pm we go")
+        vocab.observe(input: "at 3pm we go", keptIn: "at 3pm we go")
+        vocab.observe(input: "at 3pm we go", keptIn: "at 3pm we go")
         #expect(!vocab.contains("3pm"))
         #expect(!vocab.contains("at"))
         #expect(!vocab.contains("we"))
@@ -65,9 +65,18 @@ struct PersonalVocabularyTests {
 
     @Test func contractionsStayWhole() {
         let vocab = vocabulary(defaults: freshDefaults())
-        vocab.observe("y'all should come")
-        vocab.observe("y'all were right")
+        vocab.observe(input: "y'all should come", keptIn: "y'all should come")
+        vocab.observe(input: "y'all were right", keptIn: "y'all were right")
         #expect(vocab.contains("y'all"))
+    }
+
+    @Test func wordsCorrectedAwayAreNeverLearned() {
+        // The self-poisoning bug CI caught: learning "teh" from inputs would
+        // protect the typo and block its own correction forever.
+        let vocab = vocabulary(defaults: freshDefaults())
+        vocab.observe(input: "teh cat", keptIn: "the cat")
+        vocab.observe(input: "teh dog", keptIn: "the dog")
+        #expect(!vocab.contains("teh"))
     }
 
     @Test func vocabularyIsCapped() {
@@ -75,7 +84,7 @@ struct PersonalVocabularyTests {
         for round in 0..<2 {
             _ = round
             let words = (0..<600).map { "zzworda\($0)qq" }.joined(separator: " ")
-            vocab.observe(words)
+            vocab.observe(input: words, keptIn: words)
         }
         #expect(vocab.words.count <= 500)
     }
@@ -90,8 +99,8 @@ struct VocabularyGateIntegrationTests {
             PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
         }
         await MainActor.run {
-            vocab.observe("the Kanban board")
-            vocab.observe("a Kanban column")
+            vocab.observe(input: "the Kanban board", keptIn: "the Kanban board")
+            vocab.observe(input: "a Kanban column", keptIn: "a Kanban column")
         }
         let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "move the Kanban card"),
                                        vocabulary: vocab)
@@ -106,8 +115,8 @@ struct VocabularyGateIntegrationTests {
             PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
         }
         await MainActor.run {
-            vocab.observe("ping Jon today")
-            vocab.observe("Jon is out")
+            vocab.observe(input: "ping Jon today", keptIn: "ping Jon today")
+            vocab.observe(input: "Jon is out", keptIn: "Jon is out")
         }
         let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "We hired John yesterday."),
                                        vocabulary: vocab)
@@ -130,8 +139,8 @@ struct VocabularyGateIntegrationTests {
             PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
         }
         await MainActor.run {
-            vocab.observe("the kanban board")
-            vocab.observe("a kanban column")
+            vocab.observe(input: "the kanban board", keptIn: "the kanban board")
+            vocab.observe(input: "a kanban column", keptIn: "a kanban column")
         }
         let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "Move the Kanban card."),
                                        vocabulary: vocab)
