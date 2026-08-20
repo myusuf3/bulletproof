@@ -14,6 +14,7 @@ nonisolated enum OutputGate {
         case lowOverlap
         case introducedMisspelling
         case protectedWordRemoved
+        case implausibleEdit
     }
 
     /// Ratio rules only apply above these floors - short inputs legitimately
@@ -99,13 +100,8 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
     }
 
     func proofread(_ text: String) async throws -> String {
-        // Learn from what the user types regardless of outcome - names and
-        // jargon they use repeatedly are intentional, and must never be
-        // "corrected" away or flagged as model hallucinations.
         let vocabulary = await MainActor.run { [vocabularyOverride] in
-            let vocab = vocabularyOverride ?? PersonalVocabulary.shared
-            vocab.observe(text)
-            return vocab.words
+            (vocabularyOverride ?? PersonalVocabulary.shared).words
         }
         let output = try await wrapped.proofread(text)
         if let rejection = OutputGate.rejection(original: text, output: output) {
@@ -128,6 +124,11 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         if let misspelled = await SpellCheckGate.firstMisspelled(in: introduced) {
             Self.logger.warning("rejected model output: introduced misspelling \(misspelled, privacy: .private)")
             throw ProofreadingError.unusableOutput(.introducedMisspelling)
+        }
+        // Learn only from fully accepted proofreads, and only words the
+        // correction kept - never the typos it fixed.
+        await MainActor.run { [vocabularyOverride] in
+            (vocabularyOverride ?? PersonalVocabulary.shared).observe(input: text, keptIn: output)
         }
         return output
     }

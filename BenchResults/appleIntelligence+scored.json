@@ -1,0 +1,59 @@
+{
+  "categoryCounts" : {
+    "correctFix" : 20,
+    "correctReject" : 1,
+    "corruptedCleanText" : 4,
+    "gateBlockedCleanText" : 1,
+    "preserved" : 13,
+    "safeEcho" : 2,
+    "wrongFix" : 2
+  },
+  "engine" : "appleIntelligence+scored",
+  "failures" : [
+    {
+      "category" : "wrongFix",
+      "id" : "homophone-their",
+      "output" : "They’re going to the store"
+    },
+    {
+      "category" : "wrongFix",
+      "id" : "homophone-your",
+      "output" : "Your welcome, by the way"
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "brand-lowercase",
+      "output" : "The app is called Bulletproof, all lowercase."
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "profanity",
+      "output" : "This build has been broken all day."
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "dialect",
+      "output" : "You all ain't gonna believe what happened at the demo."
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "numbers",
+      "output" : "Revenue grew 9% while churn fell to 2.1%"
+    },
+    {
+      "category" : "gateBlockedCleanText",
+      "id" : "clean-emoji"
+    }
+  ],
+  "fixRate" : 0.9090909090909091,
+  "gateRejections" : {
+    "implausibleEdit" : 1,
+    "lowOverlap" : 1
+  },
+  "p50Ms" : 454.188917,
+  "p95Ms" : 673.571416,
+  "precisionWhenChanged" : 0.7692307692307693,
+  "qualityScore" : 0.8441860465116279,
+  "totalCases" : 43,
+  "unchangedPreservation" : 0.7222222222222222
+}

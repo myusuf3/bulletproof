@@ -5,7 +5,7 @@
     "preserved" : 18,
     "safeEcho" : 2
   },
-  "engine" : "local(mlx-community\/Qwen3-4B-Instruct-2507-4bit)",
+  "engine" : "local(mlx-community\/Qwen3-4B-Instruct-2507-4bit)+scored",
   "failures" : [
 
   ],
@@ -13,8 +13,8 @@
   "gateRejections" : {
     "lowOverlap" : 1
   },
-  "p50Ms" : 418.443125,
-  "p95Ms" : 495.597042,
+  "p50Ms" : 518.740042,
+  "p95Ms" : 622.049291,
   "precisionWhenChanged" : 1,
   "qualityScore" : 1,
   "totalCases" : 43,

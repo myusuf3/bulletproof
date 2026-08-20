@@ -56,13 +56,19 @@ nonisolated enum EditDiff {
     }
 }
 
-/// KeyType-seeded thresholds, explicitly provisional until tuned against the
-/// benchmark corpus - they were calibrated for single words on base models,
-/// and we score multi-word spans from instruct models.
+/// Tuned 2026-08-20 against the probe distributions
+/// (ScoringDistributionProbe): KeyType's numbers (-6.0/1.0/-7.0) vetoed half
+/// the corpus's legitimate fixes. Good edits score as low as -11.3
+/// (contractions tokenize into rare subwords) and typo originals often
+/// outscore their corrections, so only the "absurd swap" class separates:
+/// floor -12.0 and veto margin 4.5 catch censored-profanity / wrong-way
+/// homophone / name-swap cases with zero false vetoes on the corpus. The
+/// suffix check carried no signal (bad edits' suffixes scored *better*) and
+/// is parked at -15.
 nonisolated struct ScoringThresholds: Sendable {
-    var minimumMeanLogProbability = -6.0
-    var originalVetoMargin = 1.0
-    var minimumSuffixMeanLogProbability = -7.0
+    var minimumMeanLogProbability = -12.0
+    var originalVetoMargin = 4.5
+    var minimumSuffixMeanLogProbability = -15.0
 }
 
 nonisolated enum ScoredVerdict: Equatable, Sendable {
