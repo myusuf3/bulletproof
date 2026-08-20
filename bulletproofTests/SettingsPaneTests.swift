@@ -43,6 +43,10 @@ struct SettingsPaneTests {
         #expect(message == "Something specific from macOS")
     }
 
+    @Test func verifyCorrectionsIsSearchable() {
+        #expect(SettingsPane.matching("verify").contains(.engine))
+    }
+
     @Test func statisticsPaneIsSearchable() {
         #expect(SettingsPane.matching("statistics").contains(.statistics))
         #expect(SettingsPane.matching("latency").contains(.statistics))

@@ -43,7 +43,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: ["launch", "login", "startup", "onboarding", "walkthrough", "counter"]
         case .shortcut: ["hotkey", "keyboard", "record", "permission", "accessibility", "notifications"]
-        case .engine: ["apple intelligence", "proofreading", "local", "on-device"]
+        case .engine: ["apple intelligence", "proofreading", "local", "on-device", "verify", "double-check", "experimental"]
         case .models: ["download", "gemma", "qwen", "disk", "delete", "storage"]
         case .statistics: ["latency", "telemetry", "diagnostics", "log", "rejections", "outcomes", "history"]
         case .about: ["version", "update", "sparkle", "github", "release"]

@@ -13,6 +13,7 @@ final class AppState {
 
     private static let engineChoiceKey = "engineChoice"
     private static let shortcutKey = "proofreadShortcut"
+    private static let verifyCorrectionsKey = "verifyCorrections"
 
     var engineChoice: EngineChoice {
         didSet {
@@ -33,6 +34,12 @@ final class AppState {
             }
             HotkeyDispatcher.shared.registerOrNotify(shortcut)
         }
+    }
+
+    /// Experimental scored gate (default off until tuned): double-check
+    /// every correction with the local model before pasting.
+    var verifyCorrectionsEnabled: Bool {
+        didSet { UserDefaults.standard.set(verifyCorrectionsEnabled, forKey: Self.verifyCorrectionsKey) }
     }
 
     let onboarding = OnboardingProgress()
@@ -56,6 +63,7 @@ final class AppState {
         } else {
             shortcut = .default
         }
+        verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
         store.cleanupPartials()
     }
 
@@ -71,10 +79,26 @@ final class AppState {
         // Gate inside the recorder so history only ever holds accepted output.
         switch engineChoice {
         case .appleIntelligence:
-            return RecordingEngine(wrapped: OutputGatedEngine(wrapped: AppleIntelligenceEngine()))
+            return RecordingEngine(wrapped: scoredIfEnabled(
+                OutputGatedEngine(wrapped: AppleIntelligenceEngine())))
         case .local(let modelID):
-            return RecordingEngine(wrapped: OutputGatedEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID))))
+            return RecordingEngine(wrapped: scoredIfEnabled(
+                OutputGatedEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID))),
+                preferredModelID: modelID))
         }
+    }
+
+    /// The scorer is the resident local model - it also judges Apple
+    /// Intelligence output (scorer and generator need not match). Without an
+    /// installed model the gate silently stays out of the chain.
+    private func scoredIfEnabled(_ engine: any ProofreadingEngine,
+                                 preferredModelID: String? = nil) -> any ProofreadingEngine {
+        guard verifyCorrectionsEnabled,
+              let modelID = preferredModelID ?? store.installedModelIDs().sorted().first else {
+            return engine
+        }
+        return ScoredGateEngine(wrapped: engine,
+                                scorer: MLXSpanScorer(modelDirectory: store.directory(for: modelID)))
     }
 
     /// Fallback happens first so makeEngine() can never hand out an engine

@@ -28,10 +28,15 @@ import Foundation
         pendingCounts = defaults.dictionary(forKey: Self.countsKey) as? [String: Int] ?? [:]
     }
 
-    func observe(_ input: String) {
+    /// Learn only words the accepted correction *kept*: present in both
+    /// input and output means demonstrably intentional. A word the model
+    /// corrected away is probably the typo being fixed - learning it would
+    /// protect the typo and block its own correction forever.
+    func observe(input: String, keptIn output: String) {
+        let keptWords = Set(OutputGate.wordTokens(in: output).map { $0.lowercased() })
         var changed = false
         // Unique per observation: pasting "Priya Priya Priya" is one sighting.
-        for word in Set(Self.candidateWords(in: input)) {
+        for word in Set(Self.candidateWords(in: input)) where keptWords.contains(word.lowercased()) {
             let key = word.lowercased()
             guard !words.contains(key), isUnknownWord(word) else { continue }
             changed = true
