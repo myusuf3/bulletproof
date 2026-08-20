@@ -43,6 +43,8 @@ nonisolated enum ProofreadingError: LocalizedError {
                 "The model rewrote instead of correcting, so your selection was left unchanged."
             case .introducedMisspelling:
                 "The model's correction introduced a misspelling, so your selection was left unchanged."
+            case .protectedWordRemoved:
+                "The correction removed a word you use on purpose, so your selection was left unchanged."
             }
         case .timedOut:
             "Proofreading took too long. Try a shorter selection."
