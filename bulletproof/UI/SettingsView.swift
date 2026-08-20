@@ -1,7 +1,7 @@
 import SwiftUI
 
 nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
-    case general, shortcut, engine, models, statistics, about
+    case general, shortcut, engine, models, apps, statistics, about
 
     nonisolated var id: String { rawValue }
 
@@ -11,6 +11,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: "Shortcut"
         case .engine: "Engine"
         case .models: "Models"
+        case .apps: "Apps"
         case .statistics: "Statistics"
         case .about: "About"
         }
@@ -22,6 +23,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: "command"
         case .engine: "brain.fill"
         case .models: "arrow.down.circle.fill"
+        case .apps: "square.grid.2x2.fill"
         case .statistics: "chart.bar.fill"
         case .about: "info"
         }
@@ -33,6 +35,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: .blue
         case .engine: .purple
         case .models: .green
+        case .apps: .teal
         case .statistics: .orange
         case .about: .indigo
         }
@@ -45,6 +48,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         case .shortcut: ["hotkey", "keyboard", "record", "permission", "accessibility", "notifications"]
         case .engine: ["apple intelligence", "proofreading", "local", "on-device", "verify", "double-check", "experimental"]
         case .models: ["download", "gemma", "qwen", "disk", "delete", "storage"]
+        case .apps: ["exclude", "disable", "per-app", "terminal", "kitty", "block"]
         case .statistics: ["latency", "telemetry", "diagnostics", "log", "rejections", "outcomes", "history"]
         case .about: ["version", "update", "sparkle", "github", "release"]
         }
@@ -89,7 +93,7 @@ struct SettingsView: View {
                         }
                     }
                     Section("Proofreading") {
-                        ForEach([SettingsPane.engine, .models, .statistics].filter(visible.contains)) { pane in
+                        ForEach([SettingsPane.engine, .models, .apps, .statistics].filter(visible.contains)) { pane in
                             PaneRow(pane: pane)
                         }
                     }
@@ -128,6 +132,7 @@ struct SettingsView: View {
         case .shortcut: ShortcutSettingsPane()
         case .engine: EngineSettingsView()
         case .models: ModelsSettingsView()
+        case .apps: AppsSettingsView()
         case .statistics: StatisticsSettingsView()
         case .about: AboutSettingsView()
         }

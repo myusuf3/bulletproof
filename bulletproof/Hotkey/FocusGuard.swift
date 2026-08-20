@@ -5,16 +5,19 @@ import ApplicationServices
 /// copy/paste round-trip must never touch: secure fields (the text would go
 /// to a model) and terminals (a "corrected" shell command changes behavior).
 nonisolated enum FocusGuard {
-    enum BlockReason: CaseIterable {
+    enum BlockReason: CaseIterable, Equatable {
         case secureField
         case terminal
+        case disabledByUser
 
         var message: String {
             switch self {
             case .secureField:
                 "This looks like a password or code field, so it was left untouched."
             case .terminal:
-                "Proofreading a shell command could change what it runs, so terminals are left untouched."
+                "Proofreading a shell command could change what it runs, so terminals are left untouched. You can allow this app in Settings > Apps."
+            case .disabledByUser:
+                "bulletproof is turned off for this app - enable it in Settings > Apps."
             }
         }
 
@@ -22,6 +25,7 @@ nonisolated enum FocusGuard {
             switch self {
             case .secureField: "secure-field"
             case .terminal: "terminal"
+            case .disabledByUser: "disabled-by-user"
             }
         }
     }
@@ -87,10 +91,27 @@ nonisolated enum FocusGuard {
         let bundleID: String? = AXUIElementGetPid(element, &pid) == .success
             ? NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
             : nil
-        if isTerminal(bundleID: bundleID, domClasses: stringArray("AXDOMClassList", of: element)) {
-            return .terminal
-        }
+        return policyBlock(
+            secureField: false,
+            terminal: isTerminal(bundleID: bundleID, domClasses: stringArray("AXDOMClassList", of: element)),
+            policy: AppPolicyStore.shared.policy(for: bundleID))
+    }
+
+    /// Resolution order preserving safety: secure fields are never
+    /// user-overridable; a user disable beats everything else; the terminal
+    /// default can be allowed per app.
+    nonisolated static func policyBlock(secureField: Bool, terminal: Bool,
+                                        policy: TargetPolicy) -> BlockReason? {
+        if secureField { return .secureField }
+        if policy.proofreadingDisabled { return .disabledByUser }
+        if terminal && !policy.allowDespiteTerminal { return .terminal }
         return nil
+    }
+
+    /// Bundle-list membership only (the xterm DOM-class check needs a live
+    /// element) - used by Settings > Apps to pick the toggle's meaning.
+    nonisolated static func isKnownTerminal(bundleID: String?) -> Bool {
+        bundleID.map { terminalBundleIDs.contains($0) } ?? false
     }
 
     private static func string(_ attribute: String, of element: AXUIElement) -> String? {
