@@ -41,6 +41,13 @@ struct EngineSettingsView: View {
 
             SettingsCard(header: "Status") {
                 statusRow
+                if case .appleIntelligence = appState.engineChoice {
+                    SettingDivider()
+                    SettingRow(title: "Want higher accuracy?",
+                               description: "In bulletproof's proofreading benchmark, the downloadable Qwen3 4B scored 1.00 to Apple Intelligence's 0.84 at similar speed. Apple Intelligence stays the default and uses no extra disk or memory - to switch, download Qwen3 in Models and pick it above.") {
+                        EmptyView()
+                    }
+                }
             }
         }
     }
