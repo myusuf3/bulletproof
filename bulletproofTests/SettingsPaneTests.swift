@@ -43,6 +43,13 @@ struct SettingsPaneTests {
         #expect(message == "Something specific from macOS")
     }
 
+    @Test func appsPaneIsSearchable() {
+        #expect(SettingsPane.matching("apps").contains(.apps))
+        #expect(SettingsPane.matching("kitty").contains(.apps))
+        #expect(SettingsPane.matching("exclude").contains(.apps))
+        #expect(SettingsPane.matching("per-app").contains(.apps))
+    }
+
     @Test func verifyCorrectionsIsSearchable() {
         #expect(SettingsPane.matching("verify").contains(.engine))
     }
