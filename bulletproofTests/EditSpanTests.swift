@@ -76,7 +76,11 @@ struct EditDiffTests {
 }
 
 struct ScoredVerdictTests {
-    private let thresholds = ScoringThresholds()
+    // Round numbers: these tests pin the decision logic; the production
+    // defaults are pinned separately below.
+    private let thresholds = ScoringThresholds(minimumMeanLogProbability: -6.0,
+                                               originalVetoMargin: 1.0,
+                                               minimumSuffixMeanLogProbability: -7.0)
 
     @Test func plausibleEditIsAccepted() {
         #expect(ScoredVerdict.evaluate(replacementScore: -2.0, originalScore: -5.0,
@@ -119,5 +123,15 @@ struct ScoredVerdictTests {
     @Test func nonFiniteScoresAccept() {
         #expect(ScoredVerdict.evaluate(replacementScore: .nan, originalScore: -1.0,
                                        suffixScore: -1.0, thresholds: thresholds) == .accepted)
+    }
+
+    @Test func productionDefaultsMatchTheProbeTuning() {
+        // From ScoringDistributionProbe (2026-08-20): worst good edit -11.29,
+        // catchable bad edits at -12.5..-12.7; max good veto-margin 3.93,
+        // name-swap at 5.02; suffix carried no signal.
+        let tuned = ScoringThresholds()
+        #expect(tuned.minimumMeanLogProbability == -12.0)
+        #expect(tuned.originalVetoMargin == 4.5)
+        #expect(tuned.minimumSuffixMeanLogProbability == -15.0)
     }
 }

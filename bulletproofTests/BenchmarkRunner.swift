@@ -49,9 +49,21 @@ struct BenchmarkRunner {
         }
         try #require(!engines.isEmpty, "no engines available to benchmark")
 
+        // Paired variants: every engine plain-gated and (when a local model
+        // can score) scored-gated, so threshold changes diff as reports.
+        var variants: [(String, any ProofreadingEngine)] = engines.map {
+            ($0.0, OutputGatedEngine(wrapped: $0.1))
+        }
+        if let scorerID = store.installedModelIDs().sorted().first {
+            let scorer = MLXSpanScorer(modelDirectory: store.directory(for: scorerID))
+            variants += engines.map {
+                ("\($0.0)+scored", ScoredGateEngine(wrapped: OutputGatedEngine(wrapped: $0.1),
+                                                    scorer: scorer))
+            }
+        }
+
         try FileManager.default.createDirectory(at: Self.outputDir, withIntermediateDirectories: true)
-        for (name, engine) in engines {
-            let gated = OutputGatedEngine(wrapped: engine)
+        for (name, gated) in variants {
             await gated.prewarm()
             var results: [BenchResult] = []
             for benchCase in cases {

@@ -114,15 +114,26 @@ struct SpellCheckGateTests {
 }
 
 struct OutputGatedEngineTests {
+    /// Hermetic: never reads or writes PersonalVocabulary.shared, which
+    /// lives in the app's real defaults domain.
+    private func isolatedVocabulary() async -> PersonalVocabulary {
+        await MainActor.run {
+            PersonalVocabulary(defaults: UserDefaults(suiteName: "gate-vocab-\(UUID().uuidString)")!,
+                               isUnknownWord: { _ in false })
+        }
+    }
+
     @Test func passesAcceptedOutputThrough() async throws {
-        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the cat"))
+        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the cat"),
+                                       vocabulary: await isolatedVocabulary())
         #expect(try await engine.proofread("teh cat") == "the cat")
     }
 
     @Test func introducedMisspellingIsRejected() async {
         // A "correction" that injects a non-word the original never had is a
         // hallucination - a proofread must never make spelling worse.
-        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the xqzzrtl cat"))
+        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "the xqzzrtl cat"),
+                                       vocabulary: await isolatedVocabulary())
         do {
             _ = try await engine.proofread("teh cat")
             Issue.record("expected unusableOutput")

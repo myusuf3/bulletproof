@@ -27,6 +27,16 @@ struct EngineSettingsView: View {
                         .fixedSize()
                     }
                 }
+                SettingDivider()
+                SettingRow(title: "Verify corrections",
+                           description: appState.downloads.installedModelIDs.isEmpty
+                               ? "Double-checks every correction with a local model before pasting. Download a model in Models to enable."
+                               : "Double-checks every correction with the local model and blocks edits that don't read right. Experimental.") {
+                    Toggle("", isOn: $appState.verifyCorrectionsEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .disabled(appState.downloads.installedModelIDs.isEmpty)
+                }
             }
 
             SettingsCard(header: "Status") {
