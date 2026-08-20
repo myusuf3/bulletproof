@@ -70,6 +70,8 @@ struct SettingsSnapshotTests {
         try snapshotPane(ShortcutSettingsPane().environment(AppState.shared), width: 660, name: "pane-shortcut")
         try snapshotPane(EngineSettingsView().environment(AppState.shared), width: 660, name: "pane-engine")
         try snapshotPane(ModelsSettingsView().environment(AppState.shared), width: 660, name: "pane-models")
+        try snapshotPane(AppsSettingsView().environment(AppState.shared), width: 660, name: "pane-apps")
+        try snapshotPane(StatisticsSettingsView().environment(AppState.shared), width: 660, name: "pane-statistics")
         try snapshotPane(AboutSettingsView().environment(AppState.shared), width: 660, name: "pane-about")
     }
 }
