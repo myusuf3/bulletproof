@@ -22,7 +22,16 @@ import SwiftUI
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
-        window.setContentSize(NSSize(width: 640, height: 480))
+        // The walkthrough is deliberately dark-glass regardless of system
+        // theme, so its controls must render for dark.
+        window.appearance = NSAppearance(named: .darkAqua)
+        // No traffic lights on the hero card; Esc and the flow's own
+        // buttons are the ways out (closable stays in the mask so
+        // close()/⌘W keep working).
+        for buttonType: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
+            window.standardWindowButton(buttonType)?.isHidden = true
+        }
+        window.setContentSize(NSSize(width: 640, height: 540))
         window.isReleasedWhenClosed = false
         window.center()
         self.window = window

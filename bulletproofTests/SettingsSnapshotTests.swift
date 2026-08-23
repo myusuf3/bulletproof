@@ -80,6 +80,12 @@ struct SettingsSnapshotTests {
                            size: NSSize(width: 900, height: 540), name: "drill-window")
     }
 
+    @Test func renderOnboardingWelcome() throws {
+        try snapshotWindow(OnboardingView().environment(AppState.shared)
+                               .environment(\.colorScheme, .dark),
+                           size: NSSize(width: 640, height: 540), name: "onboarding-welcome")
+    }
+
     @Test func renderPaneContents() throws {
         try snapshotPane(GeneralSettingsView().environment(AppState.shared), width: 660, name: "pane-general")
         try snapshotPane(ShortcutSettingsPane().environment(AppState.shared), width: 660, name: "pane-shortcut")

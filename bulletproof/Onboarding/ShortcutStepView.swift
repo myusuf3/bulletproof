@@ -12,7 +12,7 @@ struct ShortcutStepView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
 
-            ShortcutRecorderView(combo: appState.shortcut) { appState.shortcut = $0 }
+            ShortcutRecorderView(combo: appState.shortcut, alignment: .center) { appState.shortcut = $0 }
                 .padding(.top, 12)
 
             Text("Click to change it. Needs at least one of ⌘ ⌥ ⌃.")
