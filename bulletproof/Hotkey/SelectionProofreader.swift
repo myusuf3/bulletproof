@@ -72,6 +72,9 @@ import Carbon.HIToolbox
     }
 
     func showSuccess(over rect: NSRect?) {
+        if AppState.shared.playSoundOnFix {
+            UISound.correctionApplied()
+        }
         if let rect {
             SuccessFlashController.shared.flash(over: rect)
         } else {
