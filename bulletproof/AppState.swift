@@ -75,7 +75,9 @@ final class AppState {
     }
 
     /// The single seam the service provider and UI use to get an engine.
-    func makeEngine() -> any ProofreadingEngine {
+    /// recordsStats is false only for the onboarding practice run, whose
+    /// canned typos must not become drill material.
+    func makeEngine(recordsStats: Bool = true) -> any ProofreadingEngine {
         #if DEBUG
         // CI runners have no Apple Intelligence; end-to-end tests exercise the
         // services pipeline against a deterministic engine instead.
@@ -87,11 +89,13 @@ final class AppState {
         switch engineChoice {
         case .appleIntelligence:
             return RecordingEngine(wrapped: scoredIfEnabled(
-                OutputGatedEngine(wrapped: AppleIntelligenceEngine())))
+                OutputGatedEngine(wrapped: AppleIntelligenceEngine())),
+                recordsStats: recordsStats)
         case .local(let modelID):
             return RecordingEngine(wrapped: scoredIfEnabled(
                 OutputGatedEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID))),
-                preferredModelID: modelID))
+                preferredModelID: modelID),
+                recordsStats: recordsStats)
         }
     }
 

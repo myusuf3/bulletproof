@@ -43,6 +43,13 @@ struct SettingsPaneTests {
         #expect(message == "Something specific from macOS")
     }
 
+    @Test func practicePaneIsSearchable() {
+        #expect(SettingsPane.matching("practice").contains(.practice))
+        #expect(SettingsPane.matching("monkeytype").contains(.practice))
+        #expect(SettingsPane.matching("drill").contains(.practice))
+        #expect(SettingsPane.matching("streak").contains(.practice))
+    }
+
     @Test func fixSoundSettingIsSearchable() {
         #expect(SettingsPane.matching("sound").contains(.general))
         #expect(SettingsPane.matching("chime").contains(.general))

@@ -54,14 +54,19 @@ final class CorrectionHistory {
 
 /// Wraps any engine so every successful proofread - hotkey, services,
 /// Shortcuts, onboarding practice - lands in the history without per-path
-/// wiring.
+/// wiring. Stats are skippable: the onboarding practice sentence's canned
+/// typos are not the user's own and must not seed the drill.
 nonisolated struct RecordingEngine: ProofreadingEngine {
     let wrapped: any ProofreadingEngine
+    var recordsStats = true
 
     func proofread(_ text: String) async throws -> String {
         let corrected = try await wrapped.proofread(text)
         await MainActor.run {
             AppState.shared.history.record(original: text, corrected: corrected)
+            if recordsStats {
+                CorrectionStats.shared.record(original: text, corrected: corrected)
+            }
         }
         return corrected
     }
