@@ -65,6 +65,21 @@ struct SettingsSnapshotTests {
                            size: NSSize(width: 940, height: 620), name: "settings-window")
     }
 
+    @Test func renderPracticeSurfaces() throws {
+        try snapshotPane(PracticeSettingsView().environment(AppState.shared),
+                         width: 660, name: "pane-practice")
+        let sample = [DrillWord(typo: "teh", fix: "the"),
+                      DrillWord(typo: "recieve", fix: "receive"),
+                      DrillWord(typo: "wierd", fix: "weird"),
+                      DrillWord(typo: "definately", fix: "definitely"),
+                      DrillWord(typo: "seperate", fix: "separate"),
+                      DrillWord(typo: "occured", fix: "occurred"),
+                      DrillWord(typo: "untill", fix: "until"),
+                      DrillWord(typo: "tomorow", fix: "tomorrow")]
+        try snapshotWindow(PracticeDrillView(words: sample),
+                           size: NSSize(width: 900, height: 540), name: "drill-window")
+    }
+
     @Test func renderPaneContents() throws {
         try snapshotPane(GeneralSettingsView().environment(AppState.shared), width: 660, name: "pane-general")
         try snapshotPane(ShortcutSettingsPane().environment(AppState.shared), width: 660, name: "pane-shortcut")
