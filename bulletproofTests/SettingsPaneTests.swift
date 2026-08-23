@@ -43,6 +43,11 @@ struct SettingsPaneTests {
         #expect(message == "Something specific from macOS")
     }
 
+    @Test func fixSoundSettingIsSearchable() {
+        #expect(SettingsPane.matching("sound").contains(.general))
+        #expect(SettingsPane.matching("chime").contains(.general))
+    }
+
     @Test func appsPaneIsSearchable() {
         #expect(SettingsPane.matching("apps").contains(.apps))
         #expect(SettingsPane.matching("kitty").contains(.apps))

@@ -14,6 +14,7 @@ final class AppState {
     private static let engineChoiceKey = "engineChoice"
     private static let shortcutKey = "proofreadShortcut"
     private static let verifyCorrectionsKey = "verifyCorrections"
+    private static let fixSoundKey = "playSoundOnFix"
 
     var engineChoice: EngineChoice {
         didSet {
@@ -42,6 +43,11 @@ final class AppState {
         didSet { UserDefaults.standard.set(verifyCorrectionsEnabled, forKey: Self.verifyCorrectionsKey) }
     }
 
+    /// Subtle tick when a correction lands in place. Default on.
+    var playSoundOnFix: Bool {
+        didSet { UserDefaults.standard.set(playSoundOnFix, forKey: Self.fixSoundKey) }
+    }
+
     let onboarding = OnboardingProgress()
     let store: ModelStore
     let downloads: ModelDownloadManager
@@ -64,6 +70,7 @@ final class AppState {
             shortcut = .default
         }
         verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
+        playSoundOnFix = UserDefaults.standard.object(forKey: Self.fixSoundKey) as? Bool ?? true
         store.cleanupPartials()
     }
 

@@ -44,7 +44,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
     /// What users type when hunting for a setting, beyond the pane title.
     var keywords: [String] {
         switch self {
-        case .general: ["launch", "login", "startup", "onboarding", "walkthrough", "counter"]
+        case .general: ["launch", "login", "startup", "onboarding", "walkthrough", "counter", "sound", "chime", "mute"]
         case .shortcut: ["hotkey", "keyboard", "record", "permission", "accessibility", "notifications"]
         case .engine: ["apple intelligence", "proofreading", "local", "on-device", "verify", "double-check", "experimental"]
         case .models: ["download", "gemma", "qwen", "disk", "delete", "storage"]

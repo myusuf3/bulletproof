@@ -7,6 +7,7 @@ struct GeneralSettingsView: View {
     @State private var launchAtLoginError: String?
 
     var body: some View {
+        @Bindable var appState = appState
         VStack(alignment: .leading, spacing: 0) {
             SettingsCard {
                 SettingRow(title: "Launch at login",
@@ -38,6 +39,13 @@ struct GeneralSettingsView: View {
                 if let launchAtLoginError {
                     SettingDivider()
                     SettingRow(title: "", description: launchAtLoginError) { EmptyView() }
+                }
+                SettingDivider()
+                SettingRow(title: "Sound when text is fixed",
+                           description: "A subtle chime each time a correction lands in place.") {
+                    Toggle("", isOn: $appState.playSoundOnFix)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                 }
             }
 

@@ -19,6 +19,9 @@ final class ProofreadServiceProvider: NSObject {
         let flashRect = SelectionLocator.selectionScreenRect()
         pboard.clearContents()
         pboard.setString(corrected, forType: .string)
+        if appState.playSoundOnFix {
+            UISound.correctionApplied()
+        }
         if let flashRect {
             Task {
                 try? await Task.sleep(for: .milliseconds(350))
