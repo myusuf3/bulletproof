@@ -4,6 +4,10 @@ import Carbon.HIToolbox
 /// Click-to-record shortcut field, shared by onboarding and Settings.
 struct ShortcutRecorderView: View {
     let combo: KeyCombo
+    /// Settings right-aligns the whole control so leading reads naturally;
+    /// onboarding centers the block, where a leading pill sits off-center
+    /// against its wider caption.
+    var alignment: HorizontalAlignment = .leading
     let onChange: (KeyCombo) -> Void
 
     @State private var isRecording = false
@@ -12,7 +16,7 @@ struct ShortcutRecorderView: View {
     @State private var monitor: Any?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: alignment, spacing: 6) {
             Button(action: toggleRecording) {
                 Text(capsuleText)
                     .font(.system(size: 13, weight: .medium, design: .rounded))

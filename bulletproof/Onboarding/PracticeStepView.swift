@@ -28,7 +28,12 @@ struct PracticeStepView: View {
         }
         .onAppear {
             installMonitor()
-            HotkeyDispatcher.shared.practiceHandler = { session.hotkeyFired(engine: appState.makeEngine()) }
+            HotkeyDispatcher.shared.practiceHandler = { session.hotkeyFired(engine: appState.makeEngine(recordsStats: false)) }
+        }
+        .onChange(of: session.stage) { _, stage in
+            if stage == .success {
+                UISound.practiceSuccess()
+            }
         }
         .onDisappear {
             removeMonitor()
@@ -60,7 +65,7 @@ struct PracticeStepView: View {
         .background(Color(nsColor: .textBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(
-            isSuccess ? Color.green.opacity(0.6) : Color(nsColor: .separatorColor)))
+            isSuccess ? Color.accentColor.opacity(0.7) : Color(nsColor: .separatorColor)))
         .overlay {
             if isProofreading && !reduceMotion {
                 ShimmerOverlay()

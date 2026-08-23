@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A single on-screen key that visually travels down when its physical key is
-/// held, and flashes green when the chord fires.
+/// held, and flashes in the accent color when the chord fires.
 struct KeycapView: View {
     let symbol: String
     var label: String? = nil
@@ -27,7 +27,7 @@ struct KeycapView: View {
         .frame(height: 50)
         .background(
             RoundedRectangle(cornerRadius: 9)
-                .fill(isSuccess ? Color.green.opacity(0.22)
+                .fill(isSuccess ? Color.accentColor.opacity(0.22)
                                 : Color(nsColor: .controlBackgroundColor))
                 // Two shadows: a tight contact shadow plus a soft drop shadow.
                 // Pressing collapses the drop, which sells the key travel.
@@ -46,7 +46,7 @@ struct KeycapView: View {
                     lineWidth: 1
                 )
         )
-        .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(.green, lineWidth: isSuccess ? 2 : 0))
+        .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Color.accentColor, lineWidth: isSuccess ? 2 : 0))
         .offset(y: isPressed && !reduceMotion ? 3 : 0)
         .animation(.spring(duration: 0.12, bounce: 0.25), value: isPressed)
         .animation(.spring(duration: 0.3), value: isSuccess)
@@ -55,7 +55,7 @@ struct KeycapView: View {
 
 /// A chord rendered as keycaps: modifiers in canonical ⌃⌥⇧⌘ order, then the
 /// key. Modifier caps depress live from pressedModifiers; the key cap only
-/// flashes green with the rest on fire (Carbon consumes its keyDown, so it is
+/// flashes with the rest on fire (Carbon consumes its keyDown, so it is
 /// never observed live).
 struct KeycapRow: View {
     let combo: KeyCombo
