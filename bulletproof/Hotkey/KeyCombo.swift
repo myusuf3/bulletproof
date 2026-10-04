@@ -8,6 +8,8 @@ nonisolated struct KeyCombo: Codable, Hashable {
     var modifierRawValue: UInt
 
     static let `default` = KeyCombo(keyCode: UInt32(kVK_ANSI_P), modifiers: [.command, .shift])
+    /// Hold-to-talk, the convention dictation apps share.
+    static let dictationDefault = KeyCombo(keyCode: UInt32(kVK_Space), modifiers: .option)
 
     init(keyCode: UInt32, modifiers: NSEvent.ModifierFlags) {
         self.keyCode = keyCode

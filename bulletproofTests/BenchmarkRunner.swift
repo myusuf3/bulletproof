@@ -44,7 +44,8 @@ struct BenchmarkRunner {
             engines.append(("appleIntelligence", AppleIntelligenceEngine()))
         }
         let store = ModelStore()
-        for id in store.installedModelIDs() {
+        let proofreaders = ModelCatalog.proofreadingIDs(installed: store.installedModelIDs())
+        for id in proofreaders {
             engines.append(("local(\(id))", LocalModelEngine(modelDirectory: store.directory(for: id))))
         }
         try #require(!engines.isEmpty, "no engines available to benchmark")
@@ -54,7 +55,7 @@ struct BenchmarkRunner {
         var variants: [(String, any ProofreadingEngine)] = engines.map {
             ($0.0, OutputGatedEngine(wrapped: $0.1))
         }
-        if let scorerID = store.installedModelIDs().sorted().first {
+        if let scorerID = proofreaders.sorted().first {
             let scorer = MLXSpanScorer(modelDirectory: store.directory(for: scorerID))
             variants += engines.map {
                 ("\($0.0)+scored", ScoredGateEngine(wrapped: OutputGatedEngine(wrapped: $0.1),

@@ -103,7 +103,7 @@ actor ResidencyCache<Resource: Sendable> {
 nonisolated enum LocalModelRuntime {
     static let shared = ResidencyCache<ModelContainer>(
         idleTimeout: .seconds(300),
-        onEvict: { MLX.GPU.clearCache() }
+        onEvict: { MLX.Memory.clearCache() }
     ) { directory in
         guard FileManager.default.fileExists(
             atPath: directory.appendingPathComponent("config.json").path) else {
@@ -112,7 +112,7 @@ nonisolated enum LocalModelRuntime {
         let container = try await LLMModelFactory.shared.loadContainer(
             from: directory, using: #huggingFaceTokenizerLoader())
         // Keep MLX's buffer pool from hoarding freed memory between requests.
-        MLX.GPU.set(cacheLimit: 20 * 1024 * 1024)
+        MLX.Memory.cacheLimit = 20 * 1024 * 1024
         return container
     }
 }

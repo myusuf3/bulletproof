@@ -1,6 +1,10 @@
 import Foundation
 
 nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
+    enum Kind: Sendable, Hashable {
+        case proofreading, speech
+    }
+
     /// Hugging Face repo id, e.g. "mlx-community/Qwen3-4B-Instruct-2507-4bit".
     let id: String
     let displayName: String
@@ -11,9 +15,14 @@ nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
     /// Models tab. Judged against the other catalog entries, not absolutes.
     let speed: Int
     let accuracy: Int
+    var kind: Kind = .proofreading
+    /// Repo files to fetch; nil downloads the whole snapshot. Speech repos
+    /// ship training checkpoints ten times the size of the runtime model.
+    var files: [String]? = nil
 }
 
-/// Curated local backups for Apple Intelligence. Capped at 4B parameters so
+/// Curated downloads: speech-to-text for dictation, and proofreading
+/// backups for Apple Intelligence. Proofreaders are capped at 4B parameters so
 /// every 8 GB Apple silicon Mac can run them, and limited to architectures
 /// MLX Swift can actually load (qwen3, gemma3) - never list a model users
 /// can download but not run. Gemma 4 E4B joins once mlx-swift-lm registers
@@ -38,7 +47,33 @@ nonisolated enum ModelCatalog {
             speed: 3,
             accuracy: 4
         ),
+        whistle,
     ]
+
+    /// Cactus Whistle: on-device speech-to-text, one 16.9 MB file run by
+    /// the vendored Needle engine (Packages/Needle).
+    static let whistle = CatalogModel(
+        id: "Cactus-Compute/whistle",
+        displayName: "Whistle",
+        blurb: "Tiny, fast dictation in 7 languages - fully offline",
+        approxDownloadBytes: 16_919_407,
+        speed: 5,
+        accuracy: 4,
+        kind: .speech,
+        files: ["whistle.cact"]
+    )
+
+    static let whistleModelFile = "whistle.cact"
+
+    static var proofreading: [CatalogModel] { all.filter { $0.kind == .proofreading } }
+    static var speech: [CatalogModel] { all.filter { $0.kind == .speech } }
+
+    /// Installed models that can proofread. Orphans count: every model ever
+    /// dropped from the catalog was an MLX proofreading model.
+    static func proofreadingIDs(installed: [String]) -> [String] {
+        let speechIDs = Set(speech.map(\.id))
+        return installed.filter { !speechIDs.contains($0) }
+    }
 
     static func displayName(for id: String) -> String {
         all.first { $0.id == id }?.displayName ?? id

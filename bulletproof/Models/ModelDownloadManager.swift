@@ -27,6 +27,10 @@ final class ModelDownloadManager {
         }.sorted()
     }
 
+    var installedProofreadingModelIDs: [String] {
+        ModelCatalog.proofreadingIDs(installed: installedModelIDs)
+    }
+
     var totalInstalledBytes: Int64 {
         states.values.reduce(0) {
             if case .installed(let bytes) = $1 { $0 + bytes } else { $0 }
@@ -79,6 +83,7 @@ final class ModelDownloadManager {
         let partial = store.partialDirectory(for: model.id)
         do {
             let files = try await client.listFiles(repo: model.id)
+                .filter { model.files?.contains($0.rfilename) ?? true }
             let totalBytes = files.compactMap(\.size).reduce(0, +)
             try? FileManager.default.removeItem(at: partial)
             try FileManager.default.createDirectory(at: partial, withIntermediateDirectories: true)

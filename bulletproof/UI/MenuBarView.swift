@@ -7,6 +7,7 @@ struct MenuBarView: View {
     var body: some View {
         Text(engineStatus)
         Text("Proofread selection: \(appState.shortcut.displayString)")
+        Text("Dictate: hold \(appState.dictationShortcut.displayString)")
         if appState.history.wordsProofread > 0 {
             Text("\(appState.history.wordsProofread.formatted()) words proofread - all on-device")
         }

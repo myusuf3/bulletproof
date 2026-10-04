@@ -8,16 +8,16 @@ struct EngineSettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsCard {
                 SettingRow(title: "Proofreading engine",
-                           description: appState.downloads.installedModelIDs.isEmpty
+                           description: appState.downloads.installedProofreadingModelIDs.isEmpty
                                ? "Download a local model in Models to add backup engines."
                                : "Local models run fully on this Mac; the first proofread after switching loads the model.") {
-                    if appState.downloads.installedModelIDs.isEmpty {
+                    if appState.downloads.installedProofreadingModelIDs.isEmpty {
                         Text("Apple Intelligence")
                             .foregroundStyle(.secondary)
                     } else {
                         Picker("", selection: $appState.engineChoice) {
                             Text("Apple Intelligence").tag(EngineChoice.appleIntelligence)
-                            ForEach(appState.downloads.installedModelIDs, id: \.self) { id in
+                            ForEach(appState.downloads.installedProofreadingModelIDs, id: \.self) { id in
                                 Text(ModelCatalog.displayName(for: id))
                                     .tag(EngineChoice.local(modelID: id))
                             }
@@ -29,13 +29,13 @@ struct EngineSettingsView: View {
                 }
                 SettingDivider()
                 SettingRow(title: "Verify corrections",
-                           description: appState.downloads.installedModelIDs.isEmpty
+                           description: appState.downloads.installedProofreadingModelIDs.isEmpty
                                ? "Double-checks every correction with a local model before pasting. Download a model in Models to enable."
                                : "Double-checks every correction with the local model and blocks edits that don't read right. Experimental.") {
                     Toggle("", isOn: $appState.verifyCorrectionsEnabled)
                         .labelsHidden()
                         .toggleStyle(.switch)
-                        .disabled(appState.downloads.installedModelIDs.isEmpty)
+                        .disabled(appState.downloads.installedProofreadingModelIDs.isEmpty)
                 }
             }
 
