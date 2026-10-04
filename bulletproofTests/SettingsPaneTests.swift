@@ -72,4 +72,12 @@ struct SettingsPaneTests {
         #expect(SettingsPane.matching("rejections").contains(.statistics))
         #expect(SettingsPane.matching("log").contains(.statistics))
     }
+
+    @Test func dictationPaneIsSearchable() {
+        #expect(SettingsPane.matching("dictation") == [.dictation])
+        #expect(SettingsPane.matching("microphone").contains(.dictation))
+        #expect(SettingsPane.matching("voice").contains(.dictation))
+        #expect(SettingsPane.matching("whistle").contains(.dictation))
+        #expect(SettingsPane.matching("whistle").contains(.models))
+    }
 }
