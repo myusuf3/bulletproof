@@ -62,7 +62,7 @@ nonisolated enum DictationOverlayPhase: Equatable {
 
     private enum State {
         case idle
-        case recording(target: pid_t?, engine: any SpeechToTextEngine)
+        case recording(session: Int, target: pid_t?, engine: any SpeechToTextEngine)
         case transcribing
     }
 
@@ -70,16 +70,22 @@ nonisolated enum DictationOverlayPhase: Equatable {
     private let makeProofreader: () -> (any ProofreadingEngine)?
     private let shortcutDisplay: () -> String
     private let surface: any DictationSurface
+    private let maximumRecording: Duration
     private var state = State.idle
+    private var session = 0
 
+    /// maximumRecording caps a hold: if the key-up is ever lost, the mic
+    /// must still turn off - recording ends and what was said is typed.
     init(makeEngine: @escaping () -> any SpeechToTextEngine,
          makeProofreader: @escaping () -> (any ProofreadingEngine)?,
          shortcutDisplay: @escaping () -> String,
-         surface: any DictationSurface) {
+         surface: any DictationSurface,
+         maximumRecording: Duration = .seconds(300)) {
         self.makeEngine = makeEngine
         self.makeProofreader = makeProofreader
         self.shortcutDisplay = shortcutDisplay
         self.surface = surface
+        self.maximumRecording = maximumRecording
     }
 
     var isIdle: Bool {
@@ -116,12 +122,19 @@ nonisolated enum DictationOverlayPhase: Equatable {
             surface.show(.failed(error.localizedDescription))
             return
         }
-        state = .recording(target: surface.frontmostAppID(), engine: engine)
+        session += 1
+        let current = session
+        state = .recording(session: current, target: surface.frontmostAppID(), engine: engine)
         surface.show(.listening)
+        Task {
+            await surface.sleep(for: maximumRecording)
+            guard case .recording(current, _, _) = state else { return }
+            keyUp()
+        }
     }
 
     func keyUp() {
-        guard case .recording(let target, let engine) = state else { return }
+        guard case .recording(_, let target, let engine) = state else { return }
         let samples = surface.stopRecording()
         guard samples.count >= Self.minimumSamples else {
             state = .idle
