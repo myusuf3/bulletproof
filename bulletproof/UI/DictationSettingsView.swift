@@ -64,9 +64,9 @@ struct DictationSettingsView: View {
                 permissionRow
                 if microphoneStatus == .granted {
                     SettingDivider()
-                    SettingRow(title: "Test", description: "Speak - the wave should move with your voice.") {
+                    SettingRow(title: "Test", description: "Click Test and speak - the wave should move with your voice.") {
                         MicrophoneMeter(deviceUID: appState.microphoneUID)
-                            .frame(width: 180, height: 28)
+                            .frame(width: 240, height: 28)
                     }
                 }
             }
