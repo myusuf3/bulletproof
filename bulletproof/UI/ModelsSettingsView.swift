@@ -1,3 +1,4 @@
+import Speech
 import SwiftUI
 
 /// Models pane: a Superwhisper-style library table sitting directly on the
@@ -25,10 +26,14 @@ struct ModelsSettingsView: View {
                 .padding(.horizontal, 6)
                 .padding(.bottom, 6)
 
-                BuiltInEngineRow(issue: appState.appleIntelligenceIssue,
+                SectionCaption(title: "Proofreading")
+
+                BuiltInEngineRow(title: "Apple Intelligence", symbol: "sparkles", color: .indigo,
+                                 speed: 5, accuracy: 3,
+                                 issue: appState.appleIntelligenceIssue,
                                  statusWidth: Self.statusColumnWidth)
 
-                ForEach(ModelCatalog.all) { model in
+                ForEach(ModelCatalog.proofreading) { model in
                     ModelGridRow(model: model, manager: appState.downloads,
                                  statusWidth: Self.statusColumnWidth)
                 }
@@ -36,6 +41,18 @@ struct ModelsSettingsView: View {
                 ForEach(ModelCatalog.orphanIDs(installed: appState.downloads.installedModelIDs), id: \.self) { id in
                     OrphanGridRow(id: id, manager: appState.downloads, store: appState.store,
                                   statusWidth: Self.statusColumnWidth)
+                }
+
+                SectionCaption(title: "Speech to text")
+
+                BuiltInEngineRow(title: "Apple Speech", symbol: "mic.fill", color: .red,
+                                 speed: 4, accuracy: 4,
+                                 issue: SpeechTranscriber.isAvailable ? nil : "Not available on this Mac",
+                                 statusWidth: Self.statusColumnWidth)
+
+                ForEach(ModelCatalog.speech) { model in
+                    ModelGridRow(model: model, manager: appState.downloads,
+                                 statusWidth: Self.statusColumnWidth)
                 }
             }
 
@@ -56,7 +73,7 @@ struct ModelsSettingsView: View {
             Button("Delete All", role: .destructive) { appState.deleteAllModels() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This frees \(format(appState.downloads.totalInstalledBytes)) of disk space. If a local model is selected, proofreading switches back to Apple Intelligence. You can download models again anytime.")
+            Text("This frees \(format(appState.downloads.totalInstalledBytes)) of disk space. Proofreading and dictation switch back to Apple's built-in engines if they were using a downloaded model. You can download models again anytime.")
         }
     }
 
@@ -65,10 +82,30 @@ struct ModelsSettingsView: View {
     }
 }
 
-/// Apple Intelligence is *chosen* in Engine, but users look here to answer
-/// "what AI does this app have" - so the built-in engine is listed alongside
+/// Groups the table's rows by job; spans every column.
+private struct SectionCaption: View {
+    let title: String
+
+    var body: some View {
+        GridRow {
+            Text(title)
+                .font(.headline)
+                .padding(.leading, 6)
+                .padding(.top, 10)
+                .gridCellColumns(3)
+        }
+    }
+}
+
+/// Built-in engines are *chosen* in Engine and Dictation, but users look
+/// here to answer "what AI does this app have" - so they're listed alongside
 /// the downloadable ones, minus the download/delete affordances.
 private struct BuiltInEngineRow: View {
+    let title: String
+    let symbol: String
+    let color: Color
+    let speed: Int
+    let accuracy: Int
     let issue: String?
     let statusWidth: CGFloat
 
@@ -76,15 +113,15 @@ private struct BuiltInEngineRow: View {
         GridRow {
             HStack(spacing: 10) {
                 RoundedRectangle(cornerRadius: 7)
-                    .fill(Color.indigo.gradient)
+                    .fill(color.gradient)
                     .frame(width: 30, height: 30)
                     .overlay(
-                        Image(systemName: "sparkles")
+                        Image(systemName: symbol)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.white)
                     )
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Apple Intelligence")
+                    Text(title)
                     Text(issue ?? "Built into macOS - nothing to download")
                         .font(.system(size: 11))
                         .foregroundStyle(issue == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
@@ -92,7 +129,7 @@ private struct BuiltInEngineRow: View {
             }
             .padding(.leading, 6)
 
-            RatingBars(speed: 5, accuracy: 3)
+            RatingBars(speed: speed, accuracy: accuracy)
 
             HStack(spacing: 8) {
                 Text("Built in")
@@ -114,7 +151,12 @@ private struct ModelIcon: View {
     private var color: Color {
         modelID.localizedCaseInsensitiveContains("qwen") ? .purple
             : modelID.localizedCaseInsensitiveContains("gemma") ? .blue
+            : modelID.localizedCaseInsensitiveContains("whistle") ? .pink
             : .gray
+    }
+
+    private var symbol: String {
+        ModelCatalog.speech.contains { $0.id == modelID } ? "waveform" : "cpu"
     }
 
     var body: some View {
@@ -122,7 +164,7 @@ private struct ModelIcon: View {
             .fill(color.gradient)
             .frame(width: 30, height: 30)
             .overlay(
-                Image(systemName: "cpu")
+                Image(systemName: symbol)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
             )

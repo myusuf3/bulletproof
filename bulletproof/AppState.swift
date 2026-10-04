@@ -171,6 +171,7 @@ final class AppState {
         } else {
             Task { await LocalModelRuntime.shared.evictNow() }
         }
+        speechModel = .appleSpeech
         for id in store.installedModelIDs() {
             downloads.delete(id: id)
         }

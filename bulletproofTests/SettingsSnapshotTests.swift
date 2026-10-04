@@ -89,10 +89,31 @@ struct SettingsSnapshotTests {
     @Test func renderPaneContents() throws {
         try snapshotPane(GeneralSettingsView().environment(AppState.shared), width: 660, name: "pane-general")
         try snapshotPane(ShortcutSettingsPane().environment(AppState.shared), width: 660, name: "pane-shortcut")
+        try snapshotPane(DictationSettingsView().environment(AppState.shared), width: 660, name: "pane-dictation")
         try snapshotPane(EngineSettingsView().environment(AppState.shared), width: 660, name: "pane-engine")
         try snapshotPane(ModelsSettingsView().environment(AppState.shared), width: 660, name: "pane-models")
         try snapshotPane(AppsSettingsView().environment(AppState.shared), width: 660, name: "pane-apps")
         try snapshotPane(StatisticsSettingsView().environment(AppState.shared), width: 660, name: "pane-statistics")
         try snapshotPane(AboutSettingsView().environment(AppState.shared), width: 660, name: "pane-about")
+    }
+
+    @Test func renderDictationOverlay() throws {
+        let phases: [(String, DictationOverlayPhase)] = [
+            ("listening", .listening),
+            ("transcribing", .transcribing),
+            ("hint", .hint("Hold ⌥Space while you speak")),
+            ("failed", .failed(DictationError.modelNotInstalled.localizedDescription)),
+        ]
+        for (name, phase) in phases {
+            let model = DictationOverlayController.Model()
+            model.phase = phase
+            for i in 0..<AudioLevelHistory.capacity {
+                model.levels.push(Float(abs(sin(Double(i) / 3))) * 0.9)
+            }
+            try snapshotPane(DictationHUDView(model: model)
+                                 .frame(height: 100)
+                                 .background(Color.gray.opacity(0.4)),
+                             width: 480, name: "overlay-\(name)")
+        }
     }
 }

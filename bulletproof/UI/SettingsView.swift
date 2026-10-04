@@ -1,7 +1,7 @@
 import SwiftUI
 
 nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
-    case general, shortcut, engine, models, apps, practice, statistics, about
+    case general, shortcut, dictation, engine, models, apps, practice, statistics, about
 
     nonisolated var id: String { rawValue }
 
@@ -9,6 +9,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: "General"
         case .shortcut: "Shortcut"
+        case .dictation: "Dictation"
         case .engine: "Engine"
         case .models: "Models"
         case .apps: "Apps"
@@ -22,6 +23,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: "gearshape.fill"
         case .shortcut: "command"
+        case .dictation: "waveform"
         case .engine: "brain.fill"
         case .models: "arrow.down.circle.fill"
         case .apps: "square.grid.2x2.fill"
@@ -35,6 +37,7 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: .gray
         case .shortcut: .blue
+        case .dictation: .red
         case .engine: .purple
         case .models: .green
         case .apps: .teal
@@ -49,8 +52,9 @@ nonisolated enum SettingsPane: String, CaseIterable, Identifiable {
         switch self {
         case .general: ["launch", "login", "startup", "onboarding", "walkthrough", "counter", "sound", "chime", "mute"]
         case .shortcut: ["hotkey", "keyboard", "record", "permission", "accessibility", "notifications"]
+        case .dictation: ["speech", "voice", "microphone", "mic", "whistle", "transcribe", "talk", "speech to text", "permission"]
         case .engine: ["apple intelligence", "proofreading", "local", "on-device", "verify", "double-check", "experimental"]
-        case .models: ["download", "gemma", "qwen", "disk", "delete", "storage"]
+        case .models: ["download", "gemma", "qwen", "whistle", "speech", "disk", "delete", "storage"]
         case .apps: ["exclude", "disable", "per-app", "terminal", "kitty", "block"]
         case .practice: ["drill", "typing", "typos", "streak", "monkeytype", "daily", "train"]
         case .statistics: ["latency", "telemetry", "diagnostics", "log", "rejections", "outcomes", "history"]
@@ -92,7 +96,7 @@ struct SettingsView: View {
                 List(selection: $selection) {
                     let visible = SettingsPane.matching(query)
                     Section("General") {
-                        ForEach([SettingsPane.general, .shortcut].filter(visible.contains)) { pane in
+                        ForEach([SettingsPane.general, .shortcut, .dictation].filter(visible.contains)) { pane in
                             PaneRow(pane: pane)
                         }
                     }
@@ -134,6 +138,7 @@ struct SettingsView: View {
         switch selection ?? .general {
         case .general: GeneralSettingsView()
         case .shortcut: ShortcutSettingsPane()
+        case .dictation: DictationSettingsView()
         case .engine: EngineSettingsView()
         case .models: ModelsSettingsView()
         case .apps: AppsSettingsView()
