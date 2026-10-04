@@ -105,7 +105,8 @@ final class AppState {
     private func scoredIfEnabled(_ engine: any ProofreadingEngine,
                                  preferredModelID: String? = nil) -> any ProofreadingEngine {
         guard verifyCorrectionsEnabled,
-              let modelID = preferredModelID ?? store.installedModelIDs().sorted().first else {
+              let modelID = preferredModelID
+                ?? ModelCatalog.proofreadingIDs(installed: store.installedModelIDs()).sorted().first else {
             return engine
         }
         return ScoredGateEngine(wrapped: engine,
