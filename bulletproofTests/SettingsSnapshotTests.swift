@@ -97,6 +97,14 @@ struct SettingsSnapshotTests {
         try snapshotPane(AboutSettingsView().environment(AppState.shared), width: 660, name: "pane-about")
     }
 
+    @Test func renderOnboardingMicrophone() throws {
+        try snapshotWindow(MicrophoneStepView().environment(AppState.shared)
+                               .padding(40)
+                               .background(Color(white: 0.12))
+                               .environment(\.colorScheme, .dark),
+                           size: NSSize(width: 640, height: 420), name: "onboarding-microphone")
+    }
+
     @Test func renderDictationOverlay() throws {
         let phases: [(String, DictationOverlayPhase)] = [
             ("listening", .listening),

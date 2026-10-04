@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum OnboardingStep: Int, CaseIterable {
-    case welcome, shortcut, accessibility, practice, done
+    case welcome, shortcut, accessibility, microphone, practice, done
 }
 
 struct OnboardingView: View {
@@ -47,6 +47,7 @@ struct OnboardingView: View {
         case .welcome: welcome
         case .shortcut: ShortcutStepView()
         case .accessibility: AccessibilityStepView()
+        case .microphone: MicrophoneStepView()
         case .practice: PracticeStepView(session: practiceSession)
         case .done: done
         }
@@ -242,6 +243,8 @@ struct OnboardingView: View {
                 .padding(.bottom, 8)
             recapRow(icon: "keyboard",
                      text: "Select text anywhere and press \(appState.shortcut.displayString) to proofread it in place.")
+            recapRow(icon: "waveform",
+                     text: "Hold \(appState.dictationShortcut.displayString) and speak to type with your voice.")
             recapRow(icon: "cursorarrow.click.2",
                      text: "Right-clicking a selection and choosing Services > Proofread also works.")
             recapRow(icon: "gearshape",
