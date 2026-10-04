@@ -16,6 +16,8 @@
 		5ADE00000000000000000102 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 5ADE00000000000000000202 /* MLXLMCommon */; };
 		5ADE00000000000000000103 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 5ADE00000000000000000203 /* MLXHuggingFace */; };
 		5ADE00000000000000000104 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 5ADE00000000000000000204 /* Tokenizers */; };
+		5ADE00000000000000000105 /* Needle in Frameworks */ = {isa = PBXBuildFile; productRef = 5ADE00000000000000000205 /* Needle */; };
+		5AC0FFEE0000000000000010 /* Needle in Frameworks */ = {isa = PBXBuildFile; productRef = 5AC0FFEE000000000000000F /* Needle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +92,7 @@
 				5ADE00000000000000000102 /* MLXLMCommon in Frameworks */,
 				5ADE00000000000000000103 /* MLXHuggingFace in Frameworks */,
 				5ADE00000000000000000104 /* Tokenizers in Frameworks */,
+				5ADE00000000000000000105 /* Needle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,6 +105,7 @@
 				5AC0FFEE0000000000000008 /* MLXLMCommon in Frameworks */,
 				5AC0FFEE000000000000000A /* MLXHuggingFace in Frameworks */,
 				5AC0FFEE000000000000000D /* Tokenizers in Frameworks */,
+				5AC0FFEE0000000000000010 /* Needle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +171,7 @@
 				5ADE00000000000000000202 /* MLXLMCommon */,
 				5ADE00000000000000000203 /* MLXHuggingFace */,
 				5ADE00000000000000000204 /* Tokenizers */,
+				5ADE00000000000000000205 /* Needle */,
 			);
 			productName = "bulletproof-dev";
 			productReference = 5ADE00000000000000000001 /* bulletproof-dev.app */;
@@ -194,6 +199,7 @@
 				5AC0FFEE0000000000000007 /* MLXLMCommon */,
 				5AC0FFEE0000000000000009 /* MLXHuggingFace */,
 				5AC0FFEE000000000000000C /* Tokenizers */,
+				5AC0FFEE000000000000000F /* Needle */,
 			);
 			productName = bulletproof;
 			productReference = 5AED82243026BC0800F87BBB /* bulletproof.app */;
@@ -284,6 +290,7 @@
 				5AC0FFEE0000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				5AC0FFEE0000000000000004 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				5AC0FFEE000000000000000B /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				5AC0FFEE000000000000000E /* XCLocalSwiftPackageReference "Packages/Needle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5AED82253026BC0800F87BBB /* Products */;
@@ -766,6 +773,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		5AC0FFEE000000000000000E /* XCLocalSwiftPackageReference "Packages/Needle" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/Needle;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		5AC0FFEE0000000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -838,6 +852,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5AC0FFEE000000000000000B /* XCRemoteSwiftPackageReference "swift-transformers" */;
 			productName = Tokenizers;
+		};
+		5AC0FFEE000000000000000F /* Needle */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Needle;
+		};
+		5ADE00000000000000000205 /* Needle */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Needle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
