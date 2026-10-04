@@ -24,4 +24,17 @@ struct ModelCatalogTests {
     @Test func noOrphansWhenAllInstalledAreCataloged() {
         #expect(ModelCatalog.orphanIDs(installed: ModelCatalog.all.map(\.id)).isEmpty)
     }
+
+    @Test func whistleDownloadsOnlyTheRuntimeModel() {
+        // The repo also holds a 220 MB training checkpoint nobody needs.
+        #expect(ModelCatalog.speech == [ModelCatalog.whistle])
+        #expect(ModelCatalog.whistle.files == [ModelCatalog.whistleModelFile])
+    }
+
+    @Test func speechModelsNeverOfferThemselvesAsProofreaders() {
+        let installed = [ModelCatalog.whistle.id, ModelCatalog.proofreading[0].id, "mlx-community/retired-model"]
+        #expect(ModelCatalog.proofreadingIDs(installed: installed)
+                == [ModelCatalog.proofreading[0].id, "mlx-community/retired-model"])
+        #expect(!ModelCatalog.proofreading.contains(ModelCatalog.whistle))
+    }
 }

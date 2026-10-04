@@ -15,6 +15,10 @@ final class AppState {
     private static let shortcutKey = "proofreadShortcut"
     private static let verifyCorrectionsKey = "verifyCorrections"
     private static let fixSoundKey = "playSoundOnFix"
+    private static let dictationShortcutKey = "dictationShortcut"
+    private static let speechModelKey = "speechModel"
+    private static let microphoneKey = "microphoneUID"
+    private static let proofreadDictationKey = "proofreadDictation"
 
     var engineChoice: EngineChoice {
         didSet {
@@ -48,6 +52,29 @@ final class AppState {
         didSet { UserDefaults.standard.set(playSoundOnFix, forKey: Self.fixSoundKey) }
     }
 
+    var dictationShortcut: KeyCombo {
+        didSet {
+            if let data = try? JSONEncoder().encode(dictationShortcut) {
+                UserDefaults.standard.set(data, forKey: Self.dictationShortcutKey)
+            }
+            HotkeyDispatcher.shared.registerOrNotify(dictationShortcut, for: .dictation)
+        }
+    }
+
+    var speechModel: SpeechModelChoice {
+        didSet { UserDefaults.standard.set(speechModel.rawValue, forKey: Self.speechModelKey) }
+    }
+
+    /// CoreAudio UID of the chosen input; nil follows the system default.
+    var microphoneUID: String? {
+        didSet { UserDefaults.standard.set(microphoneUID, forKey: Self.microphoneKey) }
+    }
+
+    /// Run dictated text through the proofreading engine before inserting.
+    var proofreadDictation: Bool {
+        didSet { UserDefaults.standard.set(proofreadDictation, forKey: Self.proofreadDictationKey) }
+    }
+
     let onboarding = OnboardingProgress()
     let store: ModelStore
     let downloads: ModelDownloadManager
@@ -69,6 +96,16 @@ final class AppState {
         } else {
             shortcut = .default
         }
+        if let data = UserDefaults.standard.data(forKey: Self.dictationShortcutKey),
+           let saved = try? JSONDecoder().decode(KeyCombo.self, from: data) {
+            dictationShortcut = saved
+        } else {
+            dictationShortcut = .dictationDefault
+        }
+        speechModel = UserDefaults.standard.string(forKey: Self.speechModelKey)
+            .flatMap(SpeechModelChoice.init(rawValue:)) ?? .appleSpeech
+        microphoneUID = UserDefaults.standard.string(forKey: Self.microphoneKey)
+        proofreadDictation = UserDefaults.standard.bool(forKey: Self.proofreadDictationKey)
         verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
         playSoundOnFix = UserDefaults.standard.object(forKey: Self.fixSoundKey) as? Bool ?? true
         store.cleanupPartials()
@@ -99,13 +136,27 @@ final class AppState {
         }
     }
 
+    func makeSpeechEngine() -> any SpeechToTextEngine {
+        switch speechModel {
+        case .appleSpeech:
+            AppleSpeechEngine()
+        case .whistle:
+            WhistleSpeechEngine(modelFile: whistleModelFile)
+        }
+    }
+
+    var whistleModelFile: URL {
+        store.directory(for: ModelCatalog.whistle.id).appendingPathComponent(ModelCatalog.whistleModelFile)
+    }
+
     /// The scorer is the resident local model - it also judges Apple
     /// Intelligence output (scorer and generator need not match). Without an
     /// installed model the gate silently stays out of the chain.
     private func scoredIfEnabled(_ engine: any ProofreadingEngine,
                                  preferredModelID: String? = nil) -> any ProofreadingEngine {
         guard verifyCorrectionsEnabled,
-              let modelID = preferredModelID ?? store.installedModelIDs().sorted().first else {
+              let modelID = preferredModelID
+                ?? ModelCatalog.proofreadingIDs(installed: store.installedModelIDs()).sorted().first else {
             return engine
         }
         return ScoredGateEngine(wrapped: engine,
@@ -120,6 +171,7 @@ final class AppState {
         } else {
             Task { await LocalModelRuntime.shared.evictNow() }
         }
+        speechModel = .appleSpeech
         for id in store.installedModelIDs() {
             downloads.delete(id: id)
         }
