@@ -4,6 +4,8 @@
 <dict>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>bulletproof listens only while you hold the dictation shortcut, and transcribes on this Mac.</string>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/myusuf3/bulletproof/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>

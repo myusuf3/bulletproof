@@ -4,6 +4,7 @@ import Carbon.HIToolbox
 /// Click-to-record shortcut field, shared by onboarding and Settings.
 struct ShortcutRecorderView: View {
     let combo: KeyCombo
+    var slot: HotkeySlot = .proofread
     /// Settings right-aligns the whole control so leading reads naturally;
     /// onboarding centers the block, where a leading pill sits off-center
     /// against its wider caption.
@@ -71,7 +72,7 @@ struct ShortcutRecorderView: View {
         HotkeyDispatcher.shared.isSuspended = true
         // Release the current chord so pressing it lands in the local monitor
         // (Carbon would otherwise consume it and the press would feel dead).
-        HotkeyDispatcher.shared.unregister()
+        HotkeyDispatcher.shared.unregister(slot)
         monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
             handle(event)
         }
@@ -87,7 +88,7 @@ struct ShortcutRecorderView: View {
         HotkeyDispatcher.shared.isSuspended = false
         // Re-register whatever combo is current (the committed one on accept,
         // the old one on cancel).
-        HotkeyDispatcher.shared.register(AppState.shared.shortcut)
+        HotkeyDispatcher.shared.register(HotkeyDispatcher.shared.combo(for: slot), for: slot)
     }
 
     /// Returns nil to swallow keystrokes while recording.
@@ -104,11 +105,17 @@ struct ShortcutRecorderView: View {
             let candidate = KeyCombo(keyCode: UInt32(event.keyCode), modifiers: event.modifierFlags)
             switch KeyComboValidator.validate(candidate) {
             case .ok:
+                if let other = HotkeySlot.allCases.first(where: {
+                    $0 != slot && HotkeyDispatcher.shared.combo(for: $0) == candidate
+                }) {
+                    verdictMessage = "\(candidate.displayString) is already your \(other.title) shortcut."
+                    return nil
+                }
                 stopRecording()
-                if HotkeyDispatcher.shared.register(candidate) {
+                if HotkeyDispatcher.shared.register(candidate, for: slot) {
                     onChange(candidate)
                 } else {
-                    HotkeyDispatcher.shared.register(combo)
+                    HotkeyDispatcher.shared.register(combo, for: slot)
                     verdictMessage = "That shortcut is taken by another app."
                 }
             case .needsModifier:
