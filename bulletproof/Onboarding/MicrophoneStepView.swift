@@ -24,8 +24,8 @@ struct MicrophoneStepView: View {
             case .granted:
                 VStack(spacing: 8) {
                     MicrophoneMeter(deviceUID: appState.microphoneUID)
-                        .frame(width: 220, height: 34)
-                    Label("Microphone ready - say something", systemImage: "checkmark.circle.fill")
+                        .frame(width: 280, height: 34)
+                    Label("Microphone ready - click Test and say something", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.secondary)
                 }
                 .padding(.top, 10)

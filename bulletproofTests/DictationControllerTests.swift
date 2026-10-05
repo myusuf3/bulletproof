@@ -13,6 +13,10 @@ private final class FakeDictationSurface: DictationSurface {
     var startError: Error?
     /// Simulates the user switching apps while transcription runs.
     var onSleep: () -> Void = {}
+    /// When set, the recording cap (the only long sleep) waits for
+    /// releaseOldestCap() instead of elapsing at once.
+    var holdsCap = false
+    private var capWaiters: [CheckedContinuation<Void, Never>] = []
 
     private(set) var requestedMicrophone = false
     private(set) var requestedAccessibility = false
@@ -44,7 +48,15 @@ private final class FakeDictationSurface: DictationSurface {
     }
     func hideOverlay() { overlayHidden = true }
     func notify(title: String, body: String) { notifications.append(title) }
-    func sleep(for duration: Duration) async { onSleep() }
+    func sleep(for duration: Duration) async {
+        guard duration < .seconds(1) else {
+            if holdsCap { await withCheckedContinuation { capWaiters.append($0) } }
+            return
+        }
+        onSleep()
+    }
+    func releaseOldestCap() { capWaiters.removeFirst().resume() }
+    var pendingCaps: Int { capWaiters.count }
 }
 
 private struct FakeSpeechEngine: SpeechToTextEngine {
@@ -227,6 +239,35 @@ struct DictationControllerTests {
         await dictate(controller, surface)
 
         #expect(surface.pasteboard.string(forType: .string) == "copied meanwhile")
+    }
+
+    @Test func recordingEndsOnItsOwnIfTheReleaseIsLost() async {
+        // The fake sleep returns at once, so the cap is reached immediately.
+        let surface = FakeDictationSurface()
+        surface.recorded = speech
+        let controller = makeController(surface)
+
+        controller.keyDown()
+        #expect(surface.isRecording)
+        while surface.isRecording || !controller.isIdle { await Task.yield() }
+
+        #expect(surface.pastedText == "hello world")
+    }
+
+    @Test func aLateCapNeverCutsShortTheNextRecording() async {
+        let surface = FakeDictationSurface()
+        surface.recorded = speech
+        surface.holdsCap = true
+        let controller = makeController(surface)
+
+        await dictate(controller, surface)
+        controller.keyDown()
+        while surface.pendingCaps < 2 { await Task.yield() }
+        // The first dictation's cap elapses during the second recording.
+        surface.releaseOldestCap()
+        for _ in 0..<20 { await Task.yield() }
+
+        #expect(surface.isRecording)
     }
 
     @Test func microphoneFailureShowsInTheOverlay() {

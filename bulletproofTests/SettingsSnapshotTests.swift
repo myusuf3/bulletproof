@@ -105,6 +105,11 @@ struct SettingsSnapshotTests {
                            size: NSSize(width: 640, height: 420), name: "onboarding-microphone")
     }
 
+    @Test func renderMicrophoneMeter() throws {
+        try snapshotWindow(MicrophoneMeter(deviceUID: nil).frame(width: 240, height: 28).padding(),
+                           size: NSSize(width: 280, height: 60), name: "microphone-meter")
+    }
+
     @Test func renderDictationOverlay() throws {
         let phases: [(String, DictationOverlayPhase)] = [
             ("listening", .listening),
