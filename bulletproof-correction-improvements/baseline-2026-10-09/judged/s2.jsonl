@@ -1,0 +1,31 @@
+{"id": "s2-004", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; pronoun case 'Me and him' not fixed."}
+{"id": "s2-009", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; article 'an user' not fixed."}
+{"id": "s2-014", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; agreement 'list ... are' not fixed."}
+{"id": "s2-018", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; 'between you and I' not fixed."}
+{"id": "s2-026", "engine": "appleIntelligence", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "note": "'most easiest' became ungrammatical 'most easy' instead of 'easiest'."}
+{"id": "s2-028", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed was->were; missed homophone there->their."}
+{"id": "s2-029", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; missed Weather->Whether and should of."}
+{"id": "s2-030", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed both typos; missed it's->its."}
+{"id": "s2-035", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Both fixed; also expanded I'd to I had (neutral)."}
+{"id": "s2-038", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; 'along with ... are' agreement not fixed."}
+{"id": "s2-041", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; 'suggested me to apply' not fixed."}
+{"id": "s2-042", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; comma splice left in place."}
+{"id": "s2-046", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Swapped principle for synonym 'primary' instead of correcting to 'principal'."}
+{"id": "s2-047", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "Correct past->passed fix; gate rejected it as implausibleEdit."}
+{"id": "s2-049", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Missed your->you're; only capitalized i and added comma."}
+{"id": "s2-050", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Capitalized intentional lowercase hey/me; fixed neither 'me and Sam' nor 'should of'."}
+{"id": "s2-056", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed there->their; missed has->have agreement."}
+{"id": "s2-059", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed It's and would have; comma splice left."}
+{"id": "s2-062", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; tense 'are waiting since' not fixed."}
+{"id": "s2-063", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; 'has finished ... yesterday' not fixed."}
+{"id": "s2-064", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; 'quality ... are' agreement not fixed."}
+{"id": "s2-066", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed has->have; missed pronoun case 'Me and my team'."}
+{"id": "s2-004", "engine": "qwen3-4b", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; pronoun case 'Me and him' not fixed."}
+{"id": "s2-020", "engine": "qwen3-4b", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; comma splice left in place."}
+{"id": "s2-029", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed should of; missed Weather->Whether."}
+{"id": "s2-047", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "Correct past->passed fix; gate rejected it as implausibleEdit."}
+{"id": "s2-049", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "Fixed you're but uppercased lol->LOL, capitalized i, added period."}
+{"id": "s2-050", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "Capitalized intentional lowercase hey/me; fixed should have; missed 'me and Sam'."}
+{"id": "s2-062", "engine": "qwen3-4b", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed; tense 'are waiting since' not fixed."}
+{"id": "s2-066", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed has->have; missed pronoun case 'Me and my team'."}
+{"id": "s2-069", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed were and threw; missed alot->a lot."}

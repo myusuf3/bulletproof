@@ -1,0 +1,104 @@
+{"id": "s5-002", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase-by-choice text (Can't, Thursday)"}
+{"id": "s5-003", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "missed 'your welcome'; capitalized lowercase casual text"}
+{"id": "s5-004", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "omg -> OMG, i -> I; capitalized casual lowercase"}
+{"id": "s5-005", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "exact fix; gate rejected it as implausibleEdit"}
+{"id": "s5-007", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "fixed awful, added commas, kept lowercase and lol"}
+{"id": "s5-008", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "expanded 'ngl' to 'Honestly', capitalized i"}
+{"id": "s5-009", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text throughout"}
+{"id": "s5-010", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-011", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "lmao -> LMAO; changed casual casing"}
+{"id": "s5-012", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "formal rewrite: thx->Thanks, intro->introduction, added 'I'/'and I will'"}
+{"id": "s5-013", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "'could of shipped' -> 'could ship', meaning changed (past to future)"}
+{"id": "s5-015", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized Yo and i in lowercase casual text"}
+{"id": "s5-016", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "fixed whether, added comma, kept tbh and lowercase"}
+{"id": "s5-017", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "eng -> engineering, capitalized lowercase text"}
+{"id": "s5-018", "engine": "appleIntelligence", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "note": "'there going' -> ungrammatical 'there's going'; also capitalized OK"}
+{"id": "s5-019", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "lowkey -> Low-key, capitalized"}
+{"id": "s5-020", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-021", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "ugh/lol -> UGH/LOL"}
+{"id": "s5-022", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "fyi -> FYI, capitalized lowercase casual text"}
+{"id": "s5-023", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "removed rocket emoji, capitalized text"}
+{"id": "s5-024", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "srsly -> Seriously, added '?', capitalized"}
+{"id": "s5-026", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase-by-choice 'i' to 'I'"}
+{"id": "s5-027", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "bday -> Birthday, capitalized"}
+{"id": "s5-028", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "tmrw -> tomorrow, capitalized"}
+{"id": "s5-029", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "missed helpfull; capitalized and split sentence"}
+{"id": "s5-030", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-031", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-032", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "ya -> Yes, capitalized"}
+{"id": "s5-037", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks from path and BP_CONFIG; missed overriden"}
+{"id": "s5-039", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "identifier OOMKilled changed to 'OOM killed'"}
+{"id": "s5-040", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around max_retries"}
+{"id": "s5-042", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around --dry-run"}
+{"id": "s5-045", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around parseHeaders"}
+{"id": "s5-048", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "echoed input; 'Should of' not fixed"}
+{"id": "s5-052", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": "BLOCKED_BAD", "note": "stripped backticks from Codable, Settings, UserDefaults"}
+{"id": "s5-054", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "fixed their; capitalized after 'Ticket:' is neutral"}
+{"id": "s5-055", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "echoed input; 'Its' not fixed"}
+{"id": "s5-056", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around Package.resolved"}
+{"id": "s5-057", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around orders.customer_id"}
+{"id": "s5-058", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around @Observable"}
+{"id": "s5-059", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "backticks around main changed to single quotes"}
+{"id": "s5-060", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around python:3.12-slim"}
+{"id": "s5-061", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "backticks changed to double quotes; missed signficantly"}
+{"id": "s5-063", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "fixed occasionally; inserted 'the' is legit; gate rejected"}
+{"id": "s5-065", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual question"}
+{"id": "s5-068", "engine": "appleIntelligence", "verdict": "ANSWERED", "gate_verdict": "BLOCKED_BAD", "note": "translated sentence into Spanish instead of correcting it"}
+{"id": "s5-070", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "exact fix; gate rejected it as implausibleEdit"}
+{"id": "s5-071", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "lol -> LOL, i'm -> I'm, restructured punctuation"}
+{"id": "s5-072", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "expanded ngl/tbh, removed fire emoji"}
+{"id": "s5-073", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "omw -> Omw, capitalized"}
+{"id": "s5-077", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "backticked command changed to single quotes"}
+{"id": "s5-078", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "stripped backticks around user_id"}
+{"id": "s5-079", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": "BLOCKED_BAD", "note": "identifier Qwen3-4B changed to Qwen-4B"}
+{"id": "s5-001", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "fixed weird, added commas, kept lowercase/lol/tbh"}
+{"id": "s5-002", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase-by-choice text"}
+{"id": "s5-003", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized text, added extra '!'"}
+{"id": "s5-004", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "omg -> OMG, i -> I, added period"}
+{"id": "s5-005", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, Haha/I, comma to '!'"}
+{"id": "s5-006", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "brb -> Brb, split sentences, capitalized"}
+{"id": "s5-007", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-008", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "ngl -> NGL, i -> I"}
+{"id": "s5-009", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-010", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized; comma to semicolon"}
+{"id": "s5-011", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-012", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "thx -> Thanks, 'will' -> 'I'll', capitalized"}
+{"id": "s5-013", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized ok/i/friday"}
+{"id": "s5-014", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized; added em dash and period"}
+{"id": "s5-015", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized Yo and i"}
+{"id": "s5-016", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "tbh -> TBH, capitalized"}
+{"id": "s5-017", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-018", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "fixed they're but capitalized OK, added semicolon"}
+{"id": "s5-019", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, comma to semicolon"}
+{"id": "s5-020", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-021", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "ugh -> Ugh, capitalized"}
+{"id": "s5-022", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "fyi -> FYI, inserted 'there's', capitalized"}
+{"id": "s5-023", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "'nice!!' -> 'Nice!', em dash, capitalized"}
+{"id": "s5-024", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, added '?', period"}
+{"id": "s5-025", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "idk expanded to \"I don't know\""}
+{"id": "s5-026", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "lol -> LOL, capitalized"}
+{"id": "s5-027", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "bday -> birthday, 'happy bday!!' -> 'Happy birthday!'"}
+{"id": "s5-028", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "tmrw -> tomorrow, capitalized"}
+{"id": "s5-029", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, comma to semicolon"}
+{"id": "s5-030", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, comma to em dash"}
+{"id": "s5-031", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual text"}
+{"id": "s5-032", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "ya -> Yes, capitalized"}
+{"id": "s5-033", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "all three errors fixed; capital/period on technical sentence; gate rejected"}
+{"id": "s5-041", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase tweet"}
+{"id": "s5-043", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "fixed instead; capital after TODO and 'a 400' are neutral"}
+{"id": "s5-051", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "fixed errors but expanded aren't -> are not"}
+{"id": "s5-054", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "fixed their; capitalized after 'Ticket:' is neutral"}
+{"id": "s5-055", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "altered backticked flag: '--output <path>' -> '--output<path>'"}
+{"id": "s5-056", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "chore -> Chore, swift-argument-parser -> Swift-Argument-Parser"}
+{"id": "s5-061", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "exact fix; gate falsely flagged protectedWordRemoved"}
+{"id": "s5-063", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase tweet, use -> usage"}
+{"id": "s5-065", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual question"}
+{"id": "s5-068", "engine": "qwen3-4b", "verdict": "ANSWERED", "gate_verdict": null, "note": "obeyed instruction framing: dropped 'Translate this to Spanish:' prefix"}
+{"id": "s5-069", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized lowercase casual question"}
+{"id": "s5-070", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "exact fix; gate rejected it as implausibleEdit"}
+{"id": "s5-071", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "lol -> LOL, mins -> minutes, capitalized"}
+{"id": "s5-072", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "ngl/tbh -> NGL/TBH, added 'the', capitalized"}
+{"id": "s5-073", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "omw changed to OMG, meaning changed"}
+{"id": "s5-074", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "capitalized, comma to em dash, added period"}
+{"id": "s5-075", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "ok -> OK, added comma"}
+{"id": "s5-079", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "mustPreserve 'Apple silicon' changed to 'Apple Silicon'"}

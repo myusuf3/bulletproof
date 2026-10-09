@@ -1,0 +1,29 @@
+{"id": "s1-005", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "fixed occurred but reworded \"deploy\" to \"deployment\""}
+{"id": "s1-006", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-009", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "echoed input; \"Im\" not fixed"}
+{"id": "s1-011", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-019", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "expanded contractions: \"It has been\", \"I am\" - formalized casual voice"}
+{"id": "s1-021", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-035", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "\"dont\" expanded to \"do not\" instead of \"don't\" - formalized"}
+{"id": "s1-037", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "\"its\" expanded to \"it is\" instead of \"it's\" - formalized"}
+{"id": "s1-050", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-053", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "\"cannot\", \"we will\" instead of \"can't\", \"we'll\" - formalized"}
+{"id": "s1-056", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-057", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "\"there is\" instead of \"there's\" - formalized"}
+{"id": "s1-059", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-063", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "all 3 typos fixed; verify gate rejected it, user keeps typos"}
+{"id": "s1-068", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "all fixed; added correct comma before \"and\""}
+{"id": "s1-006", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "capitalized \"Can\" (corpus-accepted); verify gate rejected correct fix"}
+{"id": "s1-007", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "fixed; capitalized \"I\" and added period (both corpus-accepted)"}
+{"id": "s1-011", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-021", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-030", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "all fixed; capitalized \"Follow\" after colon - neutral style"}
+{"id": "s1-044", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "fixed; capitalized \"I\" and added period (both corpus-accepted)"}
+{"id": "s1-050", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-056", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-059", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "correct fix; verify gate rejected it (implausibleEdit), user keeps typos"}
+{"id": "s1-061", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "all 4 fixed but changed \"to have a\" to \"to have had\" (tense change)"}
+{"id": "s1-063", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "all 3 typos fixed; verify gate rejected it, user keeps typos"}
+{"id": "s1-068", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "all fixed; added correct comma before \"and\""}
+{"id": "s1-072", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "clean control: capitalized intentional lowercase, added period"}
+{"id": "s1-076", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": "BLOCKED_BAD", "note": "clean control: capitalized \"Confirm\" after colon (minor, unrequested)"}
