@@ -47,18 +47,40 @@ def edit_count(a, b):
     return sum(max(i2 - i1, j2 - j1) for op, i1, i2, j1, j2 in sm.get_opcodes() if op != "equal")
 
 
+def case_edits(a, b):
+    """Words that match ignoring case but differ in casing ("hey" -> "Hey").
+    Catches restyled casing even when the input isn't all-lowercase."""
+    wa, wb = re.findall(r"[A-Za-z0-9']+", norm(a)), re.findall(r"[A-Za-z0-9']+", norm(b))
+    sm = difflib.SequenceMatcher(a=[w.lower() for w in wa], b=[w.lower() for w in wb], autojunk=False)
+    return sum(wa[i1 + k] != wb[j1 + k]
+               for op, i1, i2, j1, j2 in sm.get_opcodes() if op == "equal" for k in range(i2 - i1))
+
+
 def error_fixed(err, inp, out):
     if "->" not in err:
         return None
     wrong, right = [p.strip() for p in err.split("->", 1)]
     if not wrong or not right:
         return None
-    pat = lambda s: re.compile(r"(?<![\w'])" + re.escape(norm(s).lower()) + r"(?![\w'])")
-    n_in = len(pat(wrong).findall(norm(inp).lower()))
+    # Casing-only errors ("friday -> Friday") must be checked case-sensitively,
+    # otherwise they can never register as fixed.
+    fold = (lambda s: norm(s)) if norm(wrong).lower() == norm(right).lower() else (lambda s: norm(s).lower())
+    pat = lambda s: re.compile(r"(?<![\w'])" + re.escape(fold(s)) + r"(?![\w'])")
+    i, o = fold(inp), fold(out)
+    n_in = len(pat(wrong).findall(i))
     if n_in == 0:
         return None
-    o = norm(out).lower()
-    return len(pat(wrong).findall(o)) < n_in and bool(pat(right).search(o))
+    rights = [r.strip() for r in right.split("/") if r.strip()]  # "am -> a.m./AM"
+    # Punctuation additions ("However -> However,"): the wrong form is a prefix
+    # of the right one, so count the right form instead.
+    if any(fold(wrong) in fold(r) for r in rights):
+        return any(len(pat(r).findall(o)) > len(pat(r).findall(i)) for r in rights)
+    return len(pat(wrong).findall(o)) < n_in and any(pat(r).search(o) for r in rights)
+
+
+def starts_lowercase(text):
+    first = next((c for c in text if c.isalpha()), "")
+    return first.islower()
 
 
 def is_lowercase_style(text):
@@ -84,9 +106,12 @@ def row_flags(case, out):
     acc = case["expected"].get("acceptableOutputs", [])
     # Style checks apply only where the case's own target keeps the style
     # (dictation is lowercase by accident, and its fix is capitalization).
-    target = acc[0] if acc else inp
-    in_slang = {w for w in re.findall(r"[a-z]+", inp) if w in SLANG and w in re.findall(r"[a-z]+", target)}
-    out_tokens = set(re.findall(r"[A-Za-z]+", text))
+    # Style is required only when every acceptable output keeps it (a case
+    # that also accepts "Can you..." doesn't require lowercase).
+    targets = acc or [inp]
+    word_set = lambda t: set(re.findall(r"[A-Za-z]+", t))  # whole words, case as typed
+    in_slang = {w for w in word_set(inp) if w in SLANG and all(w in word_set(t) for t in targets)}
+    out_tokens = word_set(text)
     flags = {
         "rejected": rejected,
         "clean_preserved": norm(text) == norm(inp) if case["expected"]["kind"] == "unchanged" else None,
@@ -95,8 +120,16 @@ def row_flags(case, out):
         # Word edits away from the nearest acceptable output (or from the input
         # for clean controls): rewording, dropped/added words, missed fixes.
         "extra_edits": min((edit_count(a, text) for a in acc), default=edit_count(inp, text)),
+        # Casing restyle only counts where every target keeps a lowercase start
+        # (casual typing); dictation targets are capitalized on purpose.
+        "case_edits": min((case_edits(a, text) for a in acc), default=case_edits(inp, text))
+        if all(starts_lowercase(t) for t in targets) else 0,
+        # The opposite failure (dictation): a capital every target has is missing
+        # at the start of the text or on a standalone "i".
+        "missed_caps": bool(acc) and all(not starts_lowercase(t) for t in acc) and (
+            starts_lowercase(text) or bool(re.search(r"(?<![\w'])i(?![\w])", norm(text)))),
         "lowercase_kept": (not any(c.isupper() for c in text if c.isalpha()))
-        if is_lowercase_style(inp) and is_lowercase_style(target) else None,
+        if is_lowercase_style(inp) and all(is_lowercase_style(t) for t in targets) else None,
         "contraction_expanded": bool(len(CONTRACTION_EXPANSIONS.findall(text))
                                      > max(len(CONTRACTION_EXPANSIONS.findall(inp)),
                                            max((len(CONTRACTION_EXPANSIONS.findall(a)) for a in acc), default=0))),
@@ -109,13 +142,29 @@ def row_flags(case, out):
     errs = [error_fixed(e, inp, text) for e in case.get("errors", [])]
     errs = [e for e in errs if e is not None]
     flags["errors_fixed"], flags["errors_checkable"] = sum(errs), len(errs)
+    flags["style_broken"] = bool(flags["contraction_expanded"] or flags["case_edits"] > 0
+                                 or flags["missed_caps"] or any(
+        flags[k] is False for k in ("lowercase_kept", "slang_kept", "code_kept",
+                                    "must_preserve_kept", "linebreaks_kept")))
+    flags["pass"] = row_pass(case, flags)
     return flags
 
 
-def summarize(rows, corpus, layer):
+def row_pass(case, f):
+    """Strict "fixed my mistakes, left everything else alone": not rejected, no
+    style check broken, clean controls untouched, every checkable error fixed
+    and no word edits beyond the nearest acceptable output."""
+    if f["rejected"] or f["style_broken"]:
+        return False
+    if case["expected"]["kind"] == "unchanged":
+        return bool(f["clean_preserved"])
+    return f["errors_fixed"] == f["errors_checkable"] and f["extra_edits"] == 0
+
+
+def summarize(rows, corpus, layer, ids=None):
     by = defaultdict(list)
     for r in rows:
-        if r["id"] not in corpus:
+        if r["id"] not in corpus or (ids is not None and r["id"] not in ids):
             continue
         out = r["raw"] if layer == "raw" else r.get("scored")
         if layer == "raw" and out is None:
@@ -127,8 +176,13 @@ def summarize(rows, corpus, layer):
         rate = lambda k: (lambda v: round(sum(v) / len(v), 4) if v else None)([x[k] for x in f if x[k] is not None])
         ms = sorted(x[0]["ms"] for x in items)
         fixed, checkable = sum(x["errors_fixed"] for x in f), sum(x["errors_checkable"] for x in f)
+        per_slice = defaultdict(list)
+        for r, x in items:
+            per_slice[r["id"].split("-")[0]].append(x["pass"])
         result[eng] = {
             "n": len(f),
+            "pass_rate": rate("pass"),
+            **{f"pass_{s}": round(sum(v) / len(v), 4) for s, v in sorted(per_slice.items())},
             "errors_fixed_rate": round(fixed / checkable, 4) if checkable else None,
             "fix_exact_rate": rate("fix_exact"),
             "clean_preserved_rate": rate("clean_preserved"),
@@ -140,6 +194,7 @@ def summarize(rows, corpus, layer):
             "fix_echo_rate ↓": rate("fix_echo"),
             "contraction_expanded_rate ↓": rate("contraction_expanded"),
             "over_edit_rate ↓": round(sum(x["extra_edits"] > 0 for x in f) / len(f), 4),
+            "case_restyled_rate ↓": round(sum(x["case_edits"] > 0 for x in f) / len(f), 4),
             "mean_extra_edits ↓": round(sum(x["extra_edits"] for x in f) / len(f), 3),
             "rejected_rate ↓": rate("rejected"),
             "p50_ms ↓": round(ms[len(ms) // 2]),
@@ -197,18 +252,20 @@ def main():
     ap.add_argument("--compare")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--calibrate", action="store_true")
+    ap.add_argument("--ids", help="file with one case id per line (e.g. a split); others are ignored")
     a = ap.parse_args()
     corpus = load_corpus(a.corpus)
     if a.calibrate:
         calibrate(corpus)
         return
+    ids = set(Path(a.ids).read_text().split()) if a.ids else None
     load = lambda p: [json.loads(l) for l in Path(p).read_text().splitlines() if l.strip()]
-    res = summarize(load(a.outputs), corpus, a.layer)
+    res = summarize(load(a.outputs), corpus, a.layer, ids)
     if a.json:
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return
     print(f"layer: {a.layer}")
-    print_table(res, summarize(load(a.compare), corpus, a.layer) if a.compare else None)
+    print_table(res, summarize(load(a.compare), corpus, a.layer, ids) if a.compare else None)
 
 
 if __name__ == "__main__":
