@@ -6,7 +6,7 @@ Usage:
   python3 analysis/metrics.py --calibrate                        # agreement with the baseline judges
 
 RUN_OUTPUTS.jsonl rows are the runner's output: {id, engine, input, raw, gated, scored, ms, ...}.
-"user_sees" is the `scored` column (verify gate on); "raw" is the model output.
+"user_sees" is the `scored` column (verify gate on); "gated" is after OutputGate only; "raw" is the model output.
 
 Every metric is deterministic. Higher-is-better unless the name says otherwise (marked ↓).
 None of them replaces the judge for meaning changes - see --calibrate for how far they get.
@@ -166,7 +166,7 @@ def summarize(rows, corpus, layer, ids=None):
     for r in rows:
         if r["id"] not in corpus or (ids is not None and r["id"] not in ids):
             continue
-        out = r["raw"] if layer == "raw" else r.get("scored")
+        out = r["raw"] if layer == "raw" else r.get("gated") if layer == "gated" else r.get("scored")
         if layer == "raw" and out is None:
             out = "ENGINE_FAILED"
         by[r["engine"]].append((r, row_flags(corpus[r["id"]], out)))
@@ -248,7 +248,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("outputs", nargs="?")
     ap.add_argument("--corpus", default=str(DEFAULT_CORPUS))
-    ap.add_argument("--layer", choices=["raw", "user_sees"], default="user_sees")
+    ap.add_argument("--layer", choices=["raw", "gated", "user_sees"], default="user_sees")
     ap.add_argument("--compare")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--calibrate", action="store_true")

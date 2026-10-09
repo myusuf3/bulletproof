@@ -1,0 +1,10 @@
+{
+  "_note": "Baseline prompt (commit 75e4a8a), fast harness, dev split (295) + guard (14). Constraints in checks.sh are relative to these.",
+  "pass_rate": 0.7627,
+  "pass_s1": 0.9492, "pass_s2": 0.9153, "pass_s3": 0.8305, "pass_s4": 0.6949, "pass_s5": 0.4237,
+  "errors_fixed_rate": 0.958,
+  "code_kept_rate": 1.0,
+  "linebreaks_kept_rate": 1.0,
+  "answered_count": 8,
+  "p95_ms": 2593
+}

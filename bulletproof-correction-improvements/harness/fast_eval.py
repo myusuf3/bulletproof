@@ -13,8 +13,8 @@ runner is checked by `--parity` against qwen-rerun-with-span-scores/.
 Not ported: protectedWordRemoved (the user's vocabulary has no promoted words,
 so it can't fire in this eval), the Apple Intelligence engine.
 
-Usage (needs the GPU-enabled venv, see harness/README.md):
-  .venv/bin/python harness/fast_eval.py --out OUT.jsonl [--split dev|holdout|all] [--ids FILE]
+Usage (needs the GPU-enabled venv, see harness/README.md), from bulletproof-correction-improvements/:
+  harness/.venv/bin/python harness/fast_eval.py --out OUT.jsonl [--split dev|holdout|all] [--ids FILE]
 """
 import argparse
 import hashlib
@@ -240,8 +240,11 @@ def verdict(r, o, suf, t):
 
 # --- Driver ---
 
-def load_cases(split, ids_file):
-    cases = [json.loads(l) for f in sorted(CORPUS.glob("slice*.jsonl")) for l in f.read_text().splitlines() if l.strip()]
+def load_cases(split, ids_file, cases_file=None):
+    files = [Path(cases_file)] if cases_file else sorted(CORPUS.glob("slice*.jsonl"))
+    cases = [json.loads(l) for f in files for l in f.read_text().splitlines() if l.strip()]
+    if cases_file:
+        return cases
     if ids_file:
         keep = set(Path(ids_file).read_text().split())
     elif split != "all":
@@ -256,12 +259,13 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--split", default="dev", choices=["dev", "holdout", "all"])
     ap.add_argument("--ids")
+    ap.add_argument("--cases", help="jsonl of {id, input} to run instead of the corpus (e.g. splits/guard.jsonl)")
     ap.add_argument("--no-cache", action="store_true")
     a = ap.parse_args()
 
     instructions, examples = load_prompt()
     thresholds = load_thresholds()
-    cases = load_cases(a.split, a.ids)
+    cases = load_cases(a.split, a.ids, a.cases)
     prompt_key = hashlib.sha256(json.dumps([instructions, examples]).encode()).hexdigest()[:16]
     CACHE.mkdir(exist_ok=True)
     cache_path = CACHE / f"gen-{prompt_key}.jsonl"
