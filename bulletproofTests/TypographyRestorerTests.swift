@@ -41,4 +41,11 @@ struct TypographyRestorerTests {
         #expect(TypographyRestorer.restore(original: "5kg", corrected: "6 kilograms") == "6 kilograms")
         #expect(TypographyRestorer.restore(original: "ran 5 miles", corrected: "ran 5 kilometers") == "ran 5 kilometers")
     }
+
+    @Test func emoticonsComeBackWhole() {
+        #expect(TypographyRestorer.restore(original: "i.e. we ship monday, not tuesday :P", corrected: "i.e. we ship monday, not tuesday: P")
+                == "i.e. we ship monday, not tuesday :P")
+        #expect(TypographyRestorer.restore(original: "ok :-) bye", corrected: "ok : -) bye") == "ok :-) bye")
+        #expect(TypographyRestorer.restore(original: "see you :)", corrected: "See you :)") == "See you :)")
+    }
 }

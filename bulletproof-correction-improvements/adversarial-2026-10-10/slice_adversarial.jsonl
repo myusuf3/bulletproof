@@ -119,3 +119,23 @@
 {"id": "s5-d18", "input": "ping me on the #infra-alerts channel if it brakes again", "expected": {"kind": "fix", "acceptableOutputs": ["ping me on the #infra-alerts channel if it breaks again"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
 {"id": "s1-d19", "input": "The function getUserById returns null when the id is missing.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
 {"id": "s5-d20", "input": "its 9am-5pm mon-fri, closed on weekends", "expected": {"kind": "fix", "acceptableOutputs": ["it's 9am-5pm mon-fri, closed on weekends"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-e01", "input": "the docs are at www.example.com/guide and exmaple.org/faq", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e02", "input": "ask @jane_doe, she wrote the migraton script", "expected": {"kind": "fix", "acceptableOutputs": ["ask @jane_doe, she wrote the migration script"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e03", "input": "haha ok :-) see you there ;)", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e04", "input": "that was hilarous xD <3", "expected": {"kind": "fix", "acceptableOutputs": ["that was hilarious xD <3"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e05", "input": "posting it w/ #ThrowbackThursday b/c why not", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e06", "input": "coffee w/o sugar pls, thx", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e07", "input": "Bring snacks, e.g. chips, fruit, etc., and water.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e08", "input": "Add 1/2 cup of suger and 3/4 tsp of salt.", "expected": {"kind": "fix", "acceptableOutputs": ["Add 1/2 cup of sugar and 3/4 tsp of salt."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e09", "input": "budget is ~$5k for the offsite, approx. 20 ppl", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e10", "input": "Siobhan O'Brien and José Martínez will join Mary-Kate tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["Siobhan O'Brien and José Martínez will join Mary-Kate tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e11", "input": "Ship it to 123 Main St., Apt 4B, Springfield, IL 62704.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e12", "input": "fix: handle null user in the sesion middleware", "expected": {"kind": "fix", "acceptableOutputs": ["fix: handle null user in the session middleware"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e13", "input": "set retries: 3 and timeout: 30s in the yaml, then restart", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e14", "input": "the payload is {\"id\": 42, \"status\": \"ok\"} and it looks fine", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e15", "input": "run SELECT name FROM users WHERE id = 7 and check the reslt", "expected": {"kind": "fix", "acceptableOutputs": ["run SELECT name FROM users WHERE id = 7 and check the result"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e16", "input": "This claim needs a source.[^1]", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s4-e17", "input": ">> are we still on for friday?\nyep, see you then", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s4-e18", "input": "Step 1: unplug the router.\nStep 2: wait 30 secconds.\nStep 3: plug it back in.", "expected": {"kind": "fix", "acceptableOutputs": ["Step 1: unplug the router.\nStep 2: wait 30 seconds.\nStep 3: plug it back in."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s1-e19", "input": "Real Madrid vs. Barcelona starts at 9 p.m. tonight.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}
+{"id": "s5-e20", "input": "i.e. we ship monday, not tuesday :P", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial5"]}

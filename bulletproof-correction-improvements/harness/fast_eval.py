@@ -279,6 +279,7 @@ def sentence_case(text):
 
 _LINK = re.compile("|".join([
     r"""https?://[^\s<>()"'`]+""", r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+",
+    r"""(?<![\w@/.:-])(?:www\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|org|net|io|dev|app|co|edu|gov|ai|me|ly|uk|de|ca|us|info|biz|xyz|tv)(?![A-Za-z])|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?=/))(?:/[^\s<>()"'`]*)?""",
     r"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+", r"""\b[A-Za-z]:\\[^\s"'`]+""",
     r"(?<![\w&#])#[A-Za-z][\w-]*", r"""[^\s"'`]*\\[^\s"'`]+""",
     r"<[@#!][^<>\s]+>", r"(?<![\w@#/.-])(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9_-]{5,}(?![\w-])"]))
@@ -369,9 +370,25 @@ def restore_units(original, text):
     return text
 
 
+_EMOTICON = re.compile(r"(?<!\S)(?:[:;=8][-o']?[)(\]\[DPpOo/\\|*3$]|[xX][Dd]|<3|\^_\^|:'\()(?=$|\s|[.,!?])")
+
+
+def restore_emoticons(original, text):
+    """TypographyRestorer.restoreEmoticons."""
+    for m in _EMOTICON.finditer(original):
+        typed = m.group(0)
+        if typed in text:
+            continue
+        f = re.search(r"\s*".join(re.escape(ch) for ch in typed), text)
+        if f:
+            glued = f.start() > 0 and not text[f.start() - 1].isspace()
+            text = text[:f.start()] + (" " if glued else "") + typed + text[f.end():]
+    return text
+
+
 def restore_typography(original, text):
     """TypographyRestorer.restore."""
-    text = restore_units(original, restore_times(original, text))
+    text = restore_emoticons(original, restore_units(original, restore_times(original, text)))
     def prot(t):
         return code_spans(t) + fences(t) + [(m.start(), m.end()) for m in _LINK.finditer(t)]
     for typo, ascii_ in (("\u2014", "---"), ("\u2014", "--"), ("\u2026", "...")):

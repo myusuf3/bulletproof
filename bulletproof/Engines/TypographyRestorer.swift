@@ -81,8 +81,32 @@ nonisolated enum TypographyRestorer {
         return text
     }
 
+    private static let emoticon = try! NSRegularExpression(
+        pattern: #"(?<!\S)(?:[:;=8][-o']?[)(\]\[DPpOo/\\|*3$]|[xX][Dd]|<3|\^_\^|:'\()(?=$|\s|[.,!?])"#)
+
+    /// Emoticons are the writer's text, but a model can read ":P" as a colon
+    /// and a letter (": P"). A typed emoticon missing from the output comes
+    /// back where the output has the same characters with spaces in between.
+    static func restoreEmoticons(original: String, corrected: String) -> String {
+        let ns = original as NSString
+        var text = corrected
+        for match in emoticon.matches(in: original, range: NSRange(location: 0, length: ns.length)) {
+            let typed = ns.substring(with: match.range)
+            guard !text.contains(typed) else { continue }
+            let spaced = typed.map { NSRegularExpression.escapedPattern(for: String($0)) }.joined(separator: "\\s*")
+            guard let pattern = try? NSRegularExpression(pattern: spaced),
+                  let found = pattern.firstMatch(in: text, range: NSRange(location: 0, length: (text as NSString).length)),
+                  let range = Range(found.range, in: text) else { continue }
+            // The writer's emoticon stood alone; keep it apart from the word the model glued it to.
+            let glued = range.lowerBound > text.startIndex && !text[text.index(before: range.lowerBound)].isWhitespace
+            text.replaceSubrange(range, with: (glued ? " " : "") + typed)
+        }
+        return text
+    }
+
     static func restore(original: String, corrected: String) -> String {
-        var text = restoreUnits(original: original, corrected: restoreTimes(original: original, corrected: corrected))
+        var text = restoreEmoticons(original: original, corrected:
+            restoreUnits(original: original, corrected: restoreTimes(original: original, corrected: corrected)))
         // Em dash and ellipsis: the writer's character replaces the model's stand-in
         // (a triple hyphen first, so "---" doesn't become "—-").
         for (typographic, ascii) in [("\u{2014}", "---"), ("\u{2014}", "--"), ("\u{2026}", "...")]

@@ -48,4 +48,12 @@ struct LinkRestorerTests {
         // Plain words and short tokens aren't identifiers.
         #expect(LinkRestorer.links(in: "the meeting is at 3pm, gr8 news").isEmpty)
     }
+
+    @Test func domainsWithoutASchemeAreNeverProofread() {
+        #expect(LinkRestorer.restore(original: "docs at www.example.com/guide and exmaple.org/faq",
+                                     corrected: "docs at www.example.com/guide and example.org/faq")
+                == "docs at www.example.com/guide and exmaple.org/faq")
+        // Abbreviations and sentence ends aren't domains.
+        #expect(LinkRestorer.links(in: "Bring snacks, e.g. chips, etc. and 123 Main St., ok").isEmpty)
+    }
 }

@@ -53,7 +53,7 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    (`milk  \n`, 41% of its multi-line outputs, #77).
 5. `CodeSpanRestorer`: code is never proofread. Fenced ``` blocks come back verbatim (#78), then backticked spans
    are restored, re-quoted or re-wrapped.
-6. `LinkRestorer`: URLs, emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments), hashtags and any token
+6. `LinkRestorer`: URLs (with or without a scheme: `www.…`, common TLDs, `domain.tld/path`, #112), emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments), hashtags and any token
    with a backslash (escapes, LaTeX, `¯\_(ツ)_/¯`, #100), chat mentions (`<@U02ABC123>`) and identifiers that mix
    letters and digits (commit hashes, UUIDs, #108) are never
    proofread. An input literal missing from the output goes back over the closest-spelled new one
@@ -66,7 +66,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    if it uses only “ ” / — / … (no straight `"`, `--`, `...`), the model's ASCII stand-ins are put back
    (`TypographyRestorer`, #97; Apple Intelligence flattened 5/12 smart-punctuation probes); the writer's clock-time
    spelling comes back when the output respells the same time (`6pm` → `6 pm` → `6pm`, #109), and so does a typed
-   number + unit symbol the model spelled out (`5kg` → `5 kilograms` → `5kg`, #111). Never in code or links.
+   number + unit symbol the model spelled out (`5kg` → `5 kilograms` → `5kg`, #111), and emoticons the model split
+   (`:P` → `: P` → `:P`, #112). Never in code or links.
 8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
 
 Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`). Alignment keys are letters and

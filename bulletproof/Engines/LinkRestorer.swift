@@ -10,6 +10,8 @@ nonisolated enum LinkRestorer {
     private static let pattern = try! NSRegularExpression(pattern: [
         #"https?://[^\s<>()"'`]+"#,                              // URL
         #"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"#,                          // email
+        // Domain without a scheme: www., a common TLD, or a path after it (exmaple.org/faq).
+        #"(?<![\w@/.:-])(?:www\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|org|net|io|dev|app|co|edu|gov|ai|me|ly|uk|de|ca|us|info|biz|xyz|tv)(?![A-Za-z])|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?=/))(?:/[^\s<>()"'`]*)?"#,
         #"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+"#, // Unix path or route, 2+ segments
         #"\b[A-Za-z]:\\[^\s"'`]+"#,                              // Windows path
         #"(?<![\w&#])#[A-Za-z][\w-]*"#,                           // hashtag
