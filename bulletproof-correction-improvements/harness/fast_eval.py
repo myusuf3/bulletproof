@@ -205,10 +205,37 @@ def restore_slang(original, corrected):
     return lead + "".join(words[x] + trailing[x] for x in range(len(words)) if x not in removed)
 
 
+def sentence_case(text):
+    """ProofreadPrompt.sentenceCase (dictation path)."""
+    out, start, prev = [], True, " "
+    n = len(text)
+    for i, ch in enumerate(text):
+        nxt = text[i + 1] if i + 1 < n else " "
+        if ch.isalpha():
+            j = i
+            while j < n and text[j].isalpha():
+                j += 1
+            inner_cap = any(c.isupper() for c in text[i + 1:j])
+            pron = ch == "i" and not (prev.isalpha() or prev.isdigit()) and (nxt in "'\u2019" or not nxt.isalnum())
+            out.append(ch.upper() if (start and not inner_cap) or pron else ch)
+            start = False
+        else:
+            out.append(ch)
+            if ch in ".!?":
+                if nxt.isspace():
+                    start = True
+            elif ch in "\n\r":
+                start = True
+            elif not ch.isspace() and ch not in "\"'(\u201c\u2018":
+                start = False
+        prev = ch
+    return "".join(out)
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
     x = fix_apostrophes(restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned)))))
-    return keep_all_lowercase(original, x) if typed else x
+    return keep_all_lowercase(original, x) if typed else sentence_case(x)
 
 
 def clean_response(response, original, typed=False):

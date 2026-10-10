@@ -65,4 +65,13 @@ struct ProofreadPromptTests {
         #expect(ProofreadPrompt.cleanResponse("I can't come.", original: "i cant come", keepsLowercase: false)
                 == "I can't come.")
     }
+
+    @Test func dictationOutputGetsSentenceCasing() {
+        #expect(ProofreadPrompt.sentenceCase("the build is fixed. i'll ship it now! is that ok?\nyes")
+                == "The build is fixed. I'll ship it now! Is that ok?\nYes")
+        // Already-correct text, proper nouns, decimals and words containing "i" are untouched.
+        #expect(ProofreadPrompt.sentenceCase("Version 2.5 ships in denver. It is fine, i think.")
+                == "Version 2.5 ships in denver. It is fine, I think.")
+        #expect(ProofreadPrompt.sentenceCase("iPhone and wifi. eBay too") == "iPhone and wifi. eBay too")
+    }
 }

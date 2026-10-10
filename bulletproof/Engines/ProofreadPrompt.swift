@@ -85,7 +85,10 @@ nonisolated enum ProofreadPrompt {
     /// `keepsLowercase` is for typed text: a writer who used no capitals at all
     /// gets none back. The dictation path passes false, since transcripts are
     /// lowercase by accident and need sentence casing.
-    static func cleanResponse(_ response: String, original: String, keepsLowercase: Bool = false) -> String {
+    /// `sentenceCases` is for the dictation path: transcripts are lowercase by
+    /// accident, so sentence starts and the pronoun "I" always get capitals.
+    static func cleanResponse(_ response: String, original: String, keepsLowercase: Bool = false,
+                              sentenceCases: Bool = false) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
         if output.hasPrefix("<text>") {
             output.removeFirst("<text>".count)
@@ -99,7 +102,46 @@ nonisolated enum ProofreadPrompt {
         let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
         let recoded = CodeSpanRestorer.restore(original: original, corrected: rebroken)
         let apostrophized = ApostropheFixer.fix(recoded)
-        return keepsLowercase ? keepAllLowercase(original: original, corrected: apostrophized) : apostrophized
+        if keepsLowercase { return keepAllLowercase(original: original, corrected: apostrophized) }
+        return sentenceCases ? sentenceCase(apostrophized) : apostrophized
+    }
+
+    /// Capitalizes the first letter, the first letter after . ! ? and a space or
+    /// line break, and the standalone pronoun "i" (i, i'm, i'll, i've, i'd).
+    /// Proper nouns are left to the model; already-correct text is unchanged.
+    static func sentenceCase(_ text: String) -> String {
+        var result = ""
+        var atSentenceStart = true
+        var previous: Character = " "
+        var index = text.startIndex
+        while index < text.endIndex {
+            let character = text[index]
+            let next = text.index(after: index)
+            if character.isLetter {
+                let following = next < text.endIndex ? text[next] : " "
+                let isPronounI = (character == "i") && !previous.isLetter && !previous.isNumber
+                    && (following == "'" || following == "\u{2019}" || !(following.isLetter || following.isNumber))
+                // Words that already carry an inner capital (iPhone, eBay) are left alone.
+                let word = text[index...].prefix(while: { $0.isLetter })
+                let hasInnerCapital = word.dropFirst().contains(where: \.isUppercase)
+                let capitalize = (atSentenceStart && !hasInnerCapital) || isPronounI
+                result.append(capitalize ? Character(character.uppercased()) : character)
+                atSentenceStart = false
+            } else {
+                result.append(character)
+                if ".!?".contains(character) {
+                    let following = next < text.endIndex ? text[next] : " "
+                    if following.isWhitespace { atSentenceStart = true }
+                } else if character.isNewline {
+                    atSentenceStart = true
+                } else if !character.isWhitespace && !"\"'(\u{201C}\u{2018}".contains(character) {
+                    atSentenceStart = false
+                }
+            }
+            previous = character
+            index = next
+        }
+        return result
     }
 
     /// An input with no uppercase letters is deliberately lowercase (casual
