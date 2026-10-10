@@ -328,9 +328,37 @@ def match_apostrophe_style(original, text):
     return "".join(out)
 
 
+def restore_typography(original, text):
+    """TypographyRestorer.restore."""
+    def prot(t):
+        return code_spans(t) + fences(t) + [(m.start(), m.end()) for m in _LINK.finditer(t)]
+    for typo, ascii_ in (("\u2014", "---"), ("\u2014", "--"), ("\u2026", "...")):
+        if typo in original and ascii_ not in original and ascii_ in text:
+            p, out, k = prot(text), [], 0
+            while k < len(text):
+                if text.startswith(ascii_, k) and not any(a <= k < b for a, b in p):
+                    out.append(typo)
+                    k += len(ascii_)
+                else:
+                    out.append(text[k])
+                    k += 1
+            text = "".join(out)
+    if ("\u201c" in original or "\u201d" in original) and '"' not in original and '"' in text:
+        p, out, prev = prot(text), [], None
+        for k, ch in enumerate(text):
+            if ch == '"' and not any(a <= k < b for a, b in p):
+                opens = prev is None or prev.isspace() or prev in "([{\u2014"
+                out.append("\u201c" if opens else "\u201d")
+            else:
+                out.append(ch)
+            prev = ch
+        text = "".join(out)
+    return text
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = match_apostrophe_style(original, fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned)))))))
+    x = restore_typography(original, match_apostrophe_style(original, fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned))))))))
     return keep_all_lowercase(original, x) if typed else sentence_case(x)
 
 

@@ -108,8 +108,8 @@ nonisolated enum ProofreadPrompt {
         let recoded = LinkRestorer.restore(
             original: original, corrected: CodeSpanRestorer.restore(original: original, corrected: rebroken))
         // English-only: "dont" is French ("of which"), "im" German ("in the").
-        let apostrophized = ApostropheFixer.matchApostropheStyle(
-            of: original, in: TextLanguage.confidentNonEnglish(recoded) == nil ? ApostropheFixer.fix(recoded) : recoded)
+        let apostrophized = TypographyRestorer.restore(original: original, corrected: ApostropheFixer.matchApostropheStyle(
+            of: original, in: TextLanguage.confidentNonEnglish(recoded) == nil ? ApostropheFixer.fix(recoded) : recoded))
         if keepsLowercase { return keepAllLowercase(original: original, corrected: apostrophized) }
         return sentenceCases ? sentenceCase(apostrophized) : apostrophized
     }

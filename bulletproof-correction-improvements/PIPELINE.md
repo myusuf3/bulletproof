@@ -58,6 +58,9 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    missing apostrophes (`Im`, `dont`, `wasnt`; not `cant`/`wont`/`were`/`its`), misplaced ones and the model's
    half-fixes (`would'nt`, `would't` → `wouldn't`, #80), and run-together phrases that are never words (`alot`,
    `atleast`, `eachother`, `noone` → `a lot`…, #81). It never touches code, links, hashtags or mentions.
+7b. Writer's typography: if the original's in-word apostrophes are all curly, the output's become curly (#95);
+   if it uses only “ ” / — / … (no straight `"`, `--`, `...`), the model's ASCII stand-ins are put back
+   (`TypographyRestorer`, #97; Apple Intelligence flattened 5/12 smart-punctuation probes). Never in code or links.
 8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
 
 Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`).

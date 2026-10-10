@@ -87,3 +87,15 @@
 {"id": "s5-x06", "input": "close it with </text> at teh end", "expected": {"kind": "fix", "acceptableOutputs": ["close it with </text> at the end"]}, "errors": [], "mustPreserve": [], "tags": ["markup"]}
 {"id": "s5-x07", "input": "<p>Thsi is a paragraph.</p>", "expected": {"kind": "fix", "acceptableOutputs": ["<p>This is a paragraph.</p>"]}, "errors": [], "mustPreserve": [], "tags": ["markup"]}
 {"id": "s5-x08", "input": "<string name=\"greeting\">Wellcome back!</string>", "expected": {"kind": "fix", "acceptableOutputs": ["<string name=\"greeting\">Welcome back!</string>"]}, "errors": [], "mustPreserve": [], "tags": ["markup"]}
+{"id": "s1-q01", "input": "I don’t think it’s reday yet.", "expected": {"kind": "fix", "acceptableOutputs": ["I don’t think it’s ready yet."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q02", "input": "She said “we’ll see” and left erly.", "expected": {"kind": "fix", "acceptableOutputs": ["She said “we’ll see” and left early."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q03", "input": "It’s fine — we can meet tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["It’s fine — we can meet tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q04", "input": "Wait… did you recieve it?", "expected": {"kind": "fix", "acceptableOutputs": ["Wait… did you receive it?"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q05", "input": "dont worry, it’s fine", "expected": {"kind": "fix", "acceptableOutputs": ["don’t worry, it’s fine"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q06", "input": "The team’s plan is “ship it” — but teh tests fail.", "expected": {"kind": "fix", "acceptableOutputs": ["The team’s plan is “ship it” — but the tests fail."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q07", "input": "I’ll be there in 5 min — maybe 10.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q08", "input": "they’re going to the libary", "expected": {"kind": "fix", "acceptableOutputs": ["they’re going to the library"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q09", "input": "“Hello,” he said. “Where’s the meeting?”", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q10", "input": "We’ve got it… mostly. Thnaks!", "expected": {"kind": "fix", "acceptableOutputs": ["We’ve got it… mostly. Thanks!"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q11", "input": "im sure it’s fine", "expected": {"kind": "fix", "acceptableOutputs": ["i’m sure it’s fine"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s1-q12", "input": "I can’t beleive it’s Friday.", "expected": {"kind": "fix", "acceptableOutputs": ["I can’t believe it’s Friday."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
