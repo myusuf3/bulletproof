@@ -96,7 +96,73 @@ def clean_response(response, original):
         out = out[: -len("</text>")]
     lead = re.match(r"\s*", original).group(0)
     trail = re.search(r"\s*$", original).group(0) if original.strip() else ""
-    return restore_line_breaks(original, restore_contractions(original, lead + out.strip() + trail))
+    return restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, lead + out.strip() + trail)))
+
+
+# --- CodeSpanRestorer.swift ---
+
+def code_spans(text):
+    """(start, end) of content between single-line backtick pairs."""
+    res, i = [], 0
+    while True:
+        o = text.find("`", i)
+        if o < 0:
+            break
+        st = o + 1
+        k = st
+        while k < len(text) and text[k] != "`" and text[k] not in _NEWLINES:
+            k += 1
+        if k >= len(text):
+            break
+        if text[k] == "`" and k > st:
+            res.append((st, k))
+            i = k + 1
+        else:
+            i = k + 1 if text[k] == "`" else k
+    return res
+
+
+def _bare_occurrence(content, text):
+    code = code_spans(text)
+    word = lambda c: c.isalnum() or c in "_`"
+    start = 0
+    while True:
+        i = text.find(content, start)
+        if i < 0:
+            return None
+        e = i + len(content)
+        before = text[i - 1] if i > 0 else " "
+        after = text[e] if e < len(text) else " "
+        inside = any(a < e and i < b for a, b in code)
+        if not word(before) and not word(after) and not inside:
+            return i, e
+        start = i + 1
+
+
+def restore_code_spans(original, corrected):
+    source = [original[a:b] for a, b in code_spans(original)]
+    if not source:
+        return corrected
+    text = corrected
+    out = code_spans(text)
+    if len(out) == len(source):
+        for (a, b), content in reversed(list(zip(out, source))):
+            if text[a:b] != content:
+                text = text[:a] + content + text[b:]
+        return text
+    for content in source:
+        if "`" + content + "`" in text:
+            continue
+        quoted = next((q0 + content + q1 for q0, q1 in (('"', '"'), ("'", "'"), ("\u201c", "\u201d"), ("\u2018", "\u2019"))
+                       if q0 + content + q1 in text), None)
+        if quoted:
+            i = text.find(quoted)
+            text = text[:i] + "`" + content + "`" + text[i + len(quoted):]
+        else:
+            r = _bare_occurrence(content, text)
+            if r:
+                text = text[:r[0]] + "`" + content + "`" + text[r[1]:]
+    return text
 
 
 # --- LineBreakRestorer.swift ---
@@ -495,7 +561,7 @@ def main():
         if hit:
             # Cached rows hold cleaned output; cleaning is idempotent, so re-apply
             # the post-processing in case it changed since the row was cached.
-            raws.append((restore_line_breaks(c["input"], restore_contractions(c["input"], hit["raw"])), hit["ms"]))
+            raws.append((restore_code_spans(c["input"], restore_line_breaks(c["input"], restore_contractions(c["input"], hit["raw"]))), hit["ms"]))
             continue
         s = time.time()
         raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])

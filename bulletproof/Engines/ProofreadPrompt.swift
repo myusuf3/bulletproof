@@ -79,8 +79,8 @@ nonisolated enum ProofreadPrompt {
     }
 
     /// Strips marker echoes the model may leak, restores the original's edge
-    /// whitespace, and puts back contractions the model expanded and line
-    /// breaks it joined. Only anchored markers are leaks - mid-content
+    /// whitespace, and puts back contractions the model expanded, line breaks
+    /// it joined, and backticked code it unwrapped or edited. Only anchored markers are leaks - mid-content
     /// occurrences are legitimate text the user is proofreading.
     static func cleanResponse(_ response: String, original: String) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -92,7 +92,8 @@ nonisolated enum ProofreadPrompt {
         }
         let restored = restoreEdgeWhitespace(of: original, onto: output)
         let recontracted = ContractionRestorer.restore(original: original, corrected: restored)
-        return LineBreakRestorer.restore(original: original, corrected: recontracted)
+        let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
+        return CodeSpanRestorer.restore(original: original, corrected: rebroken)
     }
 
     /// Models strip edge whitespace from their output; in-place replacement must
