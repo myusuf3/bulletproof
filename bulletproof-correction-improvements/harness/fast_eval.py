@@ -95,9 +95,44 @@ def keep_all_lowercase(original, corrected):
     return corrected.lower()
 
 
+_APOS_FORMS = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
+               "hasn't", "hadn't", "wouldn't", "shouldn't", "couldn't", "mustn't", "needn't",
+               "I'm", "I've", "you're", "you've", "you'll", "they're", "they've", "they'll",
+               "that's", "there's", "what's", "who's", "we've", "would've", "should've", "could've"]
+_APOS = {"".join(c for c in f.lower() if c.isalpha()): f for f in _APOS_FORMS}
+
+
+def fix_apostrophes(text):
+    """ApostropheFixer.fix."""
+    code = code_spans(text)
+    out, i, n = [], 0, len(text)
+    while i < n:
+        if not text[i].isalpha():
+            out.append(text[i])
+            i += 1
+            continue
+        st = i
+        while i < n and (text[i].isalpha() or text[i] in "'\u2019"):
+            i += 1
+        word = text[st:i]
+        after = i < n and (text[i].isdigit() or text[i] == "_")
+        before = st > 0 and (text[st - 1].isdigit() or text[st - 1] in "_@#")
+        inside = any(a <= st < b for a, b in code)
+        fixed = _APOS.get(word.lower())
+        if fixed and not after and not before and not inside and "'" not in word and "\u2019" not in word:
+            if len(word) > 1 and all((not c.isalpha()) or c.isupper() for c in word):
+                fixed = fixed.upper()
+            elif word[0].isupper():
+                fixed = fixed[0].upper() + fixed[1:]
+            out.append(fixed)
+        else:
+            out.append(word)
+    return "".join(out)
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, cleaned)))
+    x = fix_apostrophes(restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, cleaned))))
     return keep_all_lowercase(original, x) if typed else x
 
 

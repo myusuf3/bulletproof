@@ -97,7 +97,8 @@ nonisolated enum ProofreadPrompt {
         let recontracted = ContractionRestorer.restore(original: original, corrected: restored)
         let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
         let recoded = CodeSpanRestorer.restore(original: original, corrected: rebroken)
-        return keepsLowercase ? keepAllLowercase(original: original, corrected: recoded) : recoded
+        let apostrophized = ApostropheFixer.fix(recoded)
+        return keepsLowercase ? keepAllLowercase(original: original, corrected: apostrophized) : apostrophized
     }
 
     /// An input with no uppercase letters is deliberately lowercase (casual
