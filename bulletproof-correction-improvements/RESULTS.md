@@ -57,6 +57,10 @@ examples. Python harness, Qwen3-4B, what the user sees:
 | Clean text untouched | 0.50 | **0.88** |
 | Errors fixed | 0.929 | 0.929 |
 
+Live Swift on the fresh set (#66): Qwen **0.971** (= Python), Apple Intelligence **0.829**. Running the code from
+before #64 gives byte-identical AI output on all 35 fresh cases, so #64's AI guide gain (dev +8, holdout 0) is
+neutral out of sample: no gain, no harm.
+
 The gain on fresh cases (+0.20) is at least as large as on the tuning set (+0.15), so this isn't overfitting.
 It also found a **gate bug**, now fixed (#46): the gate used the system dictionary (en_CA here) with per-word
 language guessing. That rejected the US "neighbor" and *accepted* "teh", "alot" and "accomodate". On English systems
