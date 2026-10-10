@@ -115,6 +115,9 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#30 kept: `LineBreakRestorer`** (new `bulletproof/Engines/LineBreakRestorer.swift`, chained after ContractionRestorer
+  in cleanResponse; Python mirror `restore_line_breaks`). Replay on #29's AI outputs: fired 9/400, 7 fail→pass, AI
+  linebreaks .40 → .87, AI pass .698 → .715. It never fires on Qwen (Qwen keeps breaks).
 - **#29 kept: H10, style policy in Apple Intelligence's `@Guide`** (Swift run, `run-2026-10-09-ai-guide-29/`). AI:
   lowercase_kept .20 → .66, slang .36 → .64, clean .78 → .88, s5 .39 → .54, pass .688 → .698. Regression: AI now joins
   multi-line text into one line (linebreaks .60 → .40). Next: a deterministic LineBreakRestorer in cleanResponse.
