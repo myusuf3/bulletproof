@@ -38,4 +38,14 @@ struct LinkRestorerTests {
                 == "\u{AF}\\_(\u{30C4})_/\u{AF} idk")
         #expect(LinkRestorer.restore(original: "use \\alpha and \\beta", corrected: "Use \\alpha and \\beta.") == "Use \\alpha and \\beta.")
     }
+
+    @Test func mentionsAndIdentifiersAreNeverProofread() {
+        // A "corrected" mention pings someone else.
+        #expect(LinkRestorer.restore(original: "<@U02ABC123> can you aprove the PR?", corrected: "<@U02ABC124> can you approve the PR?")
+                == "<@U02ABC123> can you approve the PR?")
+        #expect(LinkRestorer.restore(original: "reverted a1b2c3d, flakey tests", corrected: "reverted a1b2c4d, flaky tests")
+                == "reverted a1b2c3d, flaky tests")
+        // Plain words and short tokens aren't identifiers.
+        #expect(LinkRestorer.links(in: "the meeting is at 3pm, gr8 news").isEmpty)
+    }
 }

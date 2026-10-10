@@ -99,3 +99,23 @@
 {"id": "s1-q10", "input": "We’ve got it… mostly. Thnaks!", "expected": {"kind": "fix", "acceptableOutputs": ["We’ve got it… mostly. Thanks!"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
 {"id": "s1-q11", "input": "im sure it’s fine", "expected": {"kind": "fix", "acceptableOutputs": ["i’m sure it’s fine"]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
 {"id": "s1-q12", "input": "I can’t beleive it’s Friday.", "expected": {"kind": "fix", "acceptableOutputs": ["I can’t believe it’s Friday."]}, "errors": [], "mustPreserve": [], "tags": ["typography"]}
+{"id": "s5-d01", "input": "rename the user_id feild before the migration", "expected": {"kind": "fix", "acceptableOutputs": ["rename the user_id field before the migration"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d02", "input": "check README.md and config.yaml for the new setings", "expected": {"kind": "fix", "acceptableOutputs": ["check README.md and config.yaml for the new settings"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d03", "input": "run it with --force --dry-run first, its safer", "expected": {"kind": "fix", "acceptableOutputs": ["run it with --force --dry-run first, it's safer"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d04", "input": "<@U02ABC123> can you aprove the PR?", "expected": {"kind": "fix", "acceptableOutputs": ["<@U02ABC123> can you approve the PR?"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d05", "input": "nice work :thumbsup: :tada:", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d06", "input": "the request id was 3f9c0a7e-1b2d-4c5e-9f00-abcdef123456", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d07", "input": "reverted commit a1b2c3d, the tests were flakey", "expected": {"kind": "fix", "acceptableOutputs": ["reverted commit a1b2c3d, the tests were flaky"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d08", "input": "Call me at +1 (555) 123-4567 after 6pm.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d09", "input": "The release is on 2026-11-03 at 09:30 UTC.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d10", "input": "It weighs 5kg and the drive is 10GB.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d11", "input": "Das kostet €12,50 pro Person.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d12", "input": "Solve 2x + 3 = 7 for x.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d13", "input": "NASA and the ESA will share the SQL dumps.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d14", "input": "We finished 1st in the league and 3rd in the cup.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s4-d15", "input": "Sounds good, see you then.\n\nOn Mon, Oct 5, 2026 at 9:14 AM Dana Lee wrote:\n> Can we meet at noon?", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s4-d16", "input": "I'll send it tonite.\n\nSent from my iPhone", "expected": {"kind": "fix", "acceptableOutputs": ["I'll send it tonight.\n\nSent from my iPhone", "I'll send it tonite.\n\nSent from my iPhone"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d17", "input": "set the env var NODE_ENV=production and redeploy", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d18", "input": "ping me on the #infra-alerts channel if it brakes again", "expected": {"kind": "fix", "acceptableOutputs": ["ping me on the #infra-alerts channel if it breaks again"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s1-d19", "input": "The function getUserById returns null when the id is missing.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}
+{"id": "s5-d20", "input": "its 9am-5pm mon-fri, closed on weekends", "expected": {"kind": "fix", "acceptableOutputs": ["it's 9am-5pm mon-fri, closed on weekends"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial4"]}

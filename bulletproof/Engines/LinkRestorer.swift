@@ -1,6 +1,7 @@
 import Foundation
 
-/// URLs, email addresses, file paths, hashtags and backslash escapes are never proofread: a
+/// URLs, email addresses, file paths, hashtags, backslash escapes, chat mentions and
+/// letter-and-digit identifiers are never proofread: a
 /// typo-looking domain ("exmaple.com"), folder ("Documnets") or tag ("#teh")
 /// is still the one the user meant, and a "fixed" one silently points
 /// somewhere else. Each input literal missing from the output is put back
@@ -13,6 +14,8 @@ nonisolated enum LinkRestorer {
         #"\b[A-Za-z]:\\[^\s"'`]+"#,                              // Windows path
         #"(?<![\w&#])#[A-Za-z][\w-]*"#,                           // hashtag
         #"[^\s"'`]*\\[^\s"'`]+"#,                                // any token with a backslash (escapes, ¯\_(ツ)_/¯, LaTeX)
+        #"<[@#!][^<>\s]+>"#,                                       // chat mention (<@U02ABC123>, <#C123>, <!here>)
+        #"(?<![\w@#/.-])(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9_-]{5,}(?![\w-])"#, // id mixing letters and digits (a1b2c3d, uuid)
     ].joined(separator: "|"))
 
     static func restore(original: String, corrected: String) -> String {
