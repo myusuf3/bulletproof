@@ -21,6 +21,23 @@ Branch `autoresearch/correction-quality-2026-10-09`, 42 experiments (log: `.auto
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.75.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
+## Out-of-sample check (fresh set, `fresh-2026-10-10/`)
+
+35 new cases written after tuning, before any model saw them, on topics outside the corpus and the prompt
+examples. Python harness, Qwen3-4B, what the user sees:
+
+| | Baseline chain (2856ecb) | Current chain |
+|---|---|---|
+| Pass rate | 0.714 | **0.914** |
+| s5 casual + technical | 0.20 | **0.90** |
+| Lowercase / slang kept | 0 / 0 | **1.0 / 1.0** |
+| Clean text untouched | 0.50 | **0.88** |
+| Errors fixed | 0.929 | 0.929 |
+
+The gain on fresh cases (+0.20) is at least as large as on the tuning set (+0.15), so this isn't overfitting.
+It also found a **gate bug**: this Mac's spell checker is British English, so `introducedMisspelling`
+rejects the US spelling "neighbor" (s1-f07). The gate should accept a word that any English variant knows.
+
 ## What changed (in pipeline order)
 
 1. **Prompts** (`ProofreadPrompt.swift`): a style-preserving typed prompt (a fix list, then a keep list, then

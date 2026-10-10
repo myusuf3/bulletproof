@@ -9,12 +9,24 @@ import AppKit
     /// and other NSSpellChecker.shared clients.
     private static let documentTag = NSSpellChecker.uniqueSpellDocumentTag()
 
+    /// On an English system, a word is misspelled only if both the US and the
+    /// British dictionary flag it: the models write American spelling, so the
+    /// system's own variant (en_CA, en_GB) would reject correct fixes like
+    /// "neigbor" -> "neighbor". The explicit dictionaries are also stricter than
+    /// `language: nil`, whose per-word language guessing accepts "teh", "alot",
+    /// "accomodate". Non-English systems keep the automatic behaviour.
     static func firstMisspelled(in words: [String], language: String? = nil) -> String? {
         let checker = NSSpellChecker.shared
+        let english: [String?] = ["en", "en_GB"].filter(checker.availableLanguages.contains)
+        let automatic: [String?] = [nil]
+        let languages: [String?] = language.map { [$0] }
+            ?? (checker.language().hasPrefix("en") && !english.isEmpty ? english : automatic)
         return words.first { word in
-            checker.checkSpelling(of: word, startingAt: 0, language: language,
-                                  wrap: false, inSpellDocumentWithTag: documentTag,
-                                  wordCount: nil).location != NSNotFound
+            languages.allSatisfy { language in
+                checker.checkSpelling(of: word, startingAt: 0, language: language,
+                                      wrap: false, inSpellDocumentWithTag: documentTag,
+                                      wordCount: nil).location != NSNotFound
+            }
         }
     }
 }
