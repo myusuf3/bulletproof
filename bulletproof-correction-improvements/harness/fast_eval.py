@@ -613,7 +613,25 @@ def output_gate(original, output):
         return "introducedStructure"
     if drops_content(original, output):
         return "droppedContent"
+    if drops_markup(original, output):
+        return "droppedMarkup"
     return None
+
+
+_TAG = re.compile(r"""</?[A-Za-z][A-Za-z0-9:-]*(?:\s+[A-Za-z_:][\w:.-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*/?>""")
+
+
+def drops_markup(original, output):
+    """OutputGate.dropsMarkup: the output is missing a tag the input had."""
+    need = {}
+    for m in _TAG.finditer(original):
+        need[m.group(0)] = need.get(m.group(0), 0) + 1
+    if not need:
+        return False
+    have = {}
+    for m in _TAG.finditer(output):
+        have[m.group(0)] = have.get(m.group(0), 0) + 1
+    return any(have.get(t, 0) < n for t, n in need.items())
 
 
 def _sentences(line):

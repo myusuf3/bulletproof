@@ -229,4 +229,14 @@ struct OutputGatedEngineTests {
             Issue.record("unexpected error type: \(error)")
         }
     }
+
+    @Test func rejectsOutputThatDropsMarkupTags() {
+        #expect(OutputGate.rejection(original: "<p>Thsi is a paragraph.</p>", output: "This is a paragraph.") == .droppedMarkup)
+        #expect(OutputGate.rejection(original: #"<string name="greeting">Wellcome back!</string>"#,
+                                     output: "Welcome back!") == .droppedMarkup)
+        // Kept tags, comparisons and email brackets are fine.
+        #expect(OutputGate.rejection(original: "<p>Thsi is a paragraph.</p>", output: "<p>This is a paragraph.</p>") == nil)
+        #expect(OutputGate.rejection(original: "if a < b and c > d we stop", output: "If a < b and c > d, we stop.") == nil)
+        #expect(OutputGate.rejection(original: "mail me at <bo@example.com> pls", output: "mail me at <bo@example.com> pls") == nil)
+    }
 }

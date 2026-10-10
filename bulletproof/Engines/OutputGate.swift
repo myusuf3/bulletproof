@@ -14,6 +14,7 @@ nonisolated enum OutputGate {
         case lowOverlap
         case introducedStructure
         case droppedContent
+        case droppedMarkup
         case introducedMisspelling
         case protectedWordRemoved
         case implausibleEdit
@@ -58,6 +59,9 @@ nonisolated enum OutputGate {
         }
         if dropsContent(original: original, output: output) {
             return .droppedContent
+        }
+        if dropsMarkup(original: original, output: output) {
+            return .droppedMarkup
         }
         return nil
     }
@@ -162,6 +166,25 @@ nonisolated enum OutputGate {
     /// code fences mean the model *answered* request-like text ("summarize
     /// this in bullets", "convert to JSON") - short answers like those slip
     /// past lowOverlap because they reuse the input's words.
+    /// HTML/XML tags are markup, not prose: an output missing any tag the
+    /// input had would paste broken markup (Apple Intelligence returns
+    /// "<p>Thsi is a paragraph.</p>" as "This is a paragraph."). Tags inside
+    /// backticks are already restored by CodeSpanRestorer.
+    private static let markupTag = try! NSRegularExpression(
+        pattern: #"</?[A-Za-z][A-Za-z0-9:-]*(?:\s+[A-Za-z_:][\w:.-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*/?>"#)
+
+    static func dropsMarkup(original: String, output: String) -> Bool {
+        let tags = { (text: String) -> [String: Int] in
+            let ns = text as NSString
+            return markupTag.matches(in: text, range: NSRange(location: 0, length: ns.length))
+                .reduce(into: [:]) { counts, match in counts[ns.substring(with: match.range), default: 0] += 1 }
+        }
+        let needed = tags(original)
+        guard !needed.isEmpty else { return false }
+        let present = tags(output)
+        return needed.contains { tag, count in present[tag, default: 0] < count }
+    }
+
     static func introducesStructure(original: String, output: String) -> Bool {
         let lineBreaks = { (text: String) in
             text.trimmingCharacters(in: .whitespacesAndNewlines).filter(\.isNewline).count

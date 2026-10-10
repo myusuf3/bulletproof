@@ -68,7 +68,8 @@ restorer changes a model echo (539 inputs) and that the chain is idempotent.
 emptyOutput, replacementCharacter, introducedControlCharacters, overExpansion, lowOverlap,
 **introducedStructure** (new line breaks, `{}[]`, code fences, list or heading markers: answers rewritten as
 bullets or JSON, #27), **droppedContent** (a 4+ word sentence keeps < half its words, or a short line such as a
-sign-off vanishes in multi-line text, #39), protectedWordRemoved, introducedMisspelling.
+sign-off vanishes in multi-line text, #39), **droppedMarkup** (an HTML/XML tag of the input is missing; Apple
+Intelligence strips markup, #93), protectedWordRemoved, introducedMisspelling.
 - `SpellCheckGate`: on English systems a word is misspelled only if both the US and British dictionaries flag it (#46).
   When the corrected text is confidently non-English (`NLLanguageRecognizer` ≥ 0.8), its own language's
   dictionary is used, so correct fixes like `très` or `Mittwoch` aren't rejected (#72).

@@ -43,6 +43,8 @@ nonisolated enum ProofreadingError: LocalizedError {
                 "The model rewrote instead of correcting, so your selection was left unchanged."
             case .droppedContent:
                 "The model left out part of your text, so your selection was left unchanged."
+            case .droppedMarkup:
+                "The model removed markup tags from your text, so your selection was left unchanged."
             case .introducedMisspelling:
                 "The model's correction introduced a misspelling, so your selection was left unchanged."
             case .protectedWordRemoved:
