@@ -1,6 +1,6 @@
 # Results: correction-quality autoresearch (2026-10-09)
 
-Branch `autoresearch/correction-quality-2026-10-09`, 134 experiments (log: `.auto/log.jsonl`, playbook and history:
+Branch `autoresearch/correction-quality-2026-10-09`, 138 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
 ## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
@@ -24,7 +24,7 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
-## Latest live run (#134, corrected metric, `run-2026-10-10-live-134/`; corpus output identical to #104)
+## Latest live run (#138, corrected metric, `run-2026-10-10-live-138/`; corpus output identical to #104)
 
 | | Qwen3-4B, original → now | Apple Intelligence, original → now |
 |---|---|---|
@@ -38,13 +38,15 @@ The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
 Both engines are deterministic (Qwen at temperature 0, Apple Intelligence greedy since #62), so these are exact.
 
-**Beyond the corpus (live Swift, #134):**
+**Beyond the corpus (live Swift, #138):**
 
 | Set (never tuned on) | Qwen3-4B | Apple Intelligence |
 |---|---|---|
 | Fresh set 1 (35 cases, #45/#66) | 0.971 | 0.829 |
 | Fresh set 2 (30 realistic messages written after #100, #101) | 27/30 | 26/30 |
-| Robustness: 227 unusual inputs (10 rounds: typed, dictation, partial selections, mixed documents, clean text, expressive typing) + 14 multilingual | 223/241 | 180/241 |
+| Fresh set 3 (30 messages written after #135, held out, #136) | 27/30 | 23/30 at #136 (25/30 after #137, contaminated) |
+| Fresh set 4 (30 messages written before #137, held out; before/after A/B) | 27/30 → 27/30 | 27/30 → 27/30 |
+| Robustness: 227 unusual inputs (10 rounds: typed, dictation, partial selections, mixed documents, clean text, expressive typing) + 14 multilingual | 223/241 | 181/241 |
 | Smart typography probes (12) keep the writer's punctuation | 12/12 | 11/12 |
 | Dictation round (20 transcripts, #113) | 18/20 | 16/20 |
 
@@ -90,6 +92,13 @@ Probing unusual inputs found these real bugs, all fixed and each checked by repl
   word keeps caps when corrected), elongations shortened (`looong` → `long`), and `tonite`/`nite`/`luv` now come back.
   The first elongation rule would have undone typo fixes like `offfice` → `office` (caught by replay); the shipped rule
   only restores a run of 3+ letters the model wrote once.
+
+- #137: bare @handles are literals (`@jordan` → `@Jordan,` restored), and a writer who starts lowercase and
+  capitalizes only ALL-CAPS words keeps that style. Evaluated on fresh set 4, written before the change: neutral
+  (no output changed), 0 harm anywhere, 10 independent fail→pass on stored outputs.
+
+Out-of-sample discipline: fresh sets 3 and 4 are held out. Ideas taken from a set's failures are validated on a
+new set and the set itself is never tuned on.
 
 Post-processing cost (#127): ~20 ms at 1k characters, ~120-150 ms at the 3.3k input cap, about 1% of a long
 document's generation time.
@@ -180,7 +189,7 @@ data point is a week on the current build.
   numbers before #62 are single runs; from #62 on they're exact.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
   soundalikes. Apple Intelligence still expands some slang (0.88) and rewords more than Qwen (out of sample:
-  0.83 vs 0.97 on the fresh set, #66; 180 vs 223 of 241 robustness inputs, #134), so **Qwen is the recommended default**.
+  0.83 vs 0.97 on the fresh set, #66; 181 vs 223 of 241 robustness inputs, #138; fresh set 3 0.90 vs 0.77, #136), so **Qwen is the recommended default**.
 - The corpus is synthetic, and the judge-free metric can't see subtle meaning changes. Re-judge a sample before release.
 - Before pushing the branch: commit db65f20 contains `context/real-usage.md` (personal data), so rewrite it.
 - Owner decision (#113): dictated email addresses ("jane at example dot com") are kept as spoken today (Qwen's
