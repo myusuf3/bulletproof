@@ -26,26 +26,56 @@ nonisolated enum SlangRestorer {
         var trailing = output.tokens.map(\.trailing)
         var removed = Set<Int>()
         for case .changed(let source, let outputRange) in WordAlignment.steps(typed.keys, output.keys) {
-            let (i0, j0, j) = (source.lowerBound, outputRange.lowerBound, outputRange.upperBound)
-            guard source.count == 1, (1...4).contains(j - j0) else { continue }
-            // The typed word may carry punctuation ("thx!", "idk,"): match on its letters,
-            // which must be one contiguous run, and keep the correction's punctuation.
-            let typedWord = typed.tokens[i0].word
-            let typedLetters = typedWord.drop(while: { !$0.isLetter }).reversed().drop(while: { !$0.isLetter }).reversed()
-            let core = String(typedLetters).lowercased()
-            guard !core.isEmpty, core.allSatisfy(\.isLetter), let expansions = table[core] else { continue }
-            let typedCore = String(typedLetters)
-            let phrase = words[j0..<j].joined(separator: " ")
-            let leading = String(phrase.prefix(while: { !$0.isLetter }))
-            let tail = String(phrase.reversed().prefix(while: { !$0.isLetter && $0 != "'" }).reversed())
-            let bare = phrase.dropFirst(leading.count).dropLast(tail.count)
-            guard expansions.contains(bare.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")) else { continue }
-            words[j0] = leading + typedCore + tail
-            trailing[j0] = trailing[j - 1]
-            removed.formUnion((j0 + 1)..<j)
+            // Adjacent abbreviations change together ("u tmrw" -> "you tomorrow"),
+            // so a changed run is split into one piece per typed word.
+            guard (1...6).contains(source.count), !outputRange.isEmpty,
+                  let pieces = split(source.map { typed.tokens[$0].word }, Array(words[outputRange])),
+                  pieces.contains(where: { $0.restored != nil }) else { continue }
+            var q = outputRange.lowerBound
+            for piece in pieces {
+                if let restored = piece.restored {
+                    words[q] = restored
+                    trailing[q] = trailing[q + piece.size - 1]
+                    removed.formUnion((q + 1)..<(q + piece.size))
+                }
+                q += piece.size
+            }
         }
         guard !removed.isEmpty || words != output.tokens.map(\.word) else { return corrected }
         return output.leading + words.indices.filter { !removed.contains($0) }
             .map { words[$0] + trailing[$0] }.joined()
+    }
+
+    /// One piece per typed word: an abbreviation takes 1-4 output words that
+    /// spell one of its expansions; any other word takes exactly one.
+    private static func split(_ typedWords: [String], _ outputWords: [String]) -> [(size: Int, restored: String?)]? {
+        guard let first = typedWords.first else { return outputWords.isEmpty ? [] : nil }
+        let rest = Array(typedWords.dropFirst())
+        let maxSize = min(4, outputWords.count - rest.count)
+        guard maxSize >= 1 else { return nil }
+        for size in 1...maxSize {
+            let restored = restoredPiece(typed: first, piece: outputWords.prefix(size))
+            guard restored != nil || size == 1 else { continue }
+            if let tail = split(rest, Array(outputWords.dropFirst(size))) {
+                return [(size, restored)] + tail
+            }
+        }
+        return nil
+    }
+
+    /// The typed abbreviation (with the piece's surrounding punctuation) when
+    /// the piece is one of its expansions. The typed word may carry punctuation
+    /// ("thx!", "idk,"): it matches on its letters, which must be one contiguous run.
+    private static func restoredPiece(typed typedWord: String, piece: ArraySlice<String>) -> String? {
+        let typedLetters = typedWord.drop(while: { !$0.isLetter }).reversed().drop(while: { !$0.isLetter }).reversed()
+        let core = String(typedLetters).lowercased()
+        guard !core.isEmpty, core.allSatisfy(\.isLetter), let expansions = table[core],
+              (1...4).contains(piece.count) else { return nil }
+        let phrase = piece.joined(separator: " ")
+        let leading = String(phrase.prefix(while: { !$0.isLetter }))
+        let tail = String(phrase.reversed().prefix(while: { !$0.isLetter && $0 != "'" }).reversed())
+        let bare = phrase.dropFirst(leading.count).dropLast(tail.count)
+        guard expansions.contains(bare.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")) else { return nil }
+        return leading + String(typedLetters) + tail
     }
 }

@@ -23,4 +23,12 @@ struct SlangRestorerTests {
         #expect(restore("because of rain", "because of rain") == "because of rain")
         #expect(restore("teh cat", "the cat") == "the cat")
     }
+
+    @Test func adjacentAbbreviationsComeBackTogether() {
+        #expect(SlangRestorer.restore(original: "sounds good 👍🏽 see u tmrw", corrected: "sounds good 👍🏽 see you tomorrow")
+                == "sounds good 👍🏽 see u tmrw")
+        #expect(SlangRestorer.restore(original: "bc u said so", corrected: "because you said so") == "bc u said so")
+        // A non-abbreviation in the run keeps its correction.
+        #expect(SlangRestorer.restore(original: "im omw rn", corrected: "I'm on my way right now") == "I'm omw rn")
+    }
 }

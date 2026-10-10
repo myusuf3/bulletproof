@@ -165,6 +165,45 @@ _SLANG = {
 }
 
 
+def _slang_piece(typed_word, piece_words):
+    """The typed abbreviation's restored form for this output piece, or None (SlangRestorer.restoredPiece)."""
+    a0, b0 = 0, len(typed_word)
+    while a0 < b0 and not typed_word[a0].isalpha():
+        a0 += 1
+    while b0 > a0 and not typed_word[b0 - 1].isalpha():
+        b0 -= 1
+    typed_core = typed_word[a0:b0]
+    core = typed_core.lower()
+    if not core or not core.isalpha() or core not in _SLANG or not 1 <= len(piece_words) <= 4:
+        return None
+    phrase = " ".join(piece_words)
+    k = 0
+    while k < len(phrase) and not phrase[k].isalpha():
+        k += 1
+    e = len(phrase)
+    while e > k and not phrase[e - 1].isalpha() and phrase[e - 1] != "'":
+        e -= 1
+    if phrase[k:e].lower().replace("\u2019", "'") not in _SLANG[core]:
+        return None
+    return phrase[:k] + typed_core + phrase[e:]
+
+
+def _slang_split(typed_words, out_words):
+    """Split out_words into one piece per typed word: abbreviations onto an expansion, other words onto one word."""
+    if not typed_words:
+        return [] if not out_words else None
+    first, rest = typed_words[0], typed_words[1:]
+    for size in range(1, min(4, len(out_words) - len(rest)) + 1):
+        piece = out_words[:size]
+        restored = _slang_piece(first, piece)
+        if restored is None and size != 1:
+            continue
+        tail = _slang_split(rest, out_words[size:])
+        if tail is not None:
+            return [(size, restored)] + tail
+    return None
+
+
 def restore_slang(original, corrected):
     """SlangRestorer.restore."""
     _, typed = _word_tokens(original)
@@ -195,31 +234,18 @@ def restore_slang(original, corrected):
                 i += 1
             else:
                 j += 1
-        if i - i0 != 1 or not 1 <= j - j0 <= 4:
+        if not 1 <= i - i0 <= 6 or j == j0:
             continue
-        tw = typed[i0][0]
-        a0, b0 = 0, len(tw)
-        while a0 < b0 and not tw[a0].isalpha():
-            a0 += 1
-        while b0 > a0 and not tw[b0 - 1].isalpha():
-            b0 -= 1
-        typed_core = tw[a0:b0]
-        core = typed_core.lower()
-        if not core or not core.isalpha() or core not in _SLANG:
+        split = _slang_split([w for w, _ in typed[i0:i]], words[j0:j])
+        if split is None or all(r is None for _, r in split):
             continue
-        phrase = " ".join(words[j0:j])
-        k = 0
-        while k < len(phrase) and not phrase[k].isalpha():
-            k += 1
-        e = len(phrase)
-        while e > k and not phrase[e - 1].isalpha() and phrase[e - 1] != "'":
-            e -= 1
-        bare = phrase[k:e]
-        if bare.lower().replace("\u2019", "'") not in _SLANG[core]:
-            continue
-        words[j0] = phrase[:k] + typed_core + phrase[e:]
-        trailing[j0] = trailing[j - 1]
-        removed.update(range(j0 + 1, j))
+        q = j0
+        for size, restored in split:
+            if restored is not None:
+                words[q] = restored
+                trailing[q] = trailing[q + size - 1]
+                removed.update(range(q + 1, q + size))
+            q += size
     return lead + "".join(words[x] + trailing[x] for x in range(len(words)) if x not in removed)
 
 
