@@ -1,6 +1,6 @@
 # Results: correction-quality autoresearch (2026-10-09)
 
-Branch `autoresearch/correction-quality-2026-10-09`, 42 experiments (log: `.auto/log.jsonl`, playbook and history:
+Branch `autoresearch/correction-quality-2026-10-09`, 83 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
 ## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
@@ -24,17 +24,21 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
-## Latest live run (#62/#63, corrected metric, `run-2026-10-10-ai-greedy-62/`)
+## Latest live run (#83, corrected metric, `run-2026-10-10-live-83/`)
 
-| | Original baseline | Now |
+| | Qwen3-4B, original → now | Apple Intelligence, original → now |
 |---|---|---|
-| Qwen3-4B pass (all 400) | 0.735 | **0.915** (dev 0.919, holdout 0.905), p50 **398 ms** |
-| Apple Intelligence pass (all 400) | 0.635 | **0.785** (dev 0.783, holdout 0.790) |
+| **Pass (all 400, what the user sees)** | 0.735 → **0.923** (dev 0.929, holdout 0.905) | 0.635 → **0.808** (dev 0.810, holdout 0.800) |
+| s5 casual + technical | 0.39 → **0.94** | 0.38 → **0.80** |
+| Errors fixed | 0.915 → **0.956** | 0.826 → **0.888** |
+| Clean text untouched | 0.76 → **0.96** | 0.88 → **0.94** |
+| Lowercase / slang / code / line breaks kept | → **1.0 / 1.0 / 1.0 / 1.0** | → **1.0 / 0.88 / 1.0 / 1.0** |
+| Rejected (nothing pasted) | 4.25% → **0.5%** | 4.75% → **0.75%** |
+| Median latency | 609 ms → **399 ms** | ~0.7 s (unchanged) |
 
-Apple Intelligence now uses **greedy decoding** (`GenerationOptions(sampling: .greedy)`, #62). Its output was
-byte-identical on 400/400 across two runs (#63), so its numbers are stable values. Before, typed pass ranged
-0.68-0.80 between identical runs. (`context/pipeline.md`'s note that AI has "no temperature control" was wrong:
-the SDK has `GenerationOptions`.)
+Both engines are deterministic (Qwen at temperature 0, Apple Intelligence greedy since #62), so these are exact.
+Robustness sets, live Swift (#79): Qwen 55/60 adversarial + multilingual (Swift = Python on 60/60), Apple
+Intelligence 47/60. Six real bugs found that way are fixed (#72, #73, #75-#78).
 
 ## Metric correction (#53)
 
@@ -79,7 +83,9 @@ introduced words in every stored output, no new word is flagged.
    `ContractionRestorer` (re-contract expanded contractions), `LineBreakRestorer` (symmetric layout restore),
    `CodeSpanRestorer` (code is never proofread), `SlangRestorer` (chat abbreviations the model expanded), `ApostropheFixer` (unambiguous `dont` → `don't`), and
    `keepAllLowercase` (typed only: an all-lowercase writer gets no capitals). Replayed over 4,480-5,600 stored
-   outputs, these went fail→pass 128 + 38 + 14 + 5 + 2 times, and **pass→fail 0 times**.
+   outputs, these went fail→pass 128 + 38 + 14 + 5 + 2 times, and **pass→fail 0 times**. Later additions
+   (#76-#81): `LinkRestorer`, fenced-code restore, exact whitespace around line breaks, misplaced apostrophes and
+   run-together phrases (`alot`). Also 0 pass→fail. Full order: `PIPELINE.md` §3.
 4. **Gates** (`OutputGate`): `introducedStructure` (answers rewritten as bullets or JSON) and `droppedContent`
    (lost sentences or sign-offs). There were 0 false positives in 1,200 and 5,600 stored outputs respectively.
 5. **Verify-corrections gate retune** (`EditSpan.swift`, `SpanScorer.swift`): spell-check and cosmetic triage, plus a
@@ -101,8 +107,10 @@ introduced words in every stored output, no new word is flagged.
   **0.57x the original app's median latency** (353 vs 609 ms paired; Swift all-400 p50 1304 → 401 ms, p95
   2577 → 1837 ms). Outputs are identical on 398/400 (2 near-tie flips, pass unchanged). Apple Intelligence
   exposes no KV cache, so its latency is unchanged (p50 ~0.68 s).
-- **Apple Intelligence is non-deterministic**: about ±5-10 pp per slice between runs. Its numbers are single runs.
+- **Apple Intelligence was non-deterministic** (±5-10 pp per slice between runs) until greedy decoding (#62). Its
+  numbers before #62 are single runs; from #62 on they're exact.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
-  soundalikes. Apple Intelligence still expands some slang (0.76).
+  soundalikes. Apple Intelligence still expands some slang (0.88) and rewords more than Qwen (out of sample:
+  0.83 vs 0.97 on the fresh set, #66), so **Qwen is the recommended default**.
 - The corpus is synthetic, and the judge-free metric can't see subtle meaning changes. Re-judge a sample before release.
 - Before pushing the branch: commit db65f20 contains `context/real-usage.md` (personal data), so rewrite it.

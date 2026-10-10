@@ -37,15 +37,25 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 
 ## 3. Post-processing (`cleanResponse`, in order); each step only changes text where it applies
 1. Strip leaked `<text>` markers, restore edge whitespace.
-2. `SlangRestorer`: chat abbreviations the model expanded come back (`bc of` → `because of` → `bc of`).
+2. `SlangRestorer`: chat abbreviations the model expanded come back (`bc of` → `because of` → `bc of`), including
+   ones carrying punctuation (`bday!!`, #54).
 3. `ContractionRestorer`: a single typed contraction expanded by the model gets re-contracted (`wasnt` → `was not` → `wasn't`).
-4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added).
-5. `CodeSpanRestorer`: backticked code is never proofread. It's restored, re-quoted or re-wrapped.
-6. `ApostropheFixer`: unambiguous missing apostrophes (`Im`, `dont`, `wasnt`; not `cant`/`wont`/`were`/`its`).
-7. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase`.
+4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added), and
+   the whitespace around each break is copied exactly, which removes the markdown hard-break spaces Qwen adds
+   (`milk  \n`, 41% of its multi-line outputs, #77).
+5. `CodeSpanRestorer`: code is never proofread. Fenced ``` blocks come back verbatim (#78), then backticked spans
+   are restored, re-quoted or re-wrapped.
+6. `LinkRestorer`: URLs and emails are never proofread. An input link missing from the output goes back over the
+   closest-spelled new link (`exmaple.com` stays `exmaple.com`, #76).
+7. `ApostropheFixer` (skipped when the text is confidently non-English, so German `im` and French `dont` stay, #73):
+   missing apostrophes (`Im`, `dont`, `wasnt`; not `cant`/`wont`/`were`/`its`), misplaced ones and the model's
+   half-fixes (`would'nt`, `would't` → `wouldn't`, #80), and run-together phrases that are never words (`alot`,
+   `atleast`, `eachother`, `noone` → `a lot`…, #81). It never touches code, links, hashtags or mentions.
+8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
 
 Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`).
-Replay over 4,480-6,470 stored outputs: every step had 0 pass→fail flips.
+Replay over up to 10,962 stored outputs: every step had 0 pass→fail flips. `harness/invariants.py` checks that no
+restorer changes a model echo (539 inputs) and that the chain is idempotent.
 
 ## 4. OutputGate (always on), first failing rule wins
 emptyOutput, replacementCharacter, introducedControlCharacters, overExpansion, lowOverlap,
@@ -53,6 +63,11 @@ emptyOutput, replacementCharacter, introducedControlCharacters, overExpansion, l
 bullets or JSON, #27), **droppedContent** (a 4+ word sentence keeps < half its words, or a short line such as a
 sign-off vanishes in multi-line text, #39), protectedWordRemoved, introducedMisspelling.
 - `SpellCheckGate`: on English systems a word is misspelled only if both the US and British dictionaries flag it (#46).
+  When the corrected text is confidently non-English (`NLLanguageRecognizer` ≥ 0.8), its own language's
+  dictionary is used, so correct fixes like `très` or `Mittwoch` aren't rejected (#72).
+- `lowOverlap` and `droppedContent` count a word as surviving if it's kept verbatim or matched one-to-one to a
+  close spelling (Damerau ≤ 1 for ≤ 4 letters, else ≤ 2, accent-folded). Typo-dense input like `Teh qiuck borwn
+  fxo` is no longer rejected when it's corrected (#75).
 - Personal vocabulary: a lowercase protected word corrected to a spell-checker guess is a learned typo, so the fix
   is accepted and the entry forgotten (#67). Capitalized names stay protected.
 
@@ -67,7 +82,9 @@ are within 1 token of the same length) is exceeded. Qwen rejections on 400 cases
 
 ## 7. Evaluating changes
 - Fast loop: `./.auto/measure.sh` (Python mirror, Qwen, dev 295 + guard 14, about 20 s cached). Corpus override:
-  `BULLETPROOF_EVAL_CORPUS=<dir>` (fresh-2026-10-10, long-2026-10-10).
+  `BULLETPROOF_EVAL_CORPUS=<dir>` (fresh-2026-10-10, long-2026-10-10). Robustness sets, never tuned on:
+  `adversarial-2026-10-10/` (46 unusual inputs: emoji, mixed scripts, URLs, fences, tables, CRLF, tabs…) and
+  `multilingual-2026-10-10/` (14), run with `harness/fast_eval.py --cases <slice>.jsonl`.
 - Live: `SWIFT_VERIFY=1 ./.auto/measure.sh` (both engines, all 400, about 11 min). Both engines are deterministic, so one run is an exact A/B.
 - Latency: `BULLETPROOF_EVAL_LATENCY_AB=1 ./.auto/measure.sh` (paired, ABBA-interleaved).
 - Restorer invariants: `python3 harness/invariants.py` (echo no-op + idempotence over every stored output).
