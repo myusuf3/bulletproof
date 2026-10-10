@@ -1,6 +1,6 @@
 # Results: correction-quality autoresearch (2026-10-09)
 
-Branch `autoresearch/correction-quality-2026-10-09`, 92 experiments (log: `.auto/log.jsonl`, playbook and history:
+Branch `autoresearch/correction-quality-2026-10-09`, 104 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
 ## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
@@ -24,25 +24,35 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
-## Latest live run (#91, corrected metric, `run-2026-10-10-live-91/`; corpus output identical to #83)
+## Latest live run (#104, corrected metric, `run-2026-10-10-live-104/`)
 
 | | Qwen3-4B, original → now | Apple Intelligence, original → now |
 |---|---|---|
-| **Pass (all 400, what the user sees)** | 0.735 → **0.923** (dev 0.929, holdout 0.905) | 0.635 → **0.808** (dev 0.810, holdout 0.800) |
-| s5 casual + technical | 0.39 → **0.94** | 0.38 → **0.80** |
+| **Pass (all 400, what the user sees)** | 0.735 → **0.923** (dev 0.929, holdout 0.905) | 0.635 → **0.810** (dev 0.814, holdout 0.800) |
+| s5 casual + technical | 0.39 → **0.94** | 0.38 → **0.81** |
 | Errors fixed | 0.915 → **0.956** | 0.826 → **0.888** |
-| Clean text untouched | 0.76 → **0.96** | 0.88 → **0.94** |
+| Clean text untouched | 0.76 → **0.96** | 0.88 → **0.96** |
 | Lowercase / slang / code / line breaks kept | → **1.0 / 1.0 / 1.0 / 1.0** | → **1.0 / 0.88 / 1.0 / 1.0** |
 | Rejected (nothing pasted) | 4.25% → **0.5%** | 4.75% → **0.75%** |
 | Median latency | 609 ms → **399 ms** | ~0.7 s (unchanged) |
 
 Both engines are deterministic (Qwen at temperature 0, Apple Intelligence greedy since #62), so these are exact.
-Robustness sets, live Swift (#91, 89 adversarial + 14 multilingual inputs): Qwen **94/103**, Apple Intelligence
-**70/103**. Probing unusual inputs found 11 real bugs, all fixed:
+
+**Beyond the corpus (live Swift, #104):**
+
+| Set (never tuned on) | Qwen3-4B | Apple Intelligence |
+|---|---|---|
+| Fresh set 1 (35 cases, #45/#66) | 0.971 | 0.829 |
+| Fresh set 2 (30 realistic messages written after #100, #101) | 26/30 | 25/30 |
+| Robustness: 101 unusual inputs + 14 multilingual | 106/115 | 85/115 |
+| Smart typography probes (12) keep the writer's punctuation | 12/12 | 11/12 |
+
+Probing unusual inputs found these real bugs, all fixed and each checked by replay over every stored output
+(0 pass→fail):
 - #72: correct non-English fixes rejected by the English spell check.
 - #73: German `im` / French `dont` turned into English contractions.
 - #75: typo-dense corrections rejected as rewrites.
-- #76, #85: URLs, emails, file paths, API routes and hashtags "corrected".
+- #76, #85, #100: URLs, emails, file paths, API routes, hashtags and backslash tokens (`¯\_(ツ)_/¯`) "corrected".
 - #77: invisible trailing spaces added before line breaks.
 - #78: code inside ``` fences edited.
 - #86 (app only): mlx-swift-lm's streaming detokenizer dropped emoji modifiers, flag halves, ZWJ, ❤️/1️⃣ and
@@ -50,10 +60,17 @@ Robustness sets, live Swift (#91, 89 adversarial + 14 multilingual inputs): Qwen
 - #88 (app only): the 3-chars-per-token output budget truncated Hindi, Tamil, Bengali, Burmese and emoji runs
   (Bengali pasted at 74%).
 - #90: the writer's own edge `<text>`/`</text>` tags deleted as "leaked prompt markers".
+- #93, #100 (Apple Intelligence): stripped HTML/XML markup and invented symbols (`$€1,299.99`) were pasted; both
+  are now rejected (`droppedMarkup`, `introducedSymbol`).
+- #94, #98, #102: abbreviations the model expanded weren't restored when adjacent (`u tmrw`) or not in the table
+  (`min`, `ttyl`, `thurs`).
+- #95, #97: smart apostrophes, quotes, `—` and `…` flattened to ASCII.
+- #103: Swift and harness word-alignment keys disagreed on combining marks (Thai vowel signs).
 
-The Swift chain (`cleanResponse` + `OutputGate.rejection`) matches the harness mirror on 5,849 stored and synthetic
-pairs (#87, `harness/swift_chain_parity.py`), so the metric scores what ships. Apple Intelligence-only limits seen
-in #91: it strips HTML/XML markup and fails (error, nothing pasted) on Hindi, Tamil, Bengali and Burmese.
+The Swift chain (`cleanResponse` + `OutputGate.rejection`) matches the harness mirror on 3,218 stored and synthetic
+pairs (#87, #103, `harness/swift_chain_parity.py`), so the metric scores what ships. Apple Intelligence-only
+limits: it strips markup (now blocked, not pasted), rewords more, and fails (error, nothing pasted) on Hindi,
+Tamil, Bengali and Burmese.
 
 ## Metric correction (#53)
 
@@ -126,6 +143,6 @@ introduced words in every stored output, no new word is flagged.
   numbers before #62 are single runs; from #62 on they're exact.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
   soundalikes. Apple Intelligence still expands some slang (0.88) and rewords more than Qwen (out of sample:
-  0.83 vs 0.97 on the fresh set, #66; 70 vs 94 of 103 robustness inputs, #91), so **Qwen is the recommended default**.
+  0.83 vs 0.97 on the fresh set, #66; 85 vs 106 of 115 robustness inputs, #104), so **Qwen is the recommended default**.
 - The corpus is synthetic, and the judge-free metric can't see subtle meaning changes. Re-judge a sample before release.
 - Before pushing the branch: commit db65f20 contains `context/real-usage.md` (personal data), so rewrite it.

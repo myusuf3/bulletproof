@@ -44,7 +44,9 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 1. Strip leaked `<text>` markers (only when the writer's own text doesn't start/end with that tag, else only a
    doubled one, #90), restore edge whitespace.
 2. `SlangRestorer`: chat abbreviations the model expanded come back (`bc of` → `because of` → `bc of`), including
-   ones carrying punctuation (`bday!!`, #54).
+   ones carrying punctuation (`bday!!`, #54), adjacent ones that change together (`u tmrw` → `you tomorrow`, #94),
+   and common chat/unit/weekday/month abbreviations (`min`, `ttyl`, `thurs`, `sept`, #98, #102). Restore-only: an
+   abbreviation comes back only where the model wrote one of its listed expansions.
 3. `ContractionRestorer`: a single typed contraction expanded by the model gets re-contracted (`wasnt` → `was not` → `wasn't`).
 4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added), and
    the whitespace around each break is copied exactly, which removes the markdown hard-break spaces Qwen adds
@@ -64,7 +66,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    (`TypographyRestorer`, #97; Apple Intelligence flattened 5/12 smart-punctuation probes). Never in code or links.
 8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
 
-Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`).
+Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`). Alignment keys are letters and
+numbers per Unicode scalar, so combining marks don't count, the same as the harness's `isalnum` (#103).
 Replay over up to 10,962 stored outputs: every step had 0 pass→fail flips. `harness/invariants.py` checks that no
 restorer changes a model echo (539 inputs) and that the chain is idempotent.
 
@@ -95,7 +98,7 @@ are within 1 token of the same length) is exceeded. Qwen rejections on 400 cases
 
 ## 7. Evaluating changes
 - Fast loop: `./.auto/measure.sh` (Python mirror, Qwen, dev 295 + guard 14, about 20 s cached). Corpus override:
-  `BULLETPROOF_EVAL_CORPUS=<dir>` (fresh-2026-10-10, long-2026-10-10). Robustness sets, never tuned on:
+  `BULLETPROOF_EVAL_CORPUS=<dir>` (fresh-2026-10-10, fresh2-2026-10-10, long-2026-10-10). Robustness sets, never tuned on:
   `adversarial-2026-10-10/` (46 unusual inputs: emoji, mixed scripts, URLs, fences, tables, CRLF, tabs…) and
   `multilingual-2026-10-10/` (14), run with `harness/fast_eval.py --cases <slice>.jsonl`.
 - Live: `SWIFT_VERIFY=1 ./.auto/measure.sh` (both engines, all 400, about 11 min). Both engines are deterministic, so one run is an exact A/B.
