@@ -352,9 +352,26 @@ def restore_times(original, text):
     return text
 
 
+_UNITS = {"kg": ['kilogram', 'kilograms', 'kilos'], "g": ['gram', 'grams'], "mg": ['milligram', 'milligrams'], "lb": ['pound', 'pounds'], "lbs": ['pounds'], "oz": ['ounce', 'ounces'], "km": ['kilometer', 'kilometers', 'kilometre', 'kilometres'], "cm": ['centimeter', 'centimeters', 'centimetre', 'centimetres'], "mm": ['millimeter', 'millimeters', 'millimetre', 'millimetres'], "mi": ['mile', 'miles'], "ft": ['foot', 'feet'], "ml": ['milliliter', 'milliliters', 'millilitre', 'millilitres'], "gb": ['gigabyte', 'gigabytes'], "mb": ['megabyte', 'megabytes'], "kb": ['kilobyte', 'kilobytes'], "tb": ['terabyte', 'terabytes'], "ghz": ['gigahertz'], "mhz": ['megahertz'], "hz": ['hertz']}
+_MEASURE = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s?([A-Za-z]+)(?!\w)")
+
+
+def restore_units(original, text):
+    """TypographyRestorer.restoreUnits."""
+    for m in _MEASURE.finditer(original):
+        typed, number = m.group(0), m.group(1)
+        names = _UNITS.get(m.group(2).lower())
+        if not names or typed in text:
+            continue
+        f = re.search(r"(?<![\w.,])" + re.escape(number) + r"\s(?:" + "|".join(map(re.escape, names)) + r")(?!\w)", text, re.I)
+        if f:
+            text = text[:f.start()] + typed + text[f.end():]
+    return text
+
+
 def restore_typography(original, text):
     """TypographyRestorer.restore."""
-    text = restore_times(original, text)
+    text = restore_units(original, restore_times(original, text))
     def prot(t):
         return code_spans(t) + fences(t) + [(m.start(), m.end()) for m in _LINK.finditer(t)]
     for typo, ascii_ in (("\u2014", "---"), ("\u2014", "--"), ("\u2026", "...")):

@@ -35,8 +35,54 @@ nonisolated enum TypographyRestorer {
         return text
     }
 
+    /// Unit symbols the writer typed after a number, with the names a model spells them out as.
+    private static let unitNames: [String: [String]] = [
+        "kg": ["kilogram", "kilograms", "kilos"],
+        "g": ["gram", "grams"],
+        "mg": ["milligram", "milligrams"],
+        "lb": ["pound", "pounds"],
+        "lbs": ["pounds"],
+        "oz": ["ounce", "ounces"],
+        "km": ["kilometer", "kilometers", "kilometre", "kilometres"],
+        "cm": ["centimeter", "centimeters", "centimetre", "centimetres"],
+        "mm": ["millimeter", "millimeters", "millimetre", "millimetres"],
+        "mi": ["mile", "miles"],
+        "ft": ["foot", "feet"],
+        "ml": ["milliliter", "milliliters", "millilitre", "millilitres"],
+        "gb": ["gigabyte", "gigabytes"],
+        "mb": ["megabyte", "megabytes"],
+        "kb": ["kilobyte", "kilobytes"],
+        "tb": ["terabyte", "terabytes"],
+        "ghz": ["gigahertz"],
+        "mhz": ["megahertz"],
+        "hz": ["hertz"],
+    ]
+
+    private static let measurement = try! NSRegularExpression(
+        pattern: #"(?<![\w.,])(\d+(?:[.,]\d+)?)\s?([A-Za-z]+)(?![\w])"#)
+
+    /// The writer's "5kg" / "10GB" is style: when the output has the same
+    /// number followed by that unit's name ("5 kilograms"), the typed form
+    /// comes back. Restore-only, like SlangRestorer.
+    static func restoreUnits(original: String, corrected: String) -> String {
+        var text = corrected
+        let ns = original as NSString
+        for match in measurement.matches(in: original, range: NSRange(location: 0, length: ns.length)) {
+            let typed = ns.substring(with: match.range), number = ns.substring(with: match.range(at: 1))
+            guard let names = unitNames[ns.substring(with: match.range(at: 2)).lowercased()], !text.contains(typed) else { continue }
+            let alternatives = names.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|")
+            guard let spelled = try? NSRegularExpression(
+                pattern: "(?<![\\w.,])" + NSRegularExpression.escapedPattern(for: number) + "\\s(?:" + alternatives + ")(?![\\w])",
+                options: [.caseInsensitive]),
+                let found = spelled.firstMatch(in: text, range: NSRange(location: 0, length: (text as NSString).length)),
+                let range = Range(found.range, in: text) else { continue }
+            text.replaceSubrange(range, with: typed)
+        }
+        return text
+    }
+
     static func restore(original: String, corrected: String) -> String {
-        var text = restoreTimes(original: original, corrected: corrected)
+        var text = restoreUnits(original: original, corrected: restoreTimes(original: original, corrected: corrected))
         // Em dash and ellipsis: the writer's character replaces the model's stand-in
         // (a triple hyphen first, so "---" doesn't become "—-").
         for (typographic, ascii) in [("\u{2014}", "---"), ("\u{2014}", "--"), ("\u{2026}", "...")]

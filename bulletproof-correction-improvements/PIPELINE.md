@@ -65,7 +65,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 7b. Writer's typography: if the original's in-word apostrophes are all curly, the output's become curly (#95);
    if it uses only “ ” / — / … (no straight `"`, `--`, `...`), the model's ASCII stand-ins are put back
    (`TypographyRestorer`, #97; Apple Intelligence flattened 5/12 smart-punctuation probes); the writer's clock-time
-   spelling comes back when the output respells the same time (`6pm` → `6 pm` → `6pm`, #109). Never in code or links.
+   spelling comes back when the output respells the same time (`6pm` → `6 pm` → `6pm`, #109), and so does a typed
+   number + unit symbol the model spelled out (`5kg` → `5 kilograms` → `5kg`, #111). Never in code or links.
 8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
 
 Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`). Alignment keys are letters and

@@ -31,4 +31,14 @@ struct TypographyRestorerTests {
         #expect(TypographyRestorer.restore(original: "at 6pm", corrected: "at 7 pm") == "at 7 pm")
         #expect(TypographyRestorer.restore(original: "from 8am to 6pm", corrected: "From 8am to 6pm.") == "From 8am to 6pm.")
     }
+
+    @Test func theWritersUnitsComeBack() {
+        #expect(TypographyRestorer.restore(original: "It weighs 5kg and the drive is 10GB.",
+                                           corrected: "It weighs 5 kilograms and the drive is 10 gigabytes.")
+                == "It weighs 5kg and the drive is 10GB.")
+        #expect(TypographyRestorer.restore(original: "only 300 MB left", corrected: "Only 300 megabytes left.") == "Only 300 MB left.")
+        // A different number, or a unit the writer didn't type, is left alone.
+        #expect(TypographyRestorer.restore(original: "5kg", corrected: "6 kilograms") == "6 kilograms")
+        #expect(TypographyRestorer.restore(original: "ran 5 miles", corrected: "ran 5 kilometers") == "ran 5 kilometers")
+    }
 }
