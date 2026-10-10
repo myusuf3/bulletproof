@@ -47,3 +47,8 @@
   AppleIntelligenceEngine. The harness already supports it.
 - Deterministic style guards (H3): casing transfer and slang restore in code.
 - Qwen3-8B or Gemma-3-4B (H8) once the prompt has converged.
+- **Mid-sentence capital restore (#82, discarded for no measurable gain):** if the writer capitalized a word that isn't at a
+  sentence or line start (`Sam`, `Python`) and the model lowercased exactly that word, put the capital back. The replay over
+  all stored outputs fired 20 times on 3 cases, every one correct, but 0 fail→pass, because those rows fail for other reasons.
+  Worth adding if real-usage telemetry shows names being lowercased. The probe is in /tmp/caps_probe.py, and it must treat
+  `- ` bullets as line starts.
