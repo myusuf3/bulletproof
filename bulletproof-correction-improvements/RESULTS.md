@@ -1,6 +1,6 @@
 # Results: correction-quality autoresearch (2026-10-09)
 
-Branch `autoresearch/correction-quality-2026-10-09`, 114 experiments (log: `.auto/log.jsonl`, playbook and history:
+Branch `autoresearch/correction-quality-2026-10-09`, 125 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
 ## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
@@ -24,7 +24,7 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
-## Latest live run (#114, corrected metric, `run-2026-10-10-live-114/`; corpus output identical to #104)
+## Latest live run (#125, corrected metric, `run-2026-10-10-live-125/`; corpus output identical to #104)
 
 | | Qwen3-4B, original → now | Apple Intelligence, original → now |
 |---|---|---|
@@ -38,13 +38,13 @@ The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
 Both engines are deterministic (Qwen at temperature 0, Apple Intelligence greedy since #62), so these are exact.
 
-**Beyond the corpus (live Swift, #114):**
+**Beyond the corpus (live Swift, #125):**
 
 | Set (never tuned on) | Qwen3-4B | Apple Intelligence |
 |---|---|---|
 | Fresh set 1 (35 cases, #45/#66) | 0.971 | 0.829 |
 | Fresh set 2 (30 realistic messages written after #100, #101) | 26/30 | 25/30 |
-| Robustness: 161 unusual inputs (6 rounds, incl. dictation) + 14 multilingual | 163/175 | 132/175 |
+| Robustness: 187 unusual inputs (8 rounds: typed, dictation, partial selections, mixed documents) + 14 multilingual | 187/201 | 152/201 |
 | Smart typography probes (12) keep the writer's punctuation | 12/12 | 11/12 |
 | Dictation round (20 transcripts, #113) | 18/20 | 16/20 |
 
@@ -73,6 +73,18 @@ Probing unusual inputs found these real bugs, all fixed and each checked by repl
   identifiers (hashes, UUIDs) are now literals.
 - #109, #111: the writer's time and unit formatting restyled (`3:30pm` → `3:30 PM`, `5kg` → `5 kilograms`).
 - #112: a schemeless link respelled (`exmaple.org/faq` → `example.org/faq`) and an emoticon split (`:P` → `: P`).
+- #116: on a partial selection, the model "closed" the writer's open parenthesis or quote (`(see the attached file`
+  → `…file)`), which would be pasted mid-text; the extra edge mark is now removed (not `[]`/`{}`: the first version
+  stripped a JSON answer's braces and let it past `introducedStructure`, caught by the guard metric).
+- #119, #123: short deletions were pasted (`"I dont know," she said` → `I don't know,`; a leading Slack mention
+  dropped): 2+ outright-deleted words, or any typed link/mention/path/identifier missing after restoration, now
+  reject with `droppedContent`.
+- #121, #124: a lowercase abbreviation recased mid-sentence (`thurs` → `Thurs`) and respaced units (`450kg` →
+  `450 kg`) get the writer's form back.
+
+Guardrails added along the way: `harness/invariants.py` checks echo no-op, idempotence and "blocked answers stay
+blocked" (every gate-rejected guard answer must stay rejected after the full chain, #117); `.auto/checks.sh`
+requires `answered_pasted == 0`.
 
 The Swift chain (`cleanResponse` + `OutputGate.rejection`) matches the harness mirror on 3,218 stored and synthetic
 pairs (#87, #103, `harness/swift_chain_parity.py`), so the metric scores what ships. Apple Intelligence-only
@@ -156,7 +168,7 @@ data point is a week on the current build.
   numbers before #62 are single runs; from #62 on they're exact.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
   soundalikes. Apple Intelligence still expands some slang (0.88) and rewords more than Qwen (out of sample:
-  0.83 vs 0.97 on the fresh set, #66; 132 vs 163 of 175 robustness inputs, #114), so **Qwen is the recommended default**.
+  0.83 vs 0.97 on the fresh set, #66; 152 vs 187 of 201 robustness inputs, #125), so **Qwen is the recommended default**.
 - The corpus is synthetic, and the judge-free metric can't see subtle meaning changes. Re-judge a sample before release.
 - Before pushing the branch: commit db65f20 contains `context/real-usage.md` (personal data), so rewrite it.
 - Owner decision (#113): dictated email addresses ("jane at example dot com") are kept as spoken today (Qwen's
