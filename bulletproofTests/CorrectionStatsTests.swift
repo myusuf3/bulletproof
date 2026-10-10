@@ -196,4 +196,17 @@ struct PracticeScheduleTests {
         later.completeToday()
         #expect(later.streak == 1)
     }
+
+    @Test func modelRewritesAreNotDrilledButTyposAndHomophonesAre() {
+        // From the developer's real stats: "understood -> understand" x7 was a
+        // tense rewrite, not a typo.
+        let stats = CorrectionStats(defaults: freshDefaults())
+        for (typo, fix) in [("understood", "understand"), ("know", "knows"), ("til", "until"), ("was", "were")] {
+            #expect(!stats.isTypo(typo, fixedTo: fix), "\(typo) -> \(fix)")
+        }
+        for (typo, fix) in [("wonderign", "wondering"), ("dont", "don't"), ("their", "there"), ("weak", "week"),
+                            ("right", "write"), ("fro", "for"), ("exited", "excited")] {
+            #expect(stats.isTypo(typo, fixedTo: fix), "\(typo) -> \(fix)")
+        }
+    }
 }

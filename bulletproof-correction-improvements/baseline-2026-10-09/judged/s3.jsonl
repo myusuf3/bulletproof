@@ -1,0 +1,89 @@
+{"id": "s3-001", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-003", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Fixed I'll; comma splice and no final period, acceptable."}
+{"id": "s3-004", "engine": "appleIntelligence", "verdict": "MISSED", "gate_verdict": null, "note": "Echoed input; no colon, caps, or period added."}
+{"id": "s3-005", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Expanded contractions to 'We are'/'We will'; formalizes casual voice."}
+{"id": "s3-006", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-007", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "accept -> 'accepts' instead of except; meaning inverted."}
+{"id": "s3-008", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed know; no caps, no question mark, lowercase i."}
+{"id": "s3-009", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-010", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Fixed They're; 'end of day' -> 'the end of the day' is neutral."}
+{"id": "s3-011", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-013", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Added 'PM', not in the speech."}
+{"id": "s3-014", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; added neutral 'on'."}
+{"id": "s3-016", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-018", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed accept; left sentence start and 'i' lowercase."}
+{"id": "s3-019", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "'we're' expanded to 'we are'; comma splice, no period."}
+{"id": "s3-020", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-021", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Added question mark only; its and caps unfixed."}
+{"id": "s3-022", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-023", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Punctuation added; 'Its' apostrophe not fixed."}
+{"id": "s3-024", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-025", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "'left too' -> 'left them too'; added word, lost the number two."}
+{"id": "s3-026", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-027", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-029", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-030", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-031", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Comma instead of colon; acceptable."}
+{"id": "s3-032", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Periods added but no capitalization."}
+{"id": "s3-033", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "hasnt -> 'has not'; expands contraction, formalizes voice."}
+{"id": "s3-034", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Question mark added; 'to' -> too not fixed, no caps."}
+{"id": "s3-035", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-036", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Only a period added; denver, ill, i unfixed."}
+{"id": "s3-037", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; 'three AM' acceptable."}
+{"id": "s3-039", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "All fixes made; gate rejected a correct fix."}
+{"id": "s3-042", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Expanded They're -> 'They are', added 'of'; formalizes voice."}
+{"id": "s3-043", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": "ATE_GOOD_FIX", "note": "Punctuation fixed but 'right down' left; gate rejected it."}
+{"id": "s3-044", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Capitalized only; then -> than not fixed."}
+{"id": "s3-045", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Correct; only final period missing."}
+{"id": "s3-046", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-047", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-048", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-050", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-051", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-052", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Homophone and caps fixed; question mark missing."}
+{"id": "s3-053", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed it's; sentence start and March left lowercase."}
+{"id": "s3-054", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "note": "Fixed supposed; expanded it's -> 'it is'."}
+{"id": "s3-055", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; filler kept; no final period."}
+{"id": "s3-058", "engine": "appleIntelligence", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "note": "Split the list into a 'Rent a car...' fragment; stray comma before 'if'."}
+{"id": "s3-059", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-062", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-063", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-064", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; only final period missing."}
+{"id": "s3-065", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; comma variant, no final period."}
+{"id": "s3-066", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "All fixes made; gate rejected a correct fix."}
+{"id": "s3-067", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; dropped 'Um' (allowed); no final period."}
+{"id": "s3-068", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "'We were' is a plausible reading; corpus case is ambiguous."}
+{"id": "s3-069", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "All fixes made; comma variation only."}
+{"id": "s3-070", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "note": "Period instead of colon; acceptable."}
+{"id": "s3-005", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-011", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-012", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-013", "engine": "qwen3-4b", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "note": "'too thirty' -> 'three thirty'; wrong meeting time."}
+{"id": "s3-014", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-015", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "Changed 'is it' to 'was it'; tense reworded."}
+{"id": "s3-016", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-017", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Punctuation fixed; who's -> whose not fixed."}
+{"id": "s3-019", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Semicolon split; acceptable."}
+{"id": "s3-023", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Semicolon split; acceptable."}
+{"id": "s3-025", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Punctuation fixed; 'too' -> two not fixed."}
+{"id": "s3-028", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "note": "Fixed their/Friday; run-on 'team I want' not split."}
+{"id": "s3-033", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Dash split; acceptable."}
+{"id": "s3-034", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "Dropped 'to/too'; lost the 'also' meaning."}
+{"id": "s3-037", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "'3 am' acceptable."}
+{"id": "s3-038", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Dash split; acceptable."}
+{"id": "s3-039", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "Exact fix; gate rejected a correct fix."}
+{"id": "s3-040", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Semicolon split; acceptable."}
+{"id": "s3-041", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash instead of comma; acceptable."}
+{"id": "s3-044", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "note": "Rewrote as 'before making a decision—we'll regret later'; now nonsensical."}
+{"id": "s3-047", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Semicolon split; acceptable."}
+{"id": "s3-050", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-053", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Semicolon split; acceptable."}
+{"id": "s3-058", "engine": "qwen3-4b", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "note": "Wrong semicolon: 'hotel; if you can take care of the car'."}
+{"id": "s3-062", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-066", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "note": "Correct fix; gate rejected it."}
+{"id": "s3-068", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Em dash split; acceptable."}
+{"id": "s3-069", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "'like' -> 'as' is a standard grammar fix; otherwise correct."}
+{"id": "s3-070", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "note": "Capitalized Facilities; acceptable."}
+{"id": "s3-074", "engine": "qwen3-4b", "verdict": "PRESERVED", "gate_verdict": null, "note": "Only capitalized after colon; neutral."}
+{"id": "s3-075", "engine": "qwen3-4b", "verdict": "PRESERVED", "gate_verdict": null, "note": "Only capitalized Finance; neutral."}
+{"id": "s3-079", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": "BLOCKED_BAD", "note": "Replaced clean text with unrelated 'What's the weather like?'."}

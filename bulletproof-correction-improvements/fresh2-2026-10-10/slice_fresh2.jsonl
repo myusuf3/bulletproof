@@ -1,0 +1,30 @@
+{"id": "s5-g01", "input": "omw, be there in 10 min 🚗", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g02", "input": "cant find the charger anywhere, did u borow it?", "expected": {"kind": "fix", "acceptableOutputs": ["can't find the charger anywhere, did u borrow it?"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g03", "input": "lol thats hilarious 😂😂", "expected": {"kind": "fix", "acceptableOutputs": ["lol that's hilarious 😂😂"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g04", "input": "np! lmk if u need anything else", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g05", "input": "ppl keep asking abt the potluck tho, should we postpone?", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g06", "input": "the recipie is at https://cooking.example.org/stew?id=42 btw", "expected": {"kind": "fix", "acceptableOutputs": ["the recipe is at https://cooking.example.org/stew?id=42 btw"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g07", "input": "jk jk, im not mad 🙂", "expected": {"kind": "fix", "acceptableOutputs": ["jk jk, i'm not mad 🙂"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g08", "input": "thx for the ride!! ttyl 👋🏾", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g09", "input": "grab some milk + eggs on ur way home pls", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g10", "input": "did you see the game last nite? unreal", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g11", "input": "I’m not sure we’ll make the deadline, but we’ll try.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g12", "input": "She said “it’s fine” — but I dont beleive her.", "expected": {"kind": "fix", "acceptableOutputs": ["She said “it’s fine” — but I don’t believe her."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g13", "input": "The garden looks amazing this year… the tomatos finally came in.", "expected": {"kind": "fix", "acceptableOutputs": ["The garden looks amazing this year… the tomatoes finally came in."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g14", "input": "Our flight was delayed by two hours, so we missed the conection.", "expected": {"kind": "fix", "acceptableOutputs": ["Our flight was delayed by two hours, so we missed the connection."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g15", "input": "Please find the signed lease attached.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s2-g16", "input": "Each of the volunteers have a name tag.", "expected": {"kind": "fix", "acceptableOutputs": ["Each of the volunteers has a name tag."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s2-g17", "input": "Me and her went to the farmers market on Saturday.", "expected": {"kind": "fix", "acceptableOutputs": ["She and I went to the farmers market on Saturday.", "Her and I went to the farmers market on Saturday."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s2-g18", "input": "There is less people at the gym in the morning.", "expected": {"kind": "fix", "acceptableOutputs": ["There are fewer people at the gym in the morning."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s2-g19", "input": "The kids has been practicing piano every day.", "expected": {"kind": "fix", "acceptableOutputs": ["The kids have been practicing piano every day."]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s4-g20", "input": "Hi Priya,\n\nThanks for sending the quote so fast. Could you send the final invoice by Friday?\n\nBest,\nTom", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s4-g21", "input": "Packing list:\n- sunscrean\n- hiking boots\n- water bottle", "expected": {"kind": "fix", "acceptableOutputs": ["Packing list:\n- sunscreen\n- hiking boots\n- water bottle"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s4-g22", "input": "To reset the router, unplug it for 30 seconds, then plug it back in and wait for the light to turn green. If it stays orange, call the provider.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g23", "input": "set `MAX_RETRIES=3` in the .env file and restart, should fix the timout", "expected": {"kind": "fix", "acceptableOutputs": ["set `MAX_RETRIES=3` in the .env file and restart, should fix the timeout"]}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g24", "input": "the photos are in ~/Pictures/Vacation/2026, grab whatever u want", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g25", "input": "use <strong> for the title, not <b>, our linter complains abt it", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g26", "input": "I’ll call you at 6 — if that’s too late, text me.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g27", "input": "fyi the vet appt moved to thurs at 4", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g28", "input": "congrats on the new job!! 🎉 so happy for u", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s1-g29", "input": "The bakery on Elm Street closes early on Sundays.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}
+{"id": "s5-g30", "input": "brb, gotta walk the dog real quick", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh2"]}

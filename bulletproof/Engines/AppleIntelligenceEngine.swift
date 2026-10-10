@@ -5,11 +5,33 @@ import FoundationModels
 /// the on-device model drifts into answering request-like text.
 @Generable
 nonisolated struct Correction {
-    @Guide(description: "The input text with spelling, grammar, and punctuation corrected. Identical wording otherwise. Never a reply to the text.")
+    // The guide is a second instruction channel only this engine sees, so it
+    // carries the same keep-the-writer's-style policy as the system prompt.
+    @Guide(description: "The input text with every spelling and grammar mistake fixed, including subject-verb agreement, verb tense, articles, missing apostrophes, and misused words (their/there, your/you're, its/it's, then/than). Everything else stays exactly as written: wording, capitalization (lowercase stays lowercase), slang, contractions, emoji, punctuation style, line breaks, and backticked code. Never a reply to the text.")
+    var correctedText: String
+}
+
+/// The dictation path's output type. Transcripts are lowercase and
+/// unpunctuated by accident, so the typed-text guide ("lowercase stays
+/// lowercase") would leave them raw.
+@Generable
+nonisolated struct DictationCorrection {
+    @Guide(description: "The transcript written as correct text: sentence punctuation and capital letters added, misheard soundalike words fixed, contractions kept. The speaker's words otherwise unchanged. Never a reply to the text.")
     var correctedText: String
 }
 
 nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
+    var instructions = ProofreadPrompt.instructions
+
+    /// Greedy decoding: a proofread has one right answer, and default sampling
+    /// made output vary run to run (typed pass 0.68-0.80 across identical runs).
+    /// Matches the local engine's temperature 0.
+    static let options = GenerationOptions(samplingMode: .greedy)
+
+    /// The dictation path is identified by its prompt (AppState passes
+    /// ProofreadPrompt.dictationInstructions), and gets the matching guide.
+    var isDictation: Bool { instructions == ProofreadPrompt.dictationInstructions }
+
     /// Default guardrails throw guardrailViolation on the user's own words
     /// (profanity, heated messages, legal text); the permissive set exists
     /// exactly for transforming user-provided text.
@@ -36,13 +58,16 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         // Fresh session per request: proofreading is stateless, and a shared
         // transcript would grow and bleed context between selections.
         let session = LanguageModelSession(model: Self.model,
-                                           instructions: ProofreadPrompt.instructions)
+                                           instructions: instructions)
         do {
-            let response = try await session.respond(
-                to: ProofreadPrompt.userPrompt(for: text),
-                generating: Correction.self
-            )
-            return ProofreadPrompt.cleanResponse(response.content.correctedText, original: text)
+            let prompt = ProofreadPrompt.userPrompt(for: text)
+            let corrected = isDictation
+                ? try await session.respond(to: prompt, generating: DictationCorrection.self,
+                                            options: Self.options).content.correctedText
+                : try await session.respond(to: prompt, generating: Correction.self,
+                                            options: Self.options).content.correctedText
+            return ProofreadPrompt.cleanResponse(corrected, original: text, keepsLowercase: !isDictation,
+                                                 sentenceCases: isDictation)
         } catch let error as LanguageModelSession.GenerationError {
             throw Self.mapped(error)
         } catch {
@@ -53,7 +78,7 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
     func prewarm() async {
         guard case .available = Self.model.availability else { return }
         LanguageModelSession(model: Self.model,
-                             instructions: ProofreadPrompt.instructions).prewarm()
+                             instructions: instructions).prewarm()
     }
 
     /// Every GenerationError becomes user vocabulary - the raw messages talk

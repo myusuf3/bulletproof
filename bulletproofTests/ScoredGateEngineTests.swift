@@ -11,9 +11,13 @@ private final class FakeScorer: SpanScorer, @unchecked Sendable {
     var canned: SpanScores
     private(set) var scoredSpans: [EditDiff.Span] = []
 
-    init(replacement: Double?, original: Double? = nil, suffix: Double? = nil) {
+    init(replacement: Double?, original: Double? = nil, suffix: Double? = nil,
+         totals: (replacement: Double, original: Double)? = nil) {
         canned = SpanScores(replacement: replacement, original: original,
-                            suffixAfterReplacement: suffix)
+                            suffixAfterReplacement: suffix,
+                            replacementTotal: totals?.replacement, originalTotal: totals?.original,
+                            replacementTokenCount: totals == nil ? nil : 4,
+                            originalTokenCount: totals == nil ? nil : 4)
     }
 
     func scores(for span: EditDiff.Span) async -> SpanScores {
@@ -25,23 +29,26 @@ private final class FakeScorer: SpanScorer, @unchecked Sendable {
 struct ScoredGateEngineTests {
     // Round numbers so these pin gate behavior independent of the tuned
     // production defaults (those are pinned in ScoredVerdictTests).
-    private let thresholds = ScoringThresholds(minimumMeanLogProbability: -6.0,
-                                               originalVetoMargin: 1.0,
-                                               minimumSuffixMeanLogProbability: -7.0)
+    private let thresholds = ScoringThresholds(originalVetoMargin: 1.0, totalVetoMargin: 1.0,
+                                               maxTokenCountDifferenceForTotals: 1)
+    /// Most tests exercise scoring, so nothing counts as misspelled unless a
+    /// test says so (the real NSSpellChecker would short-circuit "teh").
+    private let noMisspellings: @Sendable ([String]) async -> Bool = { _ in false }
 
     @Test func plausibleEditPassesThrough() async throws {
         let scorer = FakeScorer(replacement: -2.0, original: -5.0, suffix: -3.0)
         let engine = ScoredGateEngine(wrapped: CannedEngine(output: "the cat sat"),
-                                      scorer: scorer)
+                                      scorer: scorer, hasMisspelling: noMisspellings)
         #expect(try await engine.proofread("teh cat sat") == "the cat sat")
         #expect(scorer.scoredSpans.count == 1)
         #expect(scorer.scoredSpans[0].replacement == "the")
     }
 
     @Test func implausibleEditIsRejected() async {
-        let scorer = FakeScorer(replacement: -9.0)
+        let scorer = FakeScorer(replacement: -9.0, original: -8.5, totals: (-20.0, -17.0))
         let engine = ScoredGateEngine(wrapped: CannedEngine(output: "the affect was strong"),
-                                      scorer: scorer, thresholds: thresholds)
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
         do {
             _ = try await engine.proofread("the effect was strong")
             Issue.record("expected unusableOutput")
@@ -59,7 +66,8 @@ struct ScoredGateEngineTests {
         // The scored version of "the user wrote it that way on purpose".
         let scorer = FakeScorer(replacement: -4.0, original: -2.0, suffix: -3.0)
         let engine = ScoredGateEngine(wrapped: CannedEngine(output: "We hired John yesterday."),
-                                      scorer: scorer, thresholds: thresholds)
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
         await #expect(throws: ProofreadingError.self) {
             _ = try await engine.proofread("We hired Jon yesterday.")
         }
@@ -68,7 +76,7 @@ struct ScoredGateEngineTests {
     @Test func unscorableSpanFailsOpen() async throws {
         let scorer = FakeScorer(replacement: nil)
         let engine = ScoredGateEngine(wrapped: CannedEngine(output: "the cat sat"),
-                                      scorer: scorer)
+                                      scorer: scorer, hasMisspelling: noMisspellings)
         #expect(try await engine.proofread("teh cat sat") == "the cat sat")
     }
 
@@ -88,6 +96,38 @@ struct ScoredGateEngineTests {
             output: "one B two D three F four H five J"), scorer: scorer)
         _ = try await engine.proofread("one A two C three E four G five I")
         #expect(scorer.scoredSpans.isEmpty)
+    }
+
+    @Test func typoFixesSkipScoring() async throws {
+        // The scorer's token-count bias rejects "resturant" -> "restaurant";
+        // a spell-checked non-word fixed to a close spelling never reaches it.
+        let scorer = FakeScorer(replacement: -99.0, original: -1.0)
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "The restaurant was closed"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: { words in words.contains("resturant") })
+        #expect(try await engine.proofread("The resturant was closed") == "The restaurant was closed")
+        #expect(scorer.scoredSpans.isEmpty)
+    }
+
+    @Test func cosmeticEditsSkipScoring() async throws {
+        let scorer = FakeScorer(replacement: -99.0, original: -1.0)
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "Unit tests pass"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
+        #expect(try await engine.proofread("unit tests pass") == "Unit tests pass")
+        #expect(scorer.scoredSpans.isEmpty)
+    }
+
+    @Test func realWordSwapsAreStillScored() async {
+        // "fucking" -> "broken": nothing misspelled, so the scorer decides.
+        let scorer = FakeScorer(replacement: -12.6, original: -11.9, totals: (-40.0, -37.0))
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "This broken build"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
+        await #expect(throws: ProofreadingError.self) {
+            _ = try await engine.proofread("This fucking build")
+        }
+        #expect(scorer.scoredSpans.count == 1)
     }
 
     @Test func pureDeletionsAreNotScored() async throws {

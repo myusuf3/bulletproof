@@ -22,6 +22,15 @@ struct AppleIntelligenceEngineTests {
         }
     }
 
+    @Test func decodingIsGreedy() {
+        #expect(AppleIntelligenceEngine.options == GenerationOptions(samplingMode: .greedy))
+    }
+
+    @Test func dictationPromptSelectsTheTranscriptGuide() {
+        #expect(!AppleIntelligenceEngine().isDictation)
+        #expect(AppleIntelligenceEngine(instructions: ProofreadPrompt.dictationInstructions).isDictation)
+    }
+
     @Test func oversizedInputThrowsBeforeAvailabilityCheck() async {
         // Runs on machines without Apple Intelligence (CI) - the cap must be
         // checked before availability or this throws engineUnavailable there.
@@ -40,7 +49,8 @@ struct AppleIntelligenceEngineTests {
     @Test func inputCapKeepsFullExchangeInsideContextWindow() {
         let cap = AppleIntelligenceEngine.maxInputCharacters
         let inputTokens = cap / 3
-        let instructionTokens = ProofreadPrompt.instructions.count / 3
+        let instructionTokens = max(ProofreadPrompt.instructions.count,
+                                    ProofreadPrompt.dictationInstructions.count) / 3
         // A correction is roughly input-sized; 2x + slack mirrors the local
         // engine's generation budget.
         #expect(instructionTokens + inputTokens + (inputTokens * 2 + 128)

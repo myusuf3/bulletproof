@@ -1,0 +1,30 @@
+{"id": "s5-f4-01", "input": "@maya the slides look great, just one typo on slide 3", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-02", "input": "cc @devon_r, can u double check the numbers b4 we send", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-03", "input": "the new hire starts mon, pls say hi when u see her", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-04", "input": "honestly the food was OK but the view was AMAZING", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-05", "input": "we're out of coffee AGAIN, who's doing the grocery run", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-06", "input": "thanks @li for covering my shift, i owe u one", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-07", "input": "running 10 min late, start without me", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-08", "input": "the wifi password changed, its on the whiteboard now", "expected": {"kind": "fix", "acceptableOutputs": ["the wifi password changed, it's on the whiteboard now"]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-09", "input": "dont forget the potluck is thurs, bring a dish", "expected": {"kind": "fix", "acceptableOutputs": ["don't forget the potluck is thurs, bring a dish"]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-10", "input": "just got back from the dentist, my face is NUMB", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-11", "input": "the printer on floor 2 is jammed agian", "expected": {"kind": "fix", "acceptableOutputs": ["the printer on floor 2 is jammed again"]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-12", "input": "can someone ping @ops about the alert in #infra", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-13", "input": "i think the deadline is fri but lmk if thats wrong", "expected": {"kind": "fix", "acceptableOutputs": ["i think the deadline is fri but lmk if that's wrong"]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-14", "input": "new record: 42 PRs merged this sprint 🚀", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-15", "input": "FYI the parking lot is closed tmrw for repaving", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s1-f4-16", "input": "Our team will present the results at the conference next week.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s1-f4-17", "input": "Please confirm your attendence by Friday.", "expected": {"kind": "fix", "acceptableOutputs": ["Please confirm your attendance by Friday."]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s1-f4-18", "input": "The invoice was paid on the 3rd and should clear by Monday.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s2-f4-19", "input": "Each of the reports need to be signed by a manager.", "expected": {"kind": "fix", "acceptableOutputs": ["Each of the reports needs to be signed by a manager."]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s2-f4-20", "input": "There's three boxes left in the storage room.", "expected": {"kind": "fix", "acceptableOutputs": ["There are three boxes left in the storage room."]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s1-f4-21", "input": "We'll need to reschedule the workshop do to the weather.", "expected": {"kind": "fix", "acceptableOutputs": ["We'll need to reschedule the workshop due to the weather."]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s4-f4-22", "input": "Hi Sam,\n\nAttached is the signed contract. Let me know if anything else is needed.\n\nBest,\nPriya", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s4-f4-23", "input": "Grocery list:\n- oat milk\n- bananas\n- coffee filters", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-24", "input": "pushed the fix to `release/2.4`, should be live in an hr", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-25", "input": "the dashboard is at metrics.example.dev/team, check the latency graph", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-26", "input": "my flight lands at 6:45pm, can u grab me from the airport?", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-27", "input": "lol the cat knocked my coffee onto the keyboard AGAIN", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s1-f4-28", "input": "I've attached the slides from Tuesday's meeting for your reference.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-29", "input": "sooo happy the release went smoothly, great work everyone", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
+{"id": "s5-f4-30", "input": "heads up @team: standup is moved to 10am tomorow", "expected": {"kind": "fix", "acceptableOutputs": ["heads up @team: standup is moved to 10am tomorrow"]}, "errors": [], "mustPreserve": [], "tags": ["fresh4"]}
