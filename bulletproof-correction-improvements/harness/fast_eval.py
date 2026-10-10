@@ -991,6 +991,9 @@ def _key_steps(a, b):
     return out
 
 
+DELETABLE_FUNCTION_WORDS = frozenset(['a', 'about', 'am', 'an', 'are', 'at', 'back', 'be', 'been', 'being', 'did', 'do', 'does', 'for', 'from', 'had', 'has', 'have', 'in', 'into', 'is', 'more', 'most', 'of', 'on', 'the', 'to', 'very', 'was', 'were', 'will', 'with', 'would'])  # OutputGate.deletableFunctionWords
+
+
 def deletes_words(original, output):
     """OutputGate.deletesWords."""
     key = lambda w: "".join(c for c in w.lower() if c.isalnum())
@@ -999,11 +1002,15 @@ def deletes_words(original, output):
     b = [key(w) for w, _ in _word_tokens(output)[1]]
     ck = lambda w: "".join(c for c in _fold(w) if c.isalnum())
     kept = surviving([k for k in (ck(w) for w in original.split()) if k], [k for k in (ck(w) for w in output.split()) if k])
-    lost = 0
+    lost, only_lone_function_words = 0, True
     for i0, i1, j0, j1 in _key_steps(a, b):
         if j0 == j1:
-            lost += sum(1 for k in range(i0, i1) if a[k] and not (k > 0 and a[k - 1] == a[k]) and ck(words[k]) not in kept)
-    return lost >= 2
+            run = [k for k in range(i0, i1) if a[k] and not (k > 0 and a[k - 1] == a[k]) and ck(words[k]) not in kept]
+            if run:
+                lost += len(run)
+                if len(run) > 1 or a[run[0]] not in DELETABLE_FUNCTION_WORDS:
+                    only_lone_function_words = False
+    return lost >= 2 and not only_lone_function_words
 
 
 def drops_content(original, output):

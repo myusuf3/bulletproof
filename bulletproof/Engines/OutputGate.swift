@@ -90,22 +90,37 @@ nonisolated enum OutputGate {
     /// and found nowhere else in the output (so "Me and Sam" -> "Sam and I"
     /// moves words rather than losing them; close spellings count as kept, as in
     /// lowOverlap). A repeated word ("the the") isn't
-    /// content. Catches short deletions the per-sentence rule below misses
+    /// content. Grammar fixes delete lone function words ("Despite of the rain"
+    /// -> "Despite the rain", "more better" -> "better", "return back" ->
+    /// "return"), so deletions that are all single function words between kept
+    /// words pass. Any lost content word, or a lost run of 2+ words ("apologies
+    /// for the delay" -> "apologies delay"), counts every deletion; pronouns,
+    /// negations and modals are never exempt, so a dropped "she said" is caught.
+    /// Catches short deletions the per-sentence rule below misses
     /// ('"I dont know," she said' -> "I don't know,").
+    static let deletableFunctionWords: Set<String> = [
+        "a", "about", "am", "an", "are", "at", "back", "be", "been", "being", "did", "do",
+        "does", "for", "from", "had", "has", "have", "in", "into", "is", "more", "most",
+        "of", "on", "the", "to", "very", "was", "were", "will", "with", "would"
+    ]
+
     static func deletesWords(original: String, output: String) -> Bool {
         let tokens = WordTokens(original)
         let source = tokens.keys, result = WordTokens(output).keys
         // Survival as in lowOverlap: kept verbatim or as a close spelling ("Teh" -> "The").
         let kept = surviving(original.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty },
                              in: output.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty })
-        var lost = 0
+        var lost = 0, onlyLoneFunctionWords = true
         for case .changed(let removed, let added) in WordAlignment.steps(source, result) where added.isEmpty {
-            for k in removed where !source[k].isEmpty && !(k > 0 && source[k - 1] == source[k])
-                && !kept.contains(contentKey(Substring(tokens.tokens[k].word))) {
-                lost += 1
+            let run = removed.filter { k in
+                !source[k].isEmpty && !(k > 0 && source[k - 1] == source[k])
+                    && !kept.contains(contentKey(Substring(tokens.tokens[k].word)))
             }
+            guard !run.isEmpty else { continue }
+            lost += run.count
+            if run.count > 1 || !deletableFunctionWords.contains(source[run[0]]) { onlyLoneFunctionWords = false }
         }
-        return lost >= 2
+        return lost >= 2 && !onlyLoneFunctionWords
     }
 
     static func dropsContent(original: String, output: String) -> Bool {

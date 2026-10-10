@@ -270,6 +270,20 @@ struct OutputGatedEngineTests {
         #expect(!OutputGate.deletesWords(original: "um so we should go", output: "So we should go."))
     }
 
+    @Test func allowsGrammarFixesThatDeleteFunctionWords() {
+        #expect(OutputGate.rejection(original: "Despite of the rain, we went to the outside.",
+                                     output: "Despite the rain, we went outside.") == nil)
+        #expect(OutputGate.rejection(original: "This one is more better and more cheaper.",
+                                     output: "This one is better and cheaper.") == nil)
+        #expect(OutputGate.rejection(original: "Please return back the book when you will finish it.",
+                                     output: "Please return the book when you finish it.") == nil)
+        // A run of function words, or a function word plus a content word, is still a deletion.
+        #expect(OutputGate.deletesWords(original: "please accept my apologies for the delay",
+                                        output: "please accept my apologies delay"))
+        #expect(OutputGate.deletesWords(original: "i looked at the analytics and the drop in signups",
+                                        output: "i looked the drop in signups"))
+    }
+
     @Test func rejectsADroppedLiteral() {
         #expect(OutputGate.rejection(original: "<@U02ZZ9K1> re: the PR, two nits", output: "re: the PR, two nits") == .droppedContent)
         #expect(OutputGate.rejection(original: "commit a1b2c3d is bad", output: "this commit is bad") == .droppedContent)
