@@ -16,10 +16,7 @@
 - Tell the model the output replaces the selection in place, so anything other than the corrected text is destructive.
 
 ## Outside this loop (need code or harness changes, so separate tracks)
-- **Verify gate (H2):** a spell-check short-circuit for non-word typos, skip scoring for case-only and whitespace-merge
-  spans, and compare full-sentence sums instead of per-token means. Probe bad edits (jon-john, profanity, effect→affect,
-  priya-maya) score −12.55 to −12.59, and good real-word fixes (past→passed, some times) score −12.29 to −13.05, so a floor
-  alone can't separate them.
+- ~~Verify gate (H2)~~: done in commit 1c8ac5a (15 → 1 Qwen rejections on 400 cases).
 - **Dictation prompt (H6):** `DictationController` builds its own proofreader, so it can pass a transcript-specific prompt.
 - Chat-turn few-shot (`static let examples`): needs `ChatSession` history in LocalModelEngine and a transcript in
   AppleIntelligenceEngine. The harness already supports it.

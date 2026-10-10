@@ -18,8 +18,8 @@ Background (read once): `bulletproof-correction-improvements/FINDINGS.md` (root 
 
 ### Why the prompt is the bottleneck (measured)
 Of Qwen's ~88 bad outcomes in 400 cases: about 50 are style restyling (32 of them only
-capitalization or punctuation, mostly s5 casual), 14 are verify-gate vetoes of good fixes (a separate
-track, not this loop), about 12 change the meaning, and 11 under-correct. The current few-shot examples *teach*
+capitalization or punctuation, mostly s5 casual), 14 were verify-gate vetoes of good fixes (fixed
+before this loop, see analysis/gate-retune.md), about 12 change the meaning, and 11 under-correct. The current few-shot examples *teach*
 formalizing (`can u` → `can you`, `Whats the whether like` → `What's the weather like?`) and leaked
 verbatim once (s3-079 became "What's the weather like?").
 
@@ -30,6 +30,9 @@ verbatim once (s3-079 became "What's the weather like?").
   slang/code/mustPreserve/line breaks lost, contractions expanded), clean controls come back untouched,
   every listed error is fixed, and there are 0 word edits beyond the nearest acceptable output. It agrees with the
   LLM judges on 94% of baseline rows and wrongly passes only 3 bad ones (all punctuation-level). Baseline **0.7627**.
+- The verify-corrections gate was retuned before the loop started (commit 1c8ac5a,
+  `bulletproof-correction-improvements/analysis/gate-retune.md`). It now vetoes about 1% of dev, mostly real
+  catches, so `pass_rate_user_sees` ≈ `pass_rate`. The harness mirrors the new gate.
 - **Secondary**: `pass_s1..s5` (s5 casual is where the headroom is, at 0.42; s3 dictation is the regression
   risk), `errors_fixed_rate`, `clean_preserved_rate`, `lowercase_kept_rate`, `slang_kept_rate`,
   `case_restyled_rate`, `over_edit_rate`, `answered_count` (guard set plus corpus lookalikes, lower is better),
