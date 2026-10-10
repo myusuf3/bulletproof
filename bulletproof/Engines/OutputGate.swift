@@ -13,6 +13,7 @@ nonisolated enum OutputGate {
         case overExpansion
         case lowOverlap
         case introducedStructure
+        case droppedContent
         case introducedMisspelling
         case protectedWordRemoved
         case implausibleEdit
@@ -54,7 +55,60 @@ nonisolated enum OutputGate {
         if introducesStructure(original: original, output: output) {
             return .introducedStructure
         }
+        if dropsContent(original: original, output: output) {
+            return .droppedContent
+        }
         return nil
+    }
+
+    /// A correction never deletes what the writer said, but models drop
+    /// sign-offs ("Kind regards,\nSofia") and whole sentences, and that paste
+    /// silently loses text. Every line, and every sentence of a multi-sentence
+    /// line, must survive: a sentence of 4+ words with fewer than half its
+    /// words left, or (in multi-line text) a short line with none left, means
+    /// content was dropped.
+    static func dropsContent(original: String, output: String) -> Bool {
+        let kept = Set(output.split(whereSeparator: \.isWhitespace).map(contentKey)).subtracting([""])
+        let lines = original.split(whereSeparator: \.isNewline)
+        for line in lines {
+            let sentences = sentences(in: String(line))
+            for sentence in sentences {
+                let words = sentence.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
+                guard !words.isEmpty else { continue }
+                let survivors = words.filter(kept.contains).count
+                if words.count < 4 {
+                    // Short whole lines (sign-offs, names) only count in
+                    // multi-line text; a short single line legitimately
+                    // changes completely ("u ok?" -> "Are you okay?").
+                    if lines.count > 1, sentences.count == 1, survivors == 0 { return true }
+                } else if survivors * 2 < words.count {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private static func contentKey(_ word: Substring) -> String {
+        String(word.lowercased().filter { $0.isLetter || $0.isNumber })
+    }
+
+    /// Splits after . ! ? followed by whitespace.
+    private static func sentences(in line: String) -> [String] {
+        var result: [String] = []
+        var current = ""
+        var previous: Character?
+        for character in line.trimmingCharacters(in: .whitespaces) {
+            if character.isWhitespace, let p = previous, ".!?".contains(p) {
+                result.append(current)
+                current = ""
+            } else if !(character.isWhitespace && current.isEmpty) {
+                current.append(character)
+            }
+            previous = character
+        }
+        if !current.isEmpty { result.append(current) }
+        return result
     }
 
     /// A correction never adds layout: new line breaks, list markers, JSON or

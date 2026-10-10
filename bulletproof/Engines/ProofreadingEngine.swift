@@ -41,6 +41,8 @@ nonisolated enum ProofreadingError: LocalizedError {
                 "The model returned garbled text, so your selection was left unchanged."
             case .overExpansion, .lowOverlap, .introducedStructure:
                 "The model rewrote instead of correcting, so your selection was left unchanged."
+            case .droppedContent:
+                "The model left out part of your text, so your selection was left unchanged."
             case .introducedMisspelling:
                 "The model's correction introduced a misspelling, so your selection was left unchanged."
             case .protectedWordRemoved:

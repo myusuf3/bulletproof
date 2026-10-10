@@ -115,6 +115,13 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#38 live full-stack verification** (`run-2026-10-09-full-stack-38/`), all 400 vs the original baseline:
+  Qwen pass .73 → .905 (s5 .39 → .94, lowercase .07 → 1.0, slang .21 → .97, rejected 4.25% → 1%); Qwen Swift dev = Python .912.
+  AI pass .63 → .71 (s5 .38 → .63, lowercase .32 → .71, slang .42 → .67, code .54 → 1.0, line breaks .67 → .87, rejected
+  4.75% → 1%). Open: AI deletes content (s4-004 sign-off, s4-044 lines); AI s3 .60 (noise range .59-.69); Swift Qwen
+  latency p50 ~1.3 s (prompt length; noisy).
+- #37 kept: CodeSpanRestorer (fires 50 times on 4,800 stored outputs, 38 fail→pass, 0 pass→fail).
+- #36 kept: LineBreakRestorer v2, symmetric (fires 22 times, 14 fail→pass, 0 pass→fail).
 - **Housekeeping after #35:** `bulletproofTests/ZZScratchCorrectionEval.swift` was committed by the #28 keep, because
   swift_verify.sh's EXIT trap used a relative path after a `cd`. It's env-gated, so it never ran in normal tests.
   It's now `git rm`'d (lands with the next keep), and the trap uses an absolute path.

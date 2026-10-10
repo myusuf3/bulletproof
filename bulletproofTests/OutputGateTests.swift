@@ -25,6 +25,21 @@ struct OutputGateTests {
                                      output: "```\na + b\n```") == .introducedStructure)
     }
 
+    @Test func rejectsDroppedSignOffsAndSentences() {
+        #expect(OutputGate.rejection(
+            original: "Thanks for teh help today.\n\nKind regards,\nSofia",
+            output: "Thanks for the help today.") == .droppedContent)
+        #expect(OutputGate.rejection(
+            original: "The oven is hot and the tray is heavy. Please wait ten minutes. Then serve the soup with bread.",
+            output: "The oven is hot and the tray is heavy. Then serve the soup with bread.") == .droppedContent)
+    }
+
+    @Test func acceptsCorrectionsThatKeepEverySentence() {
+        #expect(OutputGate.rejection(
+            original: "We recieved teh order. Its going out tomorow, I think.\nBest,\nBo",
+            output: "We received the order. It's going out tomorrow, I think.\nBest,\nBo") == nil)
+    }
+
     @Test func acceptsStructureTheInputAlreadyHad() {
         let list = "Todo:\n- buy mlik\n- call mom"
         #expect(OutputGate.rejection(original: list, output: "Todo:\n- buy milk\n- call mom") == nil)

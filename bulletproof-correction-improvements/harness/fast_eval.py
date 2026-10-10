@@ -336,7 +336,43 @@ def output_gate(original, output):
         return "lowOverlap"
     if introduces_structure(original, output):
         return "introducedStructure"
+    if drops_content(original, output):
+        return "droppedContent"
     return None
+
+
+def _sentences(line):
+    res, cur, prev = [], "", None
+    for ch in line.strip(" \t"):
+        if ch.isspace() and prev is not None and prev in ".!?":
+            res.append(cur)
+            cur = ""
+        elif not (ch.isspace() and cur == ""):
+            cur += ch
+        prev = ch
+    if cur:
+        res.append(cur)
+    return res
+
+
+def drops_content(original, output):
+    """OutputGate.dropsContent."""
+    ck = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    kept = {ck(w) for w in output.split()} - {""}
+    lines = [l for l in re.split("[" + _NEWLINES + "]", original) if l != ""]
+    for line in lines:
+        sents = _sentences(line)
+        for sent in sents:
+            words = [k for k in (ck(w) for w in sent.split()) if k]
+            if not words:
+                continue
+            surv = sum(w in kept for w in words)
+            if len(words) < 4:
+                if len(lines) > 1 and len(sents) == 1 and surv == 0:
+                    return True
+            elif surv * 2 < len(words):
+                return True
+    return False
 
 
 _NEWLINES = "\n\r\u000b\u000c\u0085\u2028\u2029"
