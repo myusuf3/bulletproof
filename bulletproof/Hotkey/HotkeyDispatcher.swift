@@ -37,12 +37,17 @@ nonisolated enum HotkeySlot: CaseIterable {
         makeEngine: { AppState.shared.makeSpeechEngine() },
         makeProofreader: {
             // Transcription slips aren't the user's typos - keep them out
-            // of the practice drill.
-            AppState.shared.proofreadDictation ? AppState.shared.makeEngine(recordsStats: false) : nil
+            // of the practice drill. Transcripts need punctuation and
+            // capitals that typed casual text must not get.
+            AppState.shared.proofreadDictation
+                ? AppState.shared.makeEngine(recordsStats: false,
+                                             instructions: ProofreadPrompt.dictationInstructions)
+                : nil
         },
         shortcutDisplay: { AppState.shared.dictationShortcut.displayString },
         surface: SystemDictationSurface(recorder: dictationRecorder,
-                                        deviceUID: { AppState.shared.microphoneUID })
+                                        deviceUID: { AppState.shared.microphoneUID }),
+        engineLabel: { AppState.shared.engineChoice.telemetryLabel }
     )
 
     /// Set by the onboarding practice step while visible. While installed and

@@ -71,6 +71,8 @@ nonisolated enum DictationOverlayPhase: Equatable {
     private let shortcutDisplay: () -> String
     private let surface: any DictationSurface
     private let maximumRecording: Duration
+    private let engineLabel: () -> String
+    private let recordTelemetry: (ProofreadEvent) -> Void
     private var state = State.idle
     private var session = 0
 
@@ -80,7 +82,11 @@ nonisolated enum DictationOverlayPhase: Equatable {
          makeProofreader: @escaping () -> (any ProofreadingEngine)?,
          shortcutDisplay: @escaping () -> String,
          surface: any DictationSurface,
-         maximumRecording: Duration = .seconds(300)) {
+         maximumRecording: Duration = .seconds(300),
+         engineLabel: @escaping () -> String = { "unknown" },
+         recordTelemetry: @escaping (ProofreadEvent) -> Void = { ProofreadTelemetry.shared.record($0) }) {
+        self.engineLabel = engineLabel
+        self.recordTelemetry = recordTelemetry
         self.makeEngine = makeEngine
         self.makeProofreader = makeProofreader
         self.shortcutDisplay = shortcutDisplay
@@ -163,10 +169,24 @@ nonisolated enum DictationOverlayPhase: Equatable {
             surface.show(.failed("Didn't catch that - try speaking closer to the mic."))
             return
         }
-        // A failed proofread must never cost the user what they said.
+        // A failed proofread must never cost the user what they said - but it
+        // must be counted: a silent fallback to the raw transcript used to be
+        // invisible in proofreadStats (keys "dictation:<engine>|<outcome>").
         var text = transcript
         if let proofreader = makeProofreader() {
-            text = (try? await proofreader.proofread(transcript)) ?? transcript
+            let start = ContinuousClock.now
+            let outcome: ProofreadOutcome
+            do {
+                text = try await proofreader.proofread(transcript)
+                outcome = text == transcript ? .unchanged : .applied
+            } catch {
+                text = transcript
+                outcome = .from(error)
+            }
+            recordTelemetry(ProofreadEvent(
+                entryPoint: .dictation, engine: "dictation:" + engineLabel(),
+                inputChars: transcript.count, outputChars: text.count, outcome: outcome, phases: [],
+                totalMs: (ContinuousClock.now - start) / .milliseconds(1)))
         }
         await insert(text, into: target)
     }

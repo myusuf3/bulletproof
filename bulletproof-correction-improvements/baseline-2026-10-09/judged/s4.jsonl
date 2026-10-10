@@ -1,0 +1,68 @@
+{"id": "s4-001", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Only added optional comma after 'morning'."}
+{"id": "s4-004", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": ["your -> you're"], "note": "Collapsed greeting line breaks, dropped 'Kind regards, Sofia' sign-off, missed 'your welcome'."}
+{"id": "s4-006", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["right -> write"], "note": "Missed homophone 'right up the proposal'."}
+{"id": "s4-008", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["you're -> your"], "note": "Missed 'remember you're choice'."}
+{"id": "s4-009", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Fixed typos but capitalized intentional all-lowercase Slack style."}
+{"id": "s4-011", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["Me and Lena -> Lena and I"], "note": "Kept 'Me and Lena will'; 'cannot' expansion is fine."}
+{"id": "s4-012", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["affect -> effect"], "note": "Missed buried 'measurable affect'."}
+{"id": "s4-013", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": "ATE_GOOD_FIX", "missed_errors": ["would of -> would have"], "note": "Kept 'would of'; else fine (curly quotes, 'you are'). Gate rejected whole fix."}
+{"id": "s4-014", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'who is' instead of 'who's' is a valid fix."}
+{"id": "s4-016", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Reworded 'two things' to 'a couple of things'; errors otherwise fixed."}
+{"id": "s4-017", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'will get' and optional comma are legitimate."}
+{"id": "s4-019", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["would'nt -> wouldn't"], "note": "Left misplaced apostrophe, only curled it: 'would’nt'."}
+{"id": "s4-020", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Unneeded '30' -> '30th' restyle, otherwise exact."}
+{"id": "s4-021", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["Your -> You're"], "note": "Missed 'Your body needs'; 'whether' -> 'if' acceptable."}
+{"id": "s4-023", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["photography. -> photography?", "alot -> a lot"], "note": "Missed question mark and 'alot'."}
+{"id": "s4-024", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Removed blank lines between PR sections; capitalized 'Migrates', added bullet period."}
+{"id": "s4-025", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Unneeded drop of 'a' in 'grab a coffee'; meaning intact."}
+{"id": "s4-026", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'It has been' is a valid fix."}
+{"id": "s4-027", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Expanded team jargon 'retro' to 'retrospective'; errors fixed."}
+{"id": "s4-029", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Unneeded 'payments flow' -> 'payment flow'; all errors fixed."}
+{"id": "s4-033", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["apps -> app's"], "note": "Missed possessive 'apps startup time'."}
+{"id": "s4-036", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Capitalized lowercase Slack style, 'ok' -> 'Okay,', 'pr' -> 'PR'."}
+{"id": "s4-039", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["Thank's -> Thanks"], "note": "Missed buried 'Thank's'."}
+{"id": "s4-040", "engine": "appleIntelligence", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "missed_errors": ["does'nt -> doesn't"], "note": "Turned 'does'nt' into new misspelling 'does’t'."}
+{"id": "s4-043", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["there -> their"], "note": "Missed 'there child tickets'."}
+{"id": "s4-045", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["their -> they're"], "note": "Missed 'their usually packed'."}
+{"id": "s4-049", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["is -> are"], "note": "Missed compound-subject agreement 'is just as important'."}
+{"id": "s4-053", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": ["there -> their"], "note": "'there feature breaks' became 'there's a feature break'; changes meaning."}
+{"id": "s4-055", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["it's -> its"], "note": "Missed 'after it's upload'."}
+{"id": "s4-056", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "missed_errors": [], "note": "Exact fix; gate rejected as implausibleEdit."}
+{"id": "s4-058", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'whether' -> 'if' acceptable."}
+{"id": "s4-059", "engine": "appleIntelligence", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["you're -> your"], "note": "Missed 'before you're guests arrive'."}
+{"id": "s4-065", "engine": "appleIntelligence", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'they were excited' is a reasonable fix for 'their exited'."}
+{"id": "s4-066", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": ["There -> Their"], "note": "Rewrote 'Their answer was' into 'There was a system design answer that was'."}
+{"id": "s4-068", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": ["there -> their"], "note": "Flattened bullet list into one line; missed 'there laptop'."}
+{"id": "s4-077", "engine": "appleIntelligence", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Clean text: stripped accent, 'cafés' -> 'cafes'."}
+{"id": "s4-002", "engine": "qwen3-4b", "verdict": "INTRODUCED_ERROR", "gate_verdict": null, "missed_errors": ["Priyankas -> Priyanka's"], "note": "Wrong possessive 'Priyankas'' mangles the name."}
+{"id": "s4-003", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'was not' expansion fine."}
+{"id": "s4-004", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'It has', 'there is' expansions fine; line breaks kept."}
+{"id": "s4-006", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Added periods to bullet items (style); all errors fixed."}
+{"id": "s4-009", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Capitalized lowercase Slack style, reworded 'now,' to 'now and'."}
+{"id": "s4-011", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'I and Lena' is grammatical though awkward."}
+{"id": "s4-012", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["affect -> effect"], "note": "Missed buried 'measurable affect'."}
+{"id": "s4-014", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'who is' valid fix."}
+{"id": "s4-016", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Optional commas only."}
+{"id": "s4-017", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Optional comma only."}
+{"id": "s4-019", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'would not' valid fix."}
+{"id": "s4-021", "engine": "qwen3-4b", "verdict": "PARTIAL", "gate_verdict": null, "missed_errors": ["Your -> You're"], "note": "Missed 'Your body needs'."}
+{"id": "s4-022", "engine": "qwen3-4b", "verdict": "INTRODUCED_ERROR", "gate_verdict": "BLOCKED_BAD", "missed_errors": [], "note": "Corrupted number: 'about 300 orders' -> 'about 00 orders'. Gate blocked it."}
+{"id": "s4-024", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Capitalized 'Migrates', 'It has'; structure kept."}
+{"id": "s4-025", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Optional comma only."}
+{"id": "s4-026", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": "ATE_GOOD_FIX", "missed_errors": [], "note": "Only 'unit' -> 'Unit'; gate rejected good fix."}
+{"id": "s4-029", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'its volunteers' valid; minor comma/clause merge."}
+{"id": "s4-030", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Reworded 'Load test' to 'Perform load testing on'; added trailing spaces to lines."}
+{"id": "s4-033", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'we'll be turning' acceptable for 'were turning'."}
+{"id": "s4-036", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Capitalized lowercase style, 'going to' -> 'I'll', added em dash."}
+{"id": "s4-041", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Tense 'spent' -> 'spend' neutral; errors fixed."}
+{"id": "s4-043", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Rewrote 'their child tickets should all' to 'all child tickets should'; capitalized Archive."}
+{"id": "s4-045", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Expansions 'was not', 'they are' fine."}
+{"id": "s4-051", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Added em dash; all errors fixed."}
+{"id": "s4-053", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "'there feature' -> 'a feature' drops ownership instead of 'their'."}
+{"id": "s4-056", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Dropped one 'the'; neutral."}
+{"id": "s4-066", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Capitalized after colon, added 'that'; neutral."}
+{"id": "s4-068", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "Added bullet periods, capital after colon; structure kept."}
+{"id": "s4-069", "engine": "qwen3-4b", "verdict": "GOOD", "gate_verdict": null, "missed_errors": [], "note": "'there's' contraction fine."}
+{"id": "s4-072", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Clean text: capitalized lowercase Slack style and added 'It'."}
+{"id": "s4-074", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Clean text: removed comma and 'it' in 'sticking, and it sometimes'."}
+{"id": "s4-079", "engine": "qwen3-4b", "verdict": "MUDDLED", "gate_verdict": null, "missed_errors": [], "note": "Clean text: reworded 'because of' to 'due to'."}

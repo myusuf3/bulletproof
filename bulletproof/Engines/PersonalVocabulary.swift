@@ -60,6 +60,16 @@ import Foundation
         }
     }
 
+    /// A protected word the user evidently didn't mean: the model corrected
+    /// it to a spell-checker suggestion (a typo learned after the model missed
+    /// it twice). Dropped so it stops blocking its own fix.
+    func forget(_ word: String) {
+        let key = word.lowercased()
+        guard words.remove(key) != nil || pendingCounts.removeValue(forKey: key) != nil else { return }
+        defaults.set(Array(words), forKey: Self.wordsKey)
+        defaults.set(pendingCounts, forKey: Self.countsKey)
+    }
+
     func contains(_ word: String) -> Bool {
         words.contains(word.lowercased())
     }

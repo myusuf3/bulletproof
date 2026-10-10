@@ -79,11 +79,15 @@ struct DictationControllerTests {
 
     private func makeController(_ surface: FakeDictationSurface,
                                 engine: FakeSpeechEngine = FakeSpeechEngine(),
-                                proofreader: FakeProofreader? = nil) -> DictationController {
+                                proofreader: FakeProofreader? = nil,
+                                recordTelemetry: @escaping (ProofreadEvent) -> Void = { _ in }) -> DictationController {
+        // Never the shared telemetry: it persists into the app's real defaults.
         DictationController(makeEngine: { engine },
                             makeProofreader: { proofreader },
                             shortcutDisplay: { "⌥Space" },
-                            surface: surface)
+                            surface: surface,
+                            engineLabel: { "fake" },
+                            recordTelemetry: recordTelemetry)
     }
 
     private func dictate(_ controller: DictationController, _ surface: FakeDictationSurface) async {
@@ -209,6 +213,24 @@ struct DictationControllerTests {
 
         await dictate(controller, surface)
 
+        #expect(surface.pastedText == "hello world")
+    }
+
+    @Test func dictationProofreadOutcomesAreCounted() async {
+        // The silent raw-transcript fallback used to leave no trace in stats.
+        var events: [ProofreadEvent] = []
+        let surface = FakeDictationSurface()
+        surface.recorded = speech
+        await dictate(makeController(surface, proofreader: FakeProofreader(fails: true),
+                                     recordTelemetry: { events.append($0) }), surface)
+        let applied = FakeDictationSurface()
+        applied.recorded = speech
+        await dictate(makeController(applied, proofreader: FakeProofreader(),
+                                     recordTelemetry: { events.append($0) }), applied)
+
+        #expect(events.map(\.entryPoint) == [.dictation, .dictation])
+        #expect(events.map(\.engine) == ["dictation:fake", "dictation:fake"])
+        #expect(events.map(\.outcome) == [.engineError("timeout"), .applied])
         #expect(surface.pastedText == "hello world")
     }
 

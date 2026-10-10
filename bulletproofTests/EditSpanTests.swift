@@ -78,60 +78,107 @@ struct EditDiffTests {
 struct ScoredVerdictTests {
     // Round numbers: these tests pin the decision logic; the production
     // defaults are pinned separately below.
-    private let thresholds = ScoringThresholds(minimumMeanLogProbability: -6.0,
-                                               originalVetoMargin: 1.0,
-                                               minimumSuffixMeanLogProbability: -7.0)
+    private let thresholds = ScoringThresholds(originalVetoMargin: 1.0, totalVetoMargin: 1.0,
+                                               maxTokenCountDifferenceForTotals: 1)
 
-    @Test func plausibleEditIsAccepted() {
-        #expect(ScoredVerdict.evaluate(replacementScore: -2.0, originalScore: -5.0,
-                                       suffixScore: -3.0, thresholds: thresholds) == .accepted)
+    private func scores(_ replacement: Double?, _ original: Double?,
+                        totals: (Double, Double)? = nil, counts: (Int, Int) = (3, 3)) -> SpanScores {
+        SpanScores(replacement: replacement, original: original, suffixAfterReplacement: -3.0,
+                   replacementTotal: totals?.0, originalTotal: totals?.1,
+                   replacementTokenCount: totals == nil ? nil : counts.0,
+                   originalTokenCount: totals == nil ? nil : counts.1)
     }
 
-    @Test func implausibleReplacementFailsTheFloor() {
-        #expect(ScoredVerdict.evaluate(replacementScore: -6.5, originalScore: -8.0,
-                                       suffixScore: -3.0, thresholds: thresholds)
-                == .rejected("belowFloor"))
+    @Test func plausibleEditIsAccepted() {
+        #expect(ScoredVerdict.evaluate(scores(-2.0, -5.0, totals: (-10, -14)), thresholds: thresholds) == .accepted)
+    }
+
+    @Test func lowReplacementScoreAloneNoLongerVetoes() {
+        // The old -12 floor: real-word fixes (past -> passed) and rare
+        // correct words (technician) live down there too.
+        #expect(ScoredVerdict.evaluate(scores(-14.0, -13.5), thresholds: thresholds) == .accepted)
     }
 
     @Test func originalReadingMuchBetterVetoesTheEdit() {
-        // The "user wrote Jon on purpose" check: original clearly outscores
+        // The "user wrote Priya on purpose" check: original clearly outscores
         // the replacement.
-        #expect(ScoredVerdict.evaluate(replacementScore: -4.0, originalScore: -2.5,
-                                       suffixScore: -3.0, thresholds: thresholds)
+        #expect(ScoredVerdict.evaluate(scores(-4.0, -2.5), thresholds: thresholds)
                 == .rejected("originalMoreLikely"))
     }
 
     @Test func originalSlightlyBetterIsWithinTheMargin() {
         // Ties and small wins for the original are expected - vetoing them
         // would eat most legitimate corrections.
-        #expect(ScoredVerdict.evaluate(replacementScore: -4.0, originalScore: -3.5,
-                                       suffixScore: -3.0, thresholds: thresholds) == .accepted)
+        #expect(ScoredVerdict.evaluate(scores(-4.0, -3.5), thresholds: thresholds) == .accepted)
     }
 
-    @Test func brokenContinuationFailsSuffixJoin() {
-        #expect(ScoredVerdict.evaluate(replacementScore: -2.0, originalScore: -5.0,
-                                       suffixScore: -7.5, thresholds: thresholds)
-                == .rejected("suffixBroken"))
+    @Test func originalTextReadingBetterOverallVetoes() {
+        // effect -> affect: similar means, but the whole text reads worse.
+        #expect(ScoredVerdict.evaluate(scores(-12.6, -12.3, totals: (-30.0, -27.0)), thresholds: thresholds)
+                == .rejected("totalOriginalMoreLikely"))
+    }
+
+    @Test func totalsOnlyCompareAtMatchedLengths() {
+        // "your welcome btw" -> "You're welcome, btw.": three more tokens make
+        // the replacement's total lower without making it worse.
+        #expect(ScoredVerdict.evaluate(scores(-6.0, -7.0, totals: (-33.0, -21.0), counts: (6, 3)),
+                                       thresholds: thresholds) == .accepted)
     }
 
     @Test func missingScoresSkipTheirChecks() {
         // Fail open: a check whose score couldn't be computed never rejects.
-        #expect(ScoredVerdict.evaluate(replacementScore: -2.0, originalScore: nil,
-                                       suffixScore: nil, thresholds: thresholds) == .accepted)
+        #expect(ScoredVerdict.evaluate(scores(-2.0, nil), thresholds: thresholds) == .accepted)
+        #expect(ScoredVerdict.evaluate(scores(nil, -1.0), thresholds: thresholds) == .accepted)
     }
 
     @Test func nonFiniteScoresAccept() {
-        #expect(ScoredVerdict.evaluate(replacementScore: .nan, originalScore: -1.0,
-                                       suffixScore: -1.0, thresholds: thresholds) == .accepted)
+        #expect(ScoredVerdict.evaluate(scores(.nan, -1.0), thresholds: thresholds) == .accepted)
+        #expect(ScoredVerdict.evaluate(scores(-2.0, -5.0, totals: (.nan, -1.0)), thresholds: thresholds) == .accepted)
     }
 
-    @Test func productionDefaultsMatchTheProbeTuning() {
-        // From ScoringDistributionProbe (2026-08-20): worst good edit -11.29,
-        // catchable bad edits at -12.5..-12.7; max good veto-margin 3.93,
-        // name-swap at 5.02; suffix carried no signal.
+    @Test func productionDefaultsMatchTheEvalTuning() {
+        // gate_replay.py (2026-10-09): good fixes' total advantage for the
+        // original peaks at +0.18; effect->affect +2.97, profanity +2.74.
+        // Name swap Priya->Maya has mean margin 4.95; max good was 4.49.
         let tuned = ScoringThresholds()
-        #expect(tuned.minimumMeanLogProbability == -12.0)
         #expect(tuned.originalVetoMargin == 4.5)
-        #expect(tuned.minimumSuffixMeanLogProbability == -15.0)
+        #expect(tuned.totalVetoMargin == 1.0)
+        #expect(tuned.maxTokenCountDifferenceForTotals == 1)
+    }
+}
+
+struct SpanTriageTests {
+    private func span(_ original: String, _ replacement: String) -> EditDiff.Span {
+        EditDiff.Span(anchor: "", original: original, replacement: replacement, suffix: "")
+    }
+
+    @Test func casingSpacingAndPunctuationAreCosmetic() {
+        #expect(SpanTriage.isCosmetic(span("unit", "Unit")))
+        #expect(SpanTriage.isCosmetic(span("some times", "sometimes")))
+        #expect(SpanTriage.isCosmetic(span("However", "However,")))
+    }
+
+    @Test func wordChangesAreNotCosmetic() {
+        #expect(!SpanTriage.isCosmetic(span("past", "passed")))
+        #expect(!SpanTriage.isCosmetic(span("300", "00")))
+        #expect(!SpanTriage.isCosmetic(span("cafés", "cafes")))
+        #expect(!SpanTriage.isCosmetic(span("...", "!")))  // no letters: still scored
+    }
+
+    @Test func closeSpellingOfAMisspellingIsATypoFix() {
+        #expect(SpanTriage.isTypoFix(span("resturant", "restaurant"),
+                                     originalHasMisspelling: true, replacementHasMisspelling: false))
+        #expect(SpanTriage.isTypoFix(span("the fucntion retuns", "The function returns"),
+                                     originalHasMisspelling: true, replacementHasMisspelling: false))
+    }
+
+    @Test func swapsAndKeptMisspellingsAreNotTypoFixes() {
+        // A misspelled original replaced by a different word is still scored.
+        #expect(!SpanTriage.isTypoFix(span("Y'all ain't gonna", "You'll never"),
+                                      originalHasMisspelling: true, replacementHasMisspelling: false))
+        #expect(!SpanTriage.isTypoFix(span("past", "passed"),
+                                      originalHasMisspelling: false, replacementHasMisspelling: false))
+        #expect(!SpanTriage.isTypoFix(span("teh", "thhe"),
+                                      originalHasMisspelling: true, replacementHasMisspelling: true))
     }
 }

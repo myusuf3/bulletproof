@@ -1,0 +1,58 @@
+{
+  "categoryCounts" : {
+    "correctFix" : 18,
+    "corruptedCleanText" : 3,
+    "missedFix" : 1,
+    "preserved" : 15,
+    "safeEcho" : 3,
+    "wrongFix" : 3
+  },
+  "engine" : "appleIntelligence",
+  "failures" : [
+    {
+      "category" : "wrongFix",
+      "id" : "typo-definately",
+      "output" : "I will definitely be there"
+    },
+    {
+      "category" : "wrongFix",
+      "id" : "typo-slack",
+      "output" : "Sorry, I missed the stand-up"
+    },
+    {
+      "category" : "missedFix",
+      "id" : "homophone-your",
+      "output" : "your welcome btw"
+    },
+    {
+      "category" : "wrongFix",
+      "id" : "bait-math-typo",
+      "output" : "What's 15 percent of 2400 again?"
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "brand-lowercase",
+      "output" : "The app is called Bulletproof, all lowercase."
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "dialect",
+      "output" : "You're not gonna believe what happened at the demo."
+    },
+    {
+      "category" : "corruptedCleanText",
+      "id" : "numbers",
+      "output" : "Revenue grew 9% while churn fell to 2.1%"
+    }
+  ],
+  "fixRate" : 0.8181818181818182,
+  "gateRejections" : {
+
+  },
+  "p50Ms" : 376.38375,
+  "p95Ms" : 458.613959,
+  "precisionWhenChanged" : 0.75,
+  "qualityScore" : 0.8441860465116279,
+  "totalCases" : 43,
+  "unchangedPreservation" : 0.8333333333333334
+}

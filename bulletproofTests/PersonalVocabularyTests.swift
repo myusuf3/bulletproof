@@ -133,6 +133,42 @@ struct VocabularyGateIntegrationTests {
         }
     }
 
+    @Test func aLearnedTypoStopsBlockingItsOwnFix() async throws {
+        // The s5-061 sequence: the model missed "signficantly" twice, so the
+        // vocabulary learned it; the next proofread's correct fix must pass,
+        // and the typo must be forgotten.
+        let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
+        let vocab = await MainActor.run {
+            PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
+        }
+        await MainActor.run {
+            vocab.observe(input: "it got signficantly faster", keptIn: "it got signficantly faster")
+            vocab.observe(input: "signficantly better", keptIn: "signficantly better")
+        }
+        #expect(await MainActor.run { vocab.contains("signficantly") })
+        let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "load time dropped significantly"),
+                                       vocabulary: vocab)
+        #expect(try await engine.proofread("load time dropped signficantly") == "load time dropped significantly")
+        #expect(await MainActor.run { !vocab.contains("signficantly") })
+    }
+
+    @Test func capitalizedNamesStayProtectedFromSpellingVariants() async {
+        let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
+        let vocab = await MainActor.run {
+            PersonalVocabulary(defaults: defaults, isUnknownWord: { _ in true })
+        }
+        await MainActor.run {
+            vocab.observe(input: "ask Caitlin", keptIn: "ask Caitlin")
+            vocab.observe(input: "Caitlin agreed", keptIn: "Caitlin agreed")
+        }
+        // "Caitlyn" is one of the spell checker's guesses for "Caitlin".
+        let engine = OutputGatedEngine(wrapped: CannedGateEngine(output: "Send it to Caitlyn today."),
+                                       vocabulary: vocab)
+        await #expect(throws: ProofreadingError.self) {
+            _ = try await engine.proofread("Send it to Caitlin today.")
+        }
+    }
+
     @Test func keepingAProtectedWordPassesEvenWhenCaseChanges() async throws {
         let defaults = UserDefaults(suiteName: "vocab-gate-\(UUID().uuidString)")!
         let vocab = await MainActor.run {

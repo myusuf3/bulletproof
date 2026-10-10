@@ -1,0 +1,22 @@
+import Foundation
+import Testing
+@testable import bulletproof
+
+/// Scratch (never committed): Swift cleanResponse + OutputGate.rejection on stored pairs, for parity with the harness.
+struct ZZParityScratch {
+    @Test func parity() throws {
+        guard let inPath = ProcessInfo.processInfo.environment["BP_PARITY_IN"],
+              let outPath = ProcessInfo.processInfo.environment["BP_PARITY_OUT"] else { return }
+        let lines = try String(contentsOfFile: inPath, encoding: .utf8).split(separator: "\n")
+        var out = ""
+        for line in lines {
+            let row = try JSONSerialization.jsonObject(with: Data(line.utf8)) as! [String: Any]
+            let input = row["input"] as! String, raw = row["raw"] as! String, dictation = row["dictation"] as! Bool
+            let clean = ProofreadPrompt.cleanResponse(raw, original: input, keepsLowercase: !dictation, sentenceCases: dictation)
+            let gate = OutputGate.rejection(original: input, output: clean).map { "\($0)" } ?? ""
+            let obj: [String: Any] = ["n": row["n"]!, "clean": clean, "gate": gate]
+            out += String(data: try JSONSerialization.data(withJSONObject: obj), encoding: .utf8)! + "\n"
+        }
+        try out.write(toFile: outPath, atomically: true, encoding: .utf8)
+    }
+}

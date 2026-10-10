@@ -5,9 +5,28 @@ import MLXNN
 import os
 
 nonisolated struct SpanScores: Equatable, Sendable {
+    /// Mean log-prob per token of each side of the span, given the anchor.
     let replacement: Double?
     let original: Double?
     let suffixAfterReplacement: Double?
+    /// Summed log-prob of span + rest of the text, for each side, and how many
+    /// tokens each sum covers (totals only compare at matched lengths).
+    var replacementTotal: Double? = nil
+    var originalTotal: Double? = nil
+    var replacementTokenCount: Int? = nil
+    var originalTokenCount: Int? = nil
+
+    init(replacement: Double?, original: Double?, suffixAfterReplacement: Double?,
+         replacementTotal: Double? = nil, originalTotal: Double? = nil,
+         replacementTokenCount: Int? = nil, originalTokenCount: Int? = nil) {
+        self.replacement = replacement
+        self.original = original
+        self.suffixAfterReplacement = suffixAfterReplacement
+        self.replacementTotal = replacementTotal
+        self.originalTotal = originalTotal
+        self.replacementTokenCount = replacementTokenCount
+        self.originalTokenCount = originalTokenCount
+    }
 }
 
 /// Scores how plausibly an edit reads in context, as mean log-probabilities.
@@ -32,26 +51,34 @@ nonisolated struct MLXSpanScorer: SpanScorer {
         // graph submissions can overlap; serialize scoring app-wide.
         return await ScoringSerializer.shared.run { [span] in
             await container.perform { context in
-                let (replacement, suffix) = Self.score(anchor: span.anchor, middle: span.replacement,
-                                                       suffix: span.suffix, context: context)
-                let original: Double?
-                if span.original.trimmingCharacters(in: .whitespaces).isEmpty {
-                    original = nil
-                } else {
-                    (original, _) = Self.score(anchor: span.anchor, middle: span.original,
-                                               suffix: span.suffix, context: context)
-                }
-                return SpanScores(replacement: replacement, original: original,
-                                  suffixAfterReplacement: suffix)
+                let replacement = Self.score(anchor: span.anchor, middle: span.replacement,
+                                             suffix: span.suffix, context: context)
+                let original = span.original.trimmingCharacters(in: .whitespaces).isEmpty
+                    ? nil
+                    : Self.score(anchor: span.anchor, middle: span.original,
+                                 suffix: span.suffix, context: context)
+                return SpanScores(replacement: replacement?.middleMean, original: original?.middleMean,
+                                  suffixAfterReplacement: replacement?.suffixMean,
+                                  replacementTotal: replacement?.total, originalTotal: original?.total,
+                                  replacementTokenCount: replacement?.tokenCount,
+                                  originalTokenCount: original?.tokenCount)
             }
         }
     }
 
-    /// Mean log-prob of `middle`'s tokens (and of `suffix`'s, from the same
-    /// pass) conditioned on what precedes them. Position i's logits predict
-    /// token i+1, so rows [start-1, end-1) score tokens [start, end).
+    private struct PassScores {
+        let middleMean: Double
+        let suffixMean: Double?
+        /// Summed log-prob of middle + suffix tokens, and how many there are.
+        let total: Double
+        let tokenCount: Int
+    }
+
+    /// Log-probs of `middle`'s tokens (and of `suffix`'s, from the same pass)
+    /// conditioned on what precedes them. Position i's logits predict token
+    /// i+1, so rows [start-1, end-1) score tokens [start, end).
     private static func score(anchor: String, middle: String, suffix: String,
-                              context: ModelContext) -> (Double?, Double?) {
+                              context: ModelContext) -> PassScores? {
         let tokenizer = context.tokenizer
         let anchorTokens = anchor.isEmpty ? [] : tokenizer.encode(text: anchor, addSpecialTokens: true)
         let withMiddle = tokenizer.encode(text: joined(anchor, middle), addSpecialTokens: true)
@@ -63,32 +90,36 @@ nonisolated struct MLXSpanScorer: SpanScorer {
         // score the wrong tokens - fail open instead.
         guard Array(withMiddle.prefix(anchorTokens.count)) == anchorTokens,
               Array(fullTokens.prefix(withMiddle.count)) == withMiddle else {
-            return (nil, nil)
+            return nil
         }
         // With no BOS token an anchorless span's first token has no
         // conditioning position; score from its second token.
         let middleStart = max(anchorTokens.count, 1)
         let middleEnd = withMiddle.count
-        guard middleEnd > middleStart else { return (nil, nil) }
+        guard middleEnd > middleStart else { return nil }
 
         let tokens = MLXArray(fullTokens).expandedDimensions(axis: 0)
         let logits = context.model(tokens, cache: context.model.newCache(parameters: nil))
             .asType(.float32)
 
-        let middleScore = meanLogProb(logits: logits, tokens: fullTokens,
-                                      start: middleStart, end: middleEnd)
-        let suffixScore = fullTokens.count > middleEnd
-            ? meanLogProb(logits: logits, tokens: fullTokens, start: middleEnd, end: fullTokens.count)
+        let middleSum = sumLogProb(logits: logits, tokens: fullTokens, start: middleStart, end: middleEnd)
+        let suffixCount = fullTokens.count - middleEnd
+        let suffixSum = suffixCount > 0
+            ? sumLogProb(logits: logits, tokens: fullTokens, start: middleEnd, end: fullTokens.count)
             : nil
-        return (middleScore, suffixScore)
+        let middleCount = middleEnd - middleStart
+        return PassScores(middleMean: middleSum / Double(middleCount),
+                          suffixMean: suffixSum.map { $0 / Double(suffixCount) },
+                          total: middleSum + (suffixSum ?? 0),
+                          tokenCount: middleCount + suffixCount)
     }
 
-    private static func meanLogProb(logits: MLXArray, tokens: [Int], start: Int, end: Int) -> Double {
+    private static func sumLogProb(logits: MLXArray, tokens: [Int], start: Int, end: Int) -> Double {
         let rows = logits[0..., (start - 1) ..< (end - 1), 0...]
         let targets = MLXArray(Array(tokens[start ..< end])).expandedDimensions(axis: 0)
         // crossEntropy is logSumExp(logits) - takeAlong(logits, targets):
         // the negative target log-prob.
-        let nll = crossEntropy(logits: rows, targets: targets, reduction: .mean)
+        let nll = crossEntropy(logits: rows, targets: targets, reduction: .sum)
         return -Double(nll.item(Float.self))
     }
 
@@ -121,6 +152,11 @@ nonisolated struct ScoredGateEngine: ProofreadingEngine {
     let wrapped: any ProofreadingEngine
     let scorer: any SpanScorer
     var thresholds = ScoringThresholds()
+    /// Whether any of these words is a non-word. A test seam over
+    /// SpellCheckGate (NSSpellChecker is main-actor only).
+    var hasMisspelling: @Sendable ([String]) async -> Bool = { words in
+        await SpellCheckGate.firstMisspelled(in: words) != nil
+    }
 
     private static let logger = Logger(subsystem: "com.mahdiyusuf.bulletproof", category: "scored-gate")
     /// Above this many changed spans the output is a rewrite - lowOverlap's
@@ -132,17 +168,27 @@ nonisolated struct ScoredGateEngine: ProofreadingEngine {
         let spans = EditDiff.spans(original: text, corrected: output)
         guard !spans.isEmpty, spans.count <= Self.maxSpansToScore else { return output }
         for span in spans where !span.replacement.trimmingCharacters(in: .whitespaces).isEmpty {
+            if await isAcceptedWithoutScoring(span) { continue }
             let scores = await scorer.scores(for: span)
-            guard let replacement = scores.replacement else { continue }
-            if case .rejected(let reason) = ScoredVerdict.evaluate(
-                    replacementScore: replacement, originalScore: scores.original,
-                    suffixScore: scores.suffixAfterReplacement, thresholds: thresholds) {
+            if case .rejected(let reason) = ScoredVerdict.evaluate(scores, thresholds: thresholds) {
+                let replacementLabel = scores.replacement.map { String($0) } ?? "-"
                 let originalLabel = scores.original.map { String($0) } ?? "-"
-                Self.logger.warning("rejected edit: \(reason, privacy: .public) replacement=\(replacement, privacy: .public) original=\(originalLabel, privacy: .public)")
+                Self.logger.warning("rejected edit: \(reason, privacy: .public) replacement=\(replacementLabel, privacy: .public) original=\(originalLabel, privacy: .public)")
                 throw ProofreadingError.unusableOutput(.implausibleEdit)
             }
         }
         return output
+    }
+
+    /// Cosmetic edits and non-word typo fixes are where the scorer's token-count
+    /// bias vetoes good corrections, and neither can be an absurd swap.
+    func isAcceptedWithoutScoring(_ span: EditDiff.Span) async -> Bool {
+        if SpanTriage.isCosmetic(span) { return true }
+        let originalWords = OutputGate.wordTokens(in: span.original)
+        guard await hasMisspelling(originalWords) else { return false }
+        return SpanTriage.isTypoFix(span, originalHasMisspelling: true,
+                                    replacementHasMisspelling: await hasMisspelling(
+                                        OutputGate.wordTokens(in: span.replacement)))
     }
 
     func prewarm() async {

@@ -56,19 +56,27 @@ nonisolated enum EditDiff {
     }
 }
 
-/// Tuned 2026-08-20 against the probe distributions
-/// (ScoringDistributionProbe): KeyType's numbers (-6.0/1.0/-7.0) vetoed half
-/// the corpus's legitimate fixes. Good edits score as low as -11.3
-/// (contractions tokenize into rare subwords) and typo originals often
-/// outscore their corrections, so only the "absurd swap" class separates:
-/// floor -12.0 and veto margin 4.5 catch censored-profanity / wrong-way
-/// homophone / name-swap cases with zero false vetoes on the corpus. The
-/// suffix check carried no signal (bad edits' suffixes scored *better*) and
-/// is parked at -15.
+/// Retuned 2026-10-09 on the 400-case correction eval (both engines' outputs,
+/// 1,218 spans, judged) plus the bench corpus and the probe's bad edits -
+/// `bulletproof-correction-improvements/harness/gate_replay.py` replays it.
+///
+/// The old per-token *mean* floor (-12.0) vetoed 28 of 480 good outputs: a
+/// misspelling splits into several subword pieces that predict each other,
+/// so its mean beats the one rare token of the correct word ("resturant"
+/// -6.27 vs "restaurant" -11.96). Real-word fixes and the bad swaps the floor
+/// targeted overlap completely (past->passed -13.01, effect->affect -12.59),
+/// so no floor separates them. Instead:
+/// - typo-shaped spans skip scoring entirely (`SpanTriage`);
+/// - `originalVetoMargin` (means) still catches name swaps (Priya->Maya, +4.95);
+/// - the total log-prob of span + rest of text decides real-word swaps, but
+///   only between length-matched versions - totals are biased toward fewer
+///   tokens exactly as means are biased toward more. Good fixes peak at +0.18;
+///   effect->affect +2.97, censored profanity +2.74, "300"->"00" +29.8.
+/// Result: 1 of 480 good outputs vetoed (was 28), same bad catches.
 nonisolated struct ScoringThresholds: Sendable {
-    var minimumMeanLogProbability = -12.0
     var originalVetoMargin = 4.5
-    var minimumSuffixMeanLogProbability = -15.0
+    var totalVetoMargin = 1.0
+    var maxTokenCountDifferenceForTotals = 1
 }
 
 nonisolated enum ScoredVerdict: Equatable, Sendable {
@@ -77,20 +85,61 @@ nonisolated enum ScoredVerdict: Equatable, Sendable {
 
     /// Fail open throughout: a missing or non-finite score never rejects -
     /// the gate is a veto layer, not a promoter.
-    static func evaluate(replacementScore: Double, originalScore: Double?,
-                         suffixScore: Double?, thresholds: ScoringThresholds) -> ScoredVerdict {
-        guard replacementScore.isFinite else { return .accepted }
-        if replacementScore < thresholds.minimumMeanLogProbability {
-            return .rejected("belowFloor")
-        }
-        if let originalScore, originalScore.isFinite,
-           originalScore > replacementScore + thresholds.originalVetoMargin {
+    static func evaluate(_ scores: SpanScores, thresholds: ScoringThresholds) -> ScoredVerdict {
+        guard let replacement = scores.replacement, replacement.isFinite else { return .accepted }
+        if let original = scores.original, original.isFinite,
+           original > replacement + thresholds.originalVetoMargin {
             return .rejected("originalMoreLikely")
         }
-        if let suffixScore, suffixScore.isFinite,
-           suffixScore < thresholds.minimumSuffixMeanLogProbability {
-            return .rejected("suffixBroken")
+        if let replacementTotal = scores.replacementTotal, replacementTotal.isFinite,
+           let originalTotal = scores.originalTotal, originalTotal.isFinite,
+           let replacementCount = scores.replacementTokenCount,
+           let originalCount = scores.originalTokenCount,
+           abs(replacementCount - originalCount) <= thresholds.maxTokenCountDifferenceForTotals,
+           originalTotal > replacementTotal + thresholds.totalVetoMargin {
+            return .rejected("totalOriginalMoreLikely")
         }
         return .accepted
+    }
+}
+
+/// Spans the scorer can't judge fairly and that can't be absurd swaps, so
+/// they are accepted without scoring.
+nonisolated enum SpanTriage {
+    /// Same letters and digits, ignoring case: a casing, spacing or
+    /// punctuation edit ("unit" -> "Unit", "some times" -> "sometimes").
+    static func isCosmetic(_ span: EditDiff.Span) -> Bool {
+        let original = letters(span.original)
+        return !original.isEmpty && original == letters(span.replacement)
+    }
+
+    /// A non-word typo corrected to a close spelling: the original has a word
+    /// the spell checker flags, the replacement has none, and the two are
+    /// close edits of each other - so it isn't a swap to a different word.
+    static func isTypoFix(_ span: EditDiff.Span, originalHasMisspelling: Bool,
+                          replacementHasMisspelling: Bool) -> Bool {
+        originalHasMisspelling && !replacementHasMisspelling
+            && similarity(letters(span.original), letters(span.replacement)) >= minimumTypoSimilarity
+    }
+
+    static let minimumTypoSimilarity = 0.6
+
+    /// 2 * LCS / (|a| + |b|) over characters.
+    static func similarity(_ a: String, _ b: String) -> Double {
+        let a = Array(a), b = Array(b)
+        guard !a.isEmpty || !b.isEmpty else { return 1 }
+        var previous = Array(repeating: 0, count: b.count + 1)
+        for x in a {
+            var current = [0]
+            for (j, y) in b.enumerated() {
+                current.append(x == y ? previous[j] + 1 : max(previous[j + 1], current[j]))
+            }
+            previous = current
+        }
+        return 2 * Double(previous[b.count]) / Double(a.count + b.count)
+    }
+
+    private static func letters(_ text: String) -> String {
+        String(text.lowercased().filter { $0.isLetter || $0.isNumber })
     }
 }
