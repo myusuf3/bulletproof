@@ -13,7 +13,9 @@ Everything gathered while evaluating how well bulletproof's proofreading correct
 | `FINDINGS.md` | The analysis: numbers, root causes ranked, what works, caveats |
 | `HYPOTHESES.md` | The experiment backlog (H1-H10): objective, metrics, evidence, risks, and gaps in the data |
 | `errors.txt` | Every failure example from the baseline, grouped by engine and failure type (human-readable) |
-| `context/pipeline.md` | How a correction flows through the code: the prompt verbatim, gates, thresholds, file:line pointers |
+| `PIPELINE.md` | **Current** correction pipeline after the autoresearch (prompts, engines, post-processing, gates, eval commands) |
+| `RESULTS.md` | Final results of the autoresearch, against this baseline |
+| `context/pipeline.md` | The pipeline as it was at the baseline (commit 75e4a8a): the prompt verbatim, gates, thresholds, file:line pointers |
 | `context/real-usage.md` | The developer's real settings and telemetry (personal, so review before publishing) |
 
 ## Layout
