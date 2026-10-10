@@ -19,7 +19,10 @@ from collections import defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).parent
-DEFAULT_CORPUS = HERE.parent / "baseline-2026-10-09" / "corpus"
+import os
+# BULLETPROOF_EVAL_CORPUS swaps in another corpus directory (e.g. fresh-2026-10-10).
+DEFAULT_CORPUS = Path(os.environ["BULLETPROOF_EVAL_CORPUS"]) if os.environ.get("BULLETPROOF_EVAL_CORPUS") \
+    else HERE.parent / "baseline-2026-10-09" / "corpus"
 
 CONTRACTION_EXPANSIONS = re.compile(
     r"\b(do not|does not|did not|cannot|can not|it is|it has|i am|we are|they are|you are|we will|"

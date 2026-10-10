@@ -18,6 +18,7 @@ Usage (needs the GPU-enabled venv, see harness/README.md), from bulletproof-corr
 """
 import argparse
 import hashlib
+import os
 import json
 import re
 import subprocess
@@ -31,7 +32,10 @@ ROOT = HERE.parent                      # bulletproof-correction-improvements/
 REPO = ROOT.parent
 PROMPT_SWIFT = REPO / "bulletproof/Engines/ProofreadPrompt.swift"
 EDITSPAN_SWIFT = REPO / "bulletproof/Engines/EditSpan.swift"
-CORPUS = ROOT / "baseline-2026-10-09/corpus"
+# BULLETPROOF_EVAL_CORPUS swaps the evaluated corpus (e.g. fresh-2026-10-10); with it set, the
+# dev/holdout split is ignored and every case in that corpus runs. Default: the 400-case corpus.
+CORPUS = Path(os.environ["BULLETPROOF_EVAL_CORPUS"]) if os.environ.get("BULLETPROOF_EVAL_CORPUS") \
+    else ROOT / "baseline-2026-10-09/corpus"
 MODEL_DIR = Path.home() / "Library/Application Support/bulletproof/Models/mlx-community/Qwen3-4B-Instruct-2507-4bit"
 CACHE = HERE / "cache"
 SPELLCHECK = HERE / "bin/spellcheck"
@@ -606,7 +610,7 @@ def load_cases(split, ids_file, cases_file=None):
         return cases
     if ids_file:
         keep = set(Path(ids_file).read_text().split())
-    elif split != "all":
+    elif split != "all" and not os.environ.get("BULLETPROOF_EVAL_CORPUS"):
         keep = set((ROOT / "splits" / f"{split}.txt").read_text().split())
     else:
         keep = None

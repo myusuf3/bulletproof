@@ -75,4 +75,5 @@ for k, v in out.items():
         print(f"METRIC {k}={v}")
 print(f"answered: guard={guard_bad} corpus={look_bad} pasted={pasted}", file=sys.stderr)
 if json_out:
-    Path(json_out).write_text(json.dumps({**out, "answered_ids": guard_bad + look_bad}, indent=2))
+    Path(json_out).write_text(json.dumps({**out, "answered_ids": guard_bad + look_bad,
+                                          "corpus": str(M.DEFAULT_CORPUS)}, indent=2))

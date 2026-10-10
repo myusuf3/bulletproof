@@ -115,6 +115,8 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#42 final live verification** (`run-2026-10-09-final-42/`): Qwen .73 → .905, AI .63 → .75 vs the original baseline
+  (AI dev = holdout = .75). Final summary in `bulletproof-correction-improvements/RESULTS.md`. Loop concluded.
 - #41 kept: ApostropheFixer, unambiguous missing-apostrophe contractions (fires 10 times on 5,600 outputs, 5 fail→pass, 0 pass→fail). Small.
 - #40 kept: typed path keeps all-lowercase writing lowercase (fires 251 times on 4,480 typed outputs, 128 fail→pass, 0 pass→fail);
   AI lowercase .71 → 1.0, AI s5 .63 → .74 (replay).
