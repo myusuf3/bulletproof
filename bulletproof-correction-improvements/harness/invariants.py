@@ -19,7 +19,8 @@ import fast_eval as F  # noqa: E402
 
 corpora = list((ROOT / "baseline-2026-10-09/corpus").glob("*.jsonl")) + [
     ROOT / p for p in ("fresh-2026-10-10/slice_fresh.jsonl", "long-2026-10-10/slice_long.jsonl",
-                       "multilingual-2026-10-10/slice_multilingual.jsonl", "splits/guard.jsonl")]
+                       "multilingual-2026-10-10/slice_multilingual.jsonl", "adversarial-2026-10-10/slice_adversarial.jsonl",
+                       "splits/guard.jsonl")]
 inputs = [json.loads(l)["input"] for f in corpora for l in open(f) if l.startswith("{")]
 inputs += ["", "   ", "ok", "🙂", "`", "``", "a`b", "```\nlet x = 1\n```", "- item\n- item two", "lol", "i",
            "U.S.A.", "e.g. this", "email me at bo@ex.com", "https://example.com/a_b?c=d", "\n\nhello\n\n",
@@ -27,7 +28,7 @@ inputs += ["", "   ", "ok", "🙂", "`", "``", "a`b", "```\nlet x = 1\n```", "- 
 
 restorers = [("slang", F.restore_slang), ("contraction", F.restore_contractions),
              ("linebreak", F.restore_line_breaks), ("code", F.restore_code_spans),
-             ("lowercase", F.keep_all_lowercase)]
+             ("links", F.restore_links), ("lowercase", F.keep_all_lowercase)]
 violations = [(name, t) for t in inputs for name, fn in restorers if fn(t, t) != t]
 
 outputs = [r for f in [ROOT / "baseline-2026-10-09/outputs.jsonl", *ROOT.glob("run-*/outputs.jsonl"),

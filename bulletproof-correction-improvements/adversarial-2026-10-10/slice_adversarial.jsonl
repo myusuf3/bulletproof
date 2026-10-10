@@ -1,0 +1,34 @@
+{"id": "s1-a01", "input": "teh", "expected": {"kind": "fix", "acceptableOutputs": ["the"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a02", "input": "recieve", "expected": {"kind": "fix", "acceptableOutputs": ["receive"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a03", "input": "thx!", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a04", "input": "ok cool", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a05", "input": "🙂", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a06", "input": "🎉🎉🎉", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a07", "input": "congrats!! 🎉 so proud of u", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a08", "input": "sounds good :)", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a09", "input": "会議は明日です。Please bring the reprot.", "expected": {"kind": "fix", "acceptableOutputs": ["会議は明日です。Please bring the report."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a10", "input": "Привет! The meeting is tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["Привет! The meeting is tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a11", "input": "PLEASE SEND TEH FILE ASAP", "expected": {"kind": "fix", "acceptableOutputs": ["PLEASE SEND THE FILE ASAP"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s4-a12", "input": "Quarterly Planning Notes", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a13", "input": "this is **realy** important", "expected": {"kind": "fix", "acceptableOutputs": ["this is **really** important"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a14", "input": "see [the docs](https://example.com/docs) for detials", "expected": {"kind": "fix", "acceptableOutputs": ["see [the docs](https://example.com/docs) for details"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a15", "input": "@sam can you reveiw #1234 when you get a sec", "expected": {"kind": "fix", "acceptableOutputs": ["@sam can you review #1234 when you get a sec"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a16", "input": "call getUserName() before rendring", "expected": {"kind": "fix", "acceptableOutputs": ["call getUserName() before rendering"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a17", "input": "the url is https://exmaple.com/a_b?c=d btw", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a18", "input": "email bo@exmaple.com for acess", "expected": {"kind": "fix", "acceptableOutputs": ["email bo@exmaple.com for access"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s4-a19", "input": "Line one\r\nLine twoo", "expected": {"kind": "fix", "acceptableOutputs": ["Line one\r\nLine two"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s4-a20", "input": "name\tvalue\nfoo\t42", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s4-a21", "input": "• buy mlik\n• call mom", "expected": {"kind": "fix", "acceptableOutputs": ["• buy milk\n• call mom"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s4-a22", "input": "1. Frist item\n2. Second item", "expected": {"kind": "fix", "acceptableOutputs": ["1. First item\n2. Second item"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a23", "input": "well... i guess so", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a24", "input": "Meet me at 3:30pm on 10/12.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a25", "input": "It costs $1,299.99 (plus tax).", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a26", "input": "Their going to love it.", "expected": {"kind": "fix", "acceptableOutputs": ["They're going to love it."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a27", "input": "lol", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a28", "input": "k", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a29", "input": "The  meeting is at  noon.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a30", "input": "He said “thanks” and left.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a31", "input": "¯\\_(ツ)_/¯ idk", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a32", "input": "I'll be there in 5 min — maybe 10.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s1-a33", "input": "Its 2026 already?!", "expected": {"kind": "fix", "acceptableOutputs": ["It's 2026 already?!"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}
+{"id": "s5-a34", "input": "brb 🍕", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial"]}

@@ -1,0 +1,38 @@
+import Foundation
+
+/// URLs and email addresses are never proofread: a typo-looking domain
+/// ("exmaple.com") is still the address the user meant, and a "fixed" link
+/// silently points somewhere else. Each input link missing from the output is
+/// put back over the output link that replaced it (the closest-spelled new link).
+nonisolated enum LinkRestorer {
+    private static let pattern = try! NSRegularExpression(
+        pattern: #"https?://[^\s<>()"'`]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+"#)
+
+    static func restore(original: String, corrected: String) -> String {
+        let typed = links(in: original)
+        guard !typed.isEmpty else { return corrected }
+        var text = corrected
+        for link in typed where !text.contains(link) {
+            let candidates = links(in: text).filter { !typed.contains($0) }
+            guard let replaced = candidates.max(by: { similarity(link, $0) < similarity(link, $1) }),
+                  similarity(link, replaced) >= 0.8,
+                  let range = text.range(of: replaced) else { continue }
+            text.replaceSubrange(range, with: link)
+        }
+        return text
+    }
+
+    /// Links in order, with trailing sentence punctuation trimmed.
+    static func links(in text: String) -> [String] {
+        let ns = text as NSString
+        return pattern.matches(in: text, range: NSRange(location: 0, length: ns.length)).map { match in
+            var link = ns.substring(with: match.range)
+            while let last = link.last, ".,;:!?)".contains(last) { link.removeLast() }
+            return link
+        }
+    }
+
+    private static func similarity(_ a: String, _ b: String) -> Double {
+        SpanTriage.similarity(a.lowercased(), b.lowercased())
+    }
+}

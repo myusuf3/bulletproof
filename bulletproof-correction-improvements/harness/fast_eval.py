@@ -234,9 +234,40 @@ def sentence_case(text):
     return "".join(out)
 
 
+_LINK = re.compile(r"""https?://[^\s<>()"'`]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+""")
+
+
+def links(text):
+    out = []
+    for m in _LINK.finditer(text):
+        link = m.group(0)
+        while link and link[-1] in ".,;:!?)":
+            link = link[:-1]
+        out.append(link)
+    return out
+
+
+def restore_links(original, corrected):
+    """LinkRestorer.restore."""
+    typed = links(original)
+    if not typed:
+        return corrected
+    text = corrected
+    for link in typed:
+        if link in text:
+            continue
+        cands = [c for c in links(text) if c not in typed]
+        if not cands:
+            continue
+        best = max(cands, key=lambda c: similarity(link.lower(), c.lower()))
+        if similarity(link.lower(), best.lower()) >= 0.8 and best in text:
+            text = text.replace(best, link, 1)
+    return text
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = fix_apostrophes(restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned)))))
+    x = fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned))))))
     return keep_all_lowercase(original, x) if typed else sentence_case(x)
 
 
