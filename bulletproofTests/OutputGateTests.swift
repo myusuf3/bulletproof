@@ -40,6 +40,20 @@ struct OutputGateTests {
             output: "We received the order. It's going out tomorrow, I think.\nBest,\nBo") == nil)
     }
 
+    @Test func typoDenseCorrectionsAreNotLowOverlapOrDroppedContent() {
+        // Fast typing: most words misspelled, all fixed. Word overlap is low,
+        // but each input word survives as a close spelling.
+        #expect(OutputGate.rejection(original: "Teh qiuck borwn fxo jmups ovr the lazy dog.",
+                                     output: "The quick brown fox jumps over the lazy dog.") == nil)
+        #expect(OutputGate.rejection(original: "Plaese sned teh reprot tmorow mornign.",
+                                     output: "Please send the report tomorrow morning.") == nil)
+        #expect(OutputGate.rejection(original: "Shopping list:\n- eggs\n- bred\n- coffe beans",
+                                     output: "Shopping list:\n- eggs\n- bread\n- coffee beans") == nil)
+        // A translation still shares no words.
+        #expect(OutputGate.rejection(original: "Please translate: the meeting moved to tomorrow morning at nine",
+                                     output: "La reunión se trasladó a mañana a las nueve") == .lowOverlap)
+    }
+
     @Test func acceptsStructureTheInputAlreadyHad() {
         let list = "Todo:\n- buy mlik\n- call mom"
         #expect(OutputGate.rejection(original: list, output: "Todo:\n- buy milk\n- call mom") == nil)

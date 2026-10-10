@@ -49,7 +49,8 @@ nonisolated enum OutputGate {
         // summary shares almost none of them.
         let originalWords = words(of: original)
         if originalWords.count >= overlapMinimumWords,
-           originalWords.intersection(words(of: output)).count * 2 < originalWords.count {
+           originalWords.intersection(surviving(Array(originalWords), in: Array(words(of: output)))).count * 2
+            < originalWords.count {
             return .lowOverlap
         }
         if introducesStructure(original: original, output: output) {
@@ -68,7 +69,9 @@ nonisolated enum OutputGate {
     /// words left, or (in multi-line text) a short line with none left, means
     /// content was dropped.
     static func dropsContent(original: String, output: String) -> Bool {
-        let kept = Set(output.split(whereSeparator: \.isWhitespace).map(contentKey)).subtracting([""])
+        let inputKeys = original.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
+        let outputKeys = output.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
+        let kept = surviving(inputKeys, in: outputKeys)
         let lines = original.split(whereSeparator: \.isNewline)
         for line in lines {
             let sentences = sentences(in: String(line))
@@ -90,7 +93,51 @@ nonisolated enum OutputGate {
     }
 
     private static func contentKey(_ word: Substring) -> String {
-        String(word.lowercased().filter { $0.isLetter || $0.isNumber })
+        String(word.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .filter { $0.isLetter || $0.isNumber })
+    }
+
+    /// Input words that survive into the output: kept verbatim, or *corrected*
+    /// - matched one-to-one to a new output word within a small edit distance
+    /// ("teh" -> "the", "bred" -> "bread"). A typo-dense sentence the model fixed
+    /// is not dropped content; a translation or an answer shares neither.
+    static func surviving(_ inputKeys: [String], in outputKeys: [String]) -> Set<String> {
+        let inputSet = Set(inputKeys), outputSet = Set(outputKeys)
+        var newWords: [String] = []
+        for word in outputKeys where !inputSet.contains(word) && !newWords.contains(word) {
+            newWords.append(word)
+        }
+        var survivors = outputSet
+        var used = Set<String>()
+        var seen = Set<String>()
+        for word in inputKeys where !outputSet.contains(word) && seen.insert(word).inserted {
+            if let match = newWords.first(where: { !used.contains($0) && isCloseSpelling(word, $0) }) {
+                used.insert(match)
+                survivors.insert(word)
+            }
+        }
+        return survivors
+    }
+
+    /// Damerau-Levenshtein within 1 (words up to 4 letters) or 2 (longer); 3+ letters only.
+    static func isCloseSpelling(_ a: String, _ b: String) -> Bool {
+        let a = Array(a), b = Array(b)
+        guard a.count >= 3, b.count >= 3 else { return false }
+        let limit = min(a.count, b.count) <= 4 ? 1 : 2
+        guard abs(a.count - b.count) <= limit else { return false }
+        var d = Array(repeating: Array(repeating: 0, count: b.count + 1), count: a.count + 1)
+        for i in 0...a.count { d[i][0] = i }
+        for j in 0...b.count { d[0][j] = j }
+        for i in 1...a.count {
+            for j in 1...b.count {
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost)
+                if i > 1, j > 1, a[i - 1] == b[j - 2], a[i - 2] == b[j - 1] {
+                    d[i][j] = min(d[i][j], d[i - 2][j - 2] + 1)
+                }
+            }
+        }
+        return d[a.count][b.count] <= limit
     }
 
     /// Splits after . ! ? followed by whitespace.
@@ -162,7 +209,7 @@ nonisolated enum OutputGate {
     }
 
     private static func words(of text: String) -> Set<String> {
-        Set(text.lowercased()
+        Set(text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
             .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
             .map(String.init))
     }

@@ -464,8 +464,51 @@ def restore_contractions(original, corrected):
 
 # --- OutputGate ---
 
+def _fold(text):
+    return "".join(c for c in unicodedata.normalize("NFKD", text.lower()) if not unicodedata.combining(c))
+
+
 def gate_words(text):
-    return set(w for w in re.findall(r"[^\W_]+", text.lower()))
+    return set(w for w in re.findall(r"[^\W_]+", _fold(text)))
+
+
+def _close_spelling(a, b):
+    """OutputGate.isCloseSpelling: Damerau-Levenshtein <= 1 (<= 4 letters) or <= 2, 3+ letters."""
+    if len(a) < 3 or len(b) < 3:
+        return False
+    lim = 1 if min(len(a), len(b)) <= 4 else 2
+    if abs(len(a) - len(b)) > lim:
+        return False
+    d = [[0] * (len(b) + 1) for _ in range(len(a) + 1)]
+    for i in range(len(a) + 1):
+        d[i][0] = i
+    for j in range(len(b) + 1):
+        d[0][j] = j
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] != b[j - 1]))
+            if i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                d[i][j] = min(d[i][j], d[i - 2][j - 2] + 1)
+    return d[len(a)][len(b)] <= lim
+
+
+def surviving(input_keys, output_keys):
+    """OutputGate.surviving: kept verbatim, or matched one-to-one to a new close-spelled output word."""
+    inset, outset = set(input_keys), set(output_keys)
+    new = []
+    for w in output_keys:
+        if w not in inset and w not in new:
+            new.append(w)
+    surv, used, seen = set(outset), set(), set()
+    for w in input_keys:
+        if w in outset or w in seen:
+            continue
+        seen.add(w)
+        m = next((n for n in new if n not in used and _close_spelling(w, n)), None)
+        if m is not None:
+            used.add(m)
+            surv.add(w)
+    return surv
 
 
 def word_tokens(text):
@@ -484,7 +527,7 @@ def output_gate(original, output):
     if len(original) >= 20 and len(output) > len(original) * 3:
         return "overExpansion"
     ow = gate_words(original)
-    if len(ow) >= 8 and len(ow & gate_words(output)) * 2 < len(ow):
+    if len(ow) >= 8 and len(ow & surviving(list(ow), list(gate_words(output)))) * 2 < len(ow):
         return "lowOverlap"
     if introduces_structure(original, output):
         return "introducedStructure"
@@ -509,8 +552,8 @@ def _sentences(line):
 
 def drops_content(original, output):
     """OutputGate.dropsContent."""
-    ck = lambda w: "".join(c for c in w.lower() if c.isalnum())
-    kept = {ck(w) for w in output.split()} - {""}
+    ck = lambda w: "".join(c for c in _fold(w) if c.isalnum())
+    kept = surviving([k for k in (ck(w) for w in original.split()) if k], [k for k in (ck(w) for w in output.split()) if k])
     lines = [l for l in re.split("[" + _NEWLINES + "]", original) if l != ""]
     for line in lines:
         sents = _sentences(line)
