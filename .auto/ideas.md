@@ -65,3 +65,4 @@
   Candidate OutputGate rule: the output starts with the whole input and adds 3+ non-punctuation characters. 0 acceptable
   corpus outputs and 0 stored pasted rows would be flagged; it only catches already-rejected guard answers plus this probe.
   Low value unless it shows up in real use.
+- **From fresh set 2 (#101):** (a) Apple Intelligence swaps the writer's emoji (🙂 → 😊). introducedSymbol blocks it, so it's safe but shows an error. An emoji restorer (the input's emoji are literals: put each one back where the model swapped a different emoji in) would turn the error into a correct paste. (b) Weekday abbreviations (mon, tues, wed, thurs, fri) are missing from SlangRestorer's table. AI wrote `thurs` → `thursday`, and the spell checker then rejected the lowercase `thursday`. Add restore-only entries.

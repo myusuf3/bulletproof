@@ -40,4 +40,12 @@ struct SlangRestorerTests {
         // Only the listed expansion counts: "min" corrected to "mine" stays corrected.
         #expect(SlangRestorer.restore(original: "that one is min", corrected: "that one is mine") == "that one is mine")
     }
+
+    @Test func weekdayAndMonthAbbreviationsComeBack() {
+        #expect(SlangRestorer.restore(original: "fyi the vet appt moved to thurs at 4", corrected: "fyi, the vet appt moved to Thursday at 4")
+                == "fyi, the vet appt moved to thurs at 4")
+        #expect(SlangRestorer.restore(original: "due sept 3", corrected: "due September 3") == "due sept 3")
+        // "sun" the star is never rewritten as Sunday, so nothing to undo.
+        #expect(SlangRestorer.restore(original: "the sun is out", corrected: "The sun is out.") == "The sun is out.")
+    }
 }

@@ -28,6 +28,12 @@ nonisolated enum SlangRestorer {
         "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"],
         "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"],
         "msgs": ["messages"], "kk": ["okay"],
+        // Weekday and month abbreviations ("thurs" -> "Thursday").
+        "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"],
+        "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"],
+        "sat": ["saturday"], "sun": ["sunday"], "jan": ["january"], "feb": ["february"], "aug": ["august"],
+        "sep": ["september"], "sept": ["september"], "oct": ["october"], "nov": ["november"],
+        "dec": ["december"],
     ]
 
     static func restore(original: String, corrected: String) -> String {
