@@ -56,4 +56,13 @@ struct LinkRestorerTests {
         // Abbreviations and sentence ends aren't domains.
         #expect(LinkRestorer.links(in: "Bring snacks, e.g. chips, etc. and 123 Main St., ok").isEmpty)
     }
+
+    @Test func handlesAreNeverProofread() {
+        #expect(LinkRestorer.restore(original: "@jordan can u review my PR", corrected: "@Jordan, can u review my PR")
+                == "@jordan, can u review my PR")
+        #expect(LinkRestorer.restore(original: "thanks @jonh for the reveiw", corrected: "thanks @john for the review")
+                == "thanks @jonh for the review")
+        // Emails stay emails; a lone "@" isn't a handle.
+        #expect(LinkRestorer.links(in: "mail bo@ex.com, meet @ 5").filter { $0.hasPrefix("@") }.isEmpty)
+    }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-/// URLs, email addresses, file paths, hashtags, backslash escapes, chat mentions and
+/// URLs, email addresses, file paths, hashtags, backslash escapes, chat mentions, @handles and
 /// letter-and-digit identifiers are never proofread: a
 /// typo-looking domain ("exmaple.com"), folder ("Documnets") or tag ("#teh")
 /// is still the one the user meant, and a "fixed" one silently points
@@ -17,6 +17,7 @@ nonisolated enum LinkRestorer {
         #"(?<![\w&#])#[A-Za-z][\w-]*"#,                           // hashtag
         #"[^\s"'`]*\\[^\s"'`]+"#,                                // any token with a backslash (escapes, ¯\_(ツ)_/¯, LaTeX)
         #"<[@#!][^<>\s]+>"#,                                       // chat mention (<@U02ABC123>, <#C123>, <!here>)
+        #"(?<![\w@<])@[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\w@<])@[A-Za-z0-9_]"#, // @handle (@jordan, @devon_r)
         #"(?<![\w@#/.-])(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9_-]{5,}(?![\w-])"#, // id mixing letters and digits (a1b2c3d, uuid)
     ].joined(separator: "|"))
 

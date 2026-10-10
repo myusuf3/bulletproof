@@ -92,11 +92,23 @@ def swift_ws(c):
     return c.isspace()
 
 
+def _all_caps(word):
+    letters = "".join(c for c in word if c.isalpha())
+    if len(letters) > 2 and letters[-1] == "s":
+        letters = letters[:-1]
+    return bool(letters) and letters.isupper()
+
+
 def keep_all_lowercase(original, corrected):
     """ProofreadPrompt.keepAllLowercase (typed path only)."""
-    if any(c.isupper() for c in original) or not any(c.isalpha() for c in original):
+    if not any(c.isalpha() for c in original):
         return corrected
-    return corrected.lower()
+    if not any(c.isupper() for c in original):
+        return corrected.lower()
+    first = next(c for c in original if c.isalpha())
+    if not first.islower() or not all(not any(c.isupper() for c in w) or _all_caps(w) for w in original.split()):
+        return corrected
+    return re.sub(r"\S+", lambda m: m.group(0) if _all_caps(m.group(0)) else m.group(0).lower(), corrected)
 
 
 _APOS_FORMS = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
@@ -288,7 +300,7 @@ _LINK = re.compile("|".join([
     r"""(?<![\w@/.:-])(?:www\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|org|net|io|dev|app|co|edu|gov|ai|me|ly|uk|de|ca|us|info|biz|xyz|tv)(?![A-Za-z])|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?=/))(?:/[^\s<>()"'`]*)?""",
     r"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+", r"""\b[A-Za-z]:\\[^\s"'`]+""",
     r"(?<![\w&#])#[A-Za-z][\w-]*", r"""[^\s"'`]*\\[^\s"'`]+""",
-    r"<[@#!][^<>\s]+>", r"(?<![\w@#/.-])(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9_-]{5,}(?![\w-])"]))
+    r"<[@#!][^<>\s]+>", r"(?<![\w@<])@[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\w@<])@[A-Za-z0-9_]", r"(?<![\w@#/.-])(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9_-]{5,}(?![\w-])"]))
 
 
 def links(text):

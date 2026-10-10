@@ -155,8 +155,28 @@ nonisolated enum ProofreadPrompt {
     /// An input with no uppercase letters is deliberately lowercase (casual
     /// typing). The fixes stay, the capitals the model added go.
     static func keepAllLowercase(original: String, corrected: String) -> String {
-        guard !original.contains(where: \.isUppercase), original.contains(where: \.isLetter) else { return corrected }
-        return corrected.lowercased()
+        guard original.contains(where: \.isLetter) else { return corrected }
+        if !original.contains(where: \.isUppercase) { return corrected.lowercased() }
+        // A lowercase writer who capitalizes only acronyms or emphasis ("the food was OK but the
+        // view was AMAZING", "42 PRs"): the model's sentence capitals go, ALL-CAPS words stay.
+        guard original.first(where: \.isLetter)?.isLowercase == true,
+              original.split(whereSeparator: \.isWhitespace).allSatisfy({ !$0.contains(where: \.isUppercase) || isAllCaps($0) })
+        else { return corrected }
+        var result = ""
+        var word = ""
+        func flush() { result += isAllCaps(Substring(word)) ? word : word.lowercased(); word = "" }
+        for character in corrected {
+            if character.isWhitespace { flush(); result.append(character) } else { word.append(character) }
+        }
+        flush()
+        return result
+    }
+
+    /// Every letter uppercase (a trailing plural "s" allowed: "PRs"), at least one letter.
+    private static func isAllCaps(_ word: Substring) -> Bool {
+        var letters = word.filter(\.isLetter)
+        if letters.count > 2, letters.last == "s" { letters.removeLast() }
+        return !letters.isEmpty && letters.allSatisfy(\.isUppercase)
     }
 
     /// Models strip edge whitespace from their output; in-place replacement must

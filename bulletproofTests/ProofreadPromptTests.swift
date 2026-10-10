@@ -88,4 +88,14 @@ struct ProofreadPromptTests {
                 == "Version 2.5 ships in denver. It is fine, I think.")
         #expect(ProofreadPrompt.sentenceCase("iPhone and wifi. eBay too") == "iPhone and wifi. eBay too")
     }
+
+    @Test func lowercaseWritersWithEmphasisStayLowercase() {
+        #expect(ProofreadPrompt.keepAllLowercase(original: "the new cafe is SO good, we should go sat",
+                                                 corrected: "The new cafe is SO good, we should go Sat") == "the new cafe is SO good, we should go sat")
+        #expect(ProofreadPrompt.keepAllLowercase(original: "hey could you reveiw my PR", corrected: "Hey, could you review my PR?")
+                == "hey, could you review my PR?")
+        // A writer who starts with a capital, or capitalizes a name, keeps the model's casing.
+        #expect(ProofreadPrompt.keepAllLowercase(original: "I seen that movie", corrected: "I've seen that movie") == "I've seen that movie")
+        #expect(ProofreadPrompt.keepAllLowercase(original: "i met Sam today", corrected: "I met Sam today") == "I met Sam today")
+    }
 }

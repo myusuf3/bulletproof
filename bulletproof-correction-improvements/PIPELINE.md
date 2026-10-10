@@ -62,7 +62,7 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 5. `CodeSpanRestorer`: code is never proofread. Fenced ``` blocks come back verbatim (#78), then backticked spans
    are restored, re-quoted or re-wrapped.
 6. `LinkRestorer`: URLs (with or without a scheme: `www.…`, common TLDs, `domain.tld/path`, #112), emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments), hashtags and any token
-   with a backslash (escapes, LaTeX, `¯\_(ツ)_/¯`, #100), chat mentions (`<@U02ABC123>`) and identifiers that mix
+   with a backslash (escapes, LaTeX, `¯\_(ツ)_/¯`, #100), chat mentions (`<@U02ABC123>`) and @handles (`@jordan`, #137) and identifiers that mix
    letters and digits (commit hashes, UUIDs, #108) are never
    proofread. An input literal missing from the output goes back over the closest-spelled new one
    (`exmaple.com`, `Documnets`, `#teh` stay as typed, #76, #85).
@@ -77,7 +77,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    number + unit symbol the model spelled out or respaced (`5kg` → `5 kilograms` / `5 kg` → `5kg`, #111, #124), and emoticons the model split
    (`:P` → `: P` → `:P`, #112). A bracket or quote the model added at the very edge to "close" a partial selection
    (`(see the attached file` → `…file)`) is removed; not `[]`/`{}`, which introducedStructure needs (#116). Never in code or links.
-8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).
+8. Typed path: `keepAllLowercase` (an input with no capitals gets none back; a writer who starts lowercase and
+   capitalizes only ALL-CAPS words keeps those and loses the model's other capitals, #137). Dictation: `sentenceCase` (#60).
 
 Restorers 2-4 share `WordAlignment.steps` / `WordTokens` (`LineBreakRestorer.swift`). Alignment keys are letters and
 numbers per Unicode scalar, so combining marks don't count, the same as the harness's `isalnum` (#103).
