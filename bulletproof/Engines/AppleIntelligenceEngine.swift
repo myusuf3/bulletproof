@@ -10,6 +10,8 @@ nonisolated struct Correction {
 }
 
 nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
+    var instructions = ProofreadPrompt.instructions
+
     /// Default guardrails throw guardrailViolation on the user's own words
     /// (profanity, heated messages, legal text); the permissive set exists
     /// exactly for transforming user-provided text.
@@ -36,7 +38,7 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         // Fresh session per request: proofreading is stateless, and a shared
         // transcript would grow and bleed context between selections.
         let session = LanguageModelSession(model: Self.model,
-                                           instructions: ProofreadPrompt.instructions)
+                                           instructions: instructions)
         do {
             let response = try await session.respond(
                 to: ProofreadPrompt.userPrompt(for: text),
@@ -53,7 +55,7 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
     func prewarm() async {
         guard case .available = Self.model.availability else { return }
         LanguageModelSession(model: Self.model,
-                             instructions: ProofreadPrompt.instructions).prewarm()
+                             instructions: instructions).prewarm()
     }
 
     /// Every GenerationError becomes user vocabulary - the raw messages talk

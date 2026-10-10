@@ -22,11 +22,13 @@ for s in ("s1", "s2", "s3", "s4", "s5"):
     need(last[f"pass_{s}"] >= base[f"pass_{s}"] - 0.05, f"pass_{s} {last[f'pass_{s}']} dropped >5pp vs baseline {base[f'pass_{s}']}")
 need(last["p95_ms"] <= base["p95_ms"] * 1.3, f"p95_ms {last['p95_ms']} > 1.3x baseline")
 instr, ex = F.load_prompt()
-need(len(instr) <= 3000, f"instructions {len(instr)} chars > 3000 (input cap / context budget)")
+dinstr, _ = F.load_prompt("dictationInstructions")
+for name, text in (("instructions", instr), ("dictationInstructions", dinstr)):
+    need(len(text) <= 3000, f"{name} {len(text)} chars > 3000 (input cap / context budget)")
 need(not ex, "static let examples (chat-turn few-shot) isn't wired into the Swift engines - keep examples inline in instructions")
 # Overfitting guard: no 6-word run from any eval input may appear in the prompt.
 words = lambda t: re.findall(r"[a-z0-9']+", t.lower())
-pw = " ".join(words(instr))
+pw = " ".join(words(instr + " " + dinstr))
 srcs = [json.loads(l)["input"] for f in list(F.CORPUS.glob("slice*.jsonl")) + [Path("bulletproof-correction-improvements/splits/guard.jsonl")] for l in f.read_text().splitlines() if l.strip()]
 for s in srcs:
     w = words(s)

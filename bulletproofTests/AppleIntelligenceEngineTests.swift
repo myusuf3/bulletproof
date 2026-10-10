@@ -40,7 +40,8 @@ struct AppleIntelligenceEngineTests {
     @Test func inputCapKeepsFullExchangeInsideContextWindow() {
         let cap = AppleIntelligenceEngine.maxInputCharacters
         let inputTokens = cap / 3
-        let instructionTokens = ProofreadPrompt.instructions.count / 3
+        let instructionTokens = max(ProofreadPrompt.instructions.count,
+                                    ProofreadPrompt.dictationInstructions.count) / 3
         // A correction is roughly input-sized; 2x + slack mirrors the local
         // engine's generation budget.
         #expect(instructionTokens + inputTokens + (inputTokens * 2 + 128)

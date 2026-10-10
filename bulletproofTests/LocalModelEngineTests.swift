@@ -17,6 +17,14 @@ struct LocalModelEngineTests {
         #expect(LocalModelEngine.maxTokens(forInputLength: 100_000) == 4096)
     }
 
+    @Test func defaultsToTheTypedTextPrompt() {
+        let engine = LocalModelEngine(modelDirectory: URL(fileURLWithPath: "/nonexistent"))
+        #expect(engine.instructions == ProofreadPrompt.instructions)
+        let dictation = LocalModelEngine(modelDirectory: URL(fileURLWithPath: "/nonexistent"),
+                                         instructions: ProofreadPrompt.dictationInstructions)
+        #expect(dictation.instructions == ProofreadPrompt.dictationInstructions)
+    }
+
     @Test func parametersAreDeterministic() {
         let params = LocalModelEngine.parameters(for: "teh cat")
         #expect(params.temperature == 0)
@@ -25,7 +33,8 @@ struct LocalModelEngineTests {
     @Test func inputCapKeepsFullExchangeInsideKVCache() {
         let cap = LocalModelEngine.maxInputCharacters
         let inputTokens = max(16, cap / 3)
-        let instructionTokens = ProofreadPrompt.instructions.count / 3
+        let instructionTokens = max(ProofreadPrompt.instructions.count,
+                                    ProofreadPrompt.dictationInstructions.count) / 3
         #expect(inputTokens + LocalModelEngine.maxTokens(forInputLength: cap) + instructionTokens
                 <= LocalModelEngine.maxKVSize)
         // The cap must stay roomy enough for real selections (a few paragraphs).

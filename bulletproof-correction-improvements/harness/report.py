@@ -42,6 +42,7 @@ look_bad = [r["id"] for r in look if answered(r["input"], r["raw"])]
 
 from fast_eval import load_prompt  # noqa: E402
 instructions, examples = load_prompt()
+dictation_instructions, _ = load_prompt("dictationInstructions")
 
 out = {
     "pass_rate": gated["pass_rate"],
@@ -64,6 +65,7 @@ out = {
     "p50_ms": gated["p50_ms ↓"],
     "p95_ms": gated["p95_ms ↓"],
     "prompt_chars": len(instructions) + sum(len(a) + len(b) for a, b in examples),
+    "dictation_prompt_chars": len(dictation_instructions),
 }
 for k, v in out.items():
     if v is not None:

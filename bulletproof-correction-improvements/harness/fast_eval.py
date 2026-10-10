@@ -54,11 +54,15 @@ def swift_multiline(src, name):
     return text.replace('\\"', '"').replace("\\\\", "\\")
 
 
-def load_prompt():
+def load_prompt(name="instructions"):
+    """`instructions` (typed text: hotkey/Services) or `dictationInstructions`
+    (the dictation path, AppState.makeEngine(instructions:))."""
     src = PROMPT_SWIFT.read_text()
-    instructions = swift_multiline(src, "instructions")
+    instructions = swift_multiline(src, name)
+    if instructions is None and name == "dictationInstructions":
+        return load_prompt("instructions")  # older code: one prompt for every path
     if instructions is None:
-        sys.exit(f"could not parse ProofreadPrompt.instructions in {PROMPT_SWIFT}")
+        sys.exit(f"could not parse ProofreadPrompt.{name} in {PROMPT_SWIFT}")
     # Optional few-shot chat turns: `static let examples: [(String, String)] = [("in", "out"), ...]`
     examples = []
     m = re.search(r"static let examples\s*:[^=]*=\s*\[(.*?)\n\s*\]", src, re.S)
@@ -294,32 +298,35 @@ def main():
     ap.add_argument("--no-cache", action="store_true")
     a = ap.parse_args()
 
-    instructions, examples = load_prompt()
+    # The s3 slice is dictation transcripts: in the app those go through the
+    # dictation path's prompt. Everything else is typed text.
+    prompts = {name: load_prompt(name) for name in ("instructions", "dictationInstructions")}
+    path_of = lambda c: "dictationInstructions" if c["id"].startswith("s3-") else "instructions"
     thresholds = load_thresholds()
     cases = load_cases(a.split, a.ids, a.cases)
-    prompt_key = hashlib.sha256(json.dumps([instructions, examples]).encode()).hexdigest()[:16]
     CACHE.mkdir(exist_ok=True)
-    cache_path = CACHE / f"gen-{prompt_key}.jsonl"
-    cache = {}
-    if cache_path.exists() and not a.no_cache:
-        for l in cache_path.read_text().splitlines():
-            r = json.loads(l)
-            cache[r["input"]] = r
+    caches, keys = {}, {}
+    for name, (instr, ex) in prompts.items():
+        keys[name] = hashlib.sha256(json.dumps([instr, ex]).encode()).hexdigest()[:16]
+        path = CACHE / f"gen-{keys[name]}.jsonl"
+        caches[name] = {json.loads(l)["input"]: json.loads(l) for l in path.read_text().splitlines()} \
+            if path.exists() and not a.no_cache else {}
     qwen = Qwen()
     t0 = time.time()
     raws = []
-    with cache_path.open("a") as cf:
-        for c in cases:
-            if c["input"] in cache:
-                hit = cache[c["input"]]
-                raws.append((hit["raw"], hit["ms"]))
-                continue
-            s = time.time()
-            raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])
-            ms = (time.time() - s) * 1000
-            raws.append((raw, ms))
+    for c in cases:
+        name = path_of(c)
+        instructions, examples = prompts[name]
+        hit = caches[name].get(c["input"])
+        if hit:
+            raws.append((hit["raw"], hit["ms"]))
+            continue
+        s = time.time()
+        raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])
+        ms = (time.time() - s) * 1000
+        raws.append((raw, ms))
+        with (CACHE / f"gen-{keys[name]}.jsonl").open("a") as cf:
             cf.write(json.dumps({"input": c["input"], "raw": raw, "ms": ms}, ensure_ascii=False) + "\n")
-            cf.flush()
     gen_s = time.time() - t0
 
     # OutputGate and span triage, with one batched spell-check call.
@@ -356,7 +363,7 @@ def main():
         rows.append({"id": c["id"], "engine": "qwen3-4b", "input": c["input"], "raw": raw, "ms": ms,
                      "gated": gated, "scored": scored, "spans": span_rows})
     Path(a.out).write_text("".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in rows))
-    print(f"cases={len(cases)} prompt={prompt_key} examples={len(examples)} gen_s={gen_s:.1f} "
+    print(f"cases={len(cases)} prompts={keys} gen_s={gen_s:.1f} "
           f"total_s={time.time() - t0:.1f}", file=sys.stderr)
 
 

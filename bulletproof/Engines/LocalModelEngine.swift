@@ -7,6 +7,7 @@ import MLXLMCommon
 nonisolated struct LocalModelEngine: ProofreadingEngine {
     let modelDirectory: URL
     var runtime: ResidencyCache<ModelContainer> = LocalModelRuntime.shared
+    var instructions = ProofreadPrompt.instructions
 
     func proofread(_ text: String) async throws -> String {
         // Checked before the model load - an oversized selection must not
@@ -27,7 +28,7 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
         // proofreading is stateless. No guided generation on MLX - the
         // instructions plus cleanResponse() are the output-shaping mechanism.
         let session = ChatSession(container,
-                                  instructions: ProofreadPrompt.instructions,
+                                  instructions: instructions,
                                   generateParameters: Self.parameters(for: text))
         do {
             let response = try await session.respond(to: ProofreadPrompt.userPrompt(for: text))

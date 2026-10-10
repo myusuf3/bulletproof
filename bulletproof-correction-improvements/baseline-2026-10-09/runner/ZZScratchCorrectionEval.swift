@@ -115,21 +115,29 @@ struct ZZScratchCorrectionEval {
         let localID = env["BULLETPROOF_EVAL_LOCAL_MODEL"] ?? qwenID
         try #require(store.isInstalled(localID), "\(localID) is not installed")
         let scorer = MLXSpanScorer(modelDirectory: store.directory(for: localID))
-        var engines: [(String, any ProofreadingEngine)] = []
+        // (typed-text engine, dictation-path engine): s3 is the dictation
+        // slice and goes through ProofreadPrompt.dictationInstructions, as
+        // DictationController does in the app.
+        var engines: [(String, any ProofreadingEngine, any ProofreadingEngine)] = []
         if env["BULLETPROOF_EVAL_SKIP_AI"] != "1", case .available = AppleIntelligenceEngine.model.availability {
-            engines.append(("appleIntelligence", AppleIntelligenceEngine()))
+            engines.append(("appleIntelligence", AppleIntelligenceEngine(),
+                            AppleIntelligenceEngine(instructions: ProofreadPrompt.dictationInstructions)))
         }
+        let localDirectory = store.directory(for: localID)
         engines.append((localID == qwenID ? "qwen3-4b" : "local(\(localID))",
-                        LocalModelEngine(modelDirectory: store.directory(for: localID))))
+                        LocalModelEngine(modelDirectory: localDirectory),
+                        LocalModelEngine(modelDirectory: localDirectory,
+                                         instructions: ProofreadPrompt.dictationInstructions)))
 
         FileManager.default.createFile(atPath: out.path, contents: nil)
         let handle = try FileHandle(forWritingTo: out)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
 
-        for (name, engine) in engines {
-            await engine.prewarm()
+        for (name, typedEngine, dictationEngine) in engines {
+            await typedEngine.prewarm()
             for c in cases {
+                let engine = c.id.hasPrefix("s3-") ? dictationEngine : typedEngine
                 let start = ContinuousClock.now
                 var raw: String?
                 var rawError: String?

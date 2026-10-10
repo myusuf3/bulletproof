@@ -51,9 +51,16 @@ python3 bulletproof-correction-improvements/harness/flips.py .auto/runs/dev.json
 Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 
 ## Files in Scope
-- `bulletproof/Engines/ProofreadPrompt.swift`, **only the `instructions` string literal**. It's a Swift
-  multi-line string (`"""`) where a trailing `\` joins lines. Keep the doc comment above it accurate.
-  The harness parses this exact literal, so what you measure is what ships.
+- `bulletproof/Engines/ProofreadPrompt.swift`, **only the `instructions` and `dictationInstructions` string
+  literals**. Each is a Swift multi-line string (`"""`) where a trailing `\` joins lines. Keep the doc comments accurate.
+  The harness parses these exact literals, so what you measure is what ships.
+  - `instructions`: typed text (hotkey, Services, Shortcuts). Evaluated on s1, s2, s4, s5 and the guard set.
+  - `dictationInstructions`: the dictation path (`HotkeyDispatcher` → `AppState.makeEngine(instructions:)`).
+    Evaluated on s3 (70 transcripts and 10 punctuated controls).
+- **Why two prompts (exp #2-#5):** s3 transcripts and s5 casual typing look the same as text (52/59 s3 and 10/59
+  s5 dev inputs have no punctuation; `lets grab lunch next week im free tuesday and thursday` could be either).
+  One prompt either capitalized casual text (s5 ≈ .5) or left transcripts raw (s3 ≈ .14-.32). The app knows the
+  path, so commit `H6` routes dictation to its own prompt. This is a real app change, with the eval runner and harness mirroring it.
 
 ## Off Limits
 - Everything under `bulletproof-correction-improvements/` (corpus, splits, metrics, harness, judge rubric):
@@ -71,7 +78,7 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 - `answered_count` ≤ baseline (8). See the finding below.
 - No slice's pass rate may drop more than 5 pp below baseline (this stops trading dictation for casual text).
 - p95 latency ≤ 1.3× baseline. Latency is noisy (±40% run to run), so this check is deliberately loose.
-- `instructions` ≤ 3000 chars. `LocalModelEngine.maxInputCharacters` subtracts the prompt from the
+- each prompt ≤ 3000 chars. `LocalModelEngine.maxInputCharacters` subtracts the prompt from the
   4096-token KV budget, and a unit test requires the input cap to stay above 2000 chars.
 - **Overfitting guard:** no 6-word run from any corpus or guard input may appear in the prompt. Write
   examples on topics unlike the corpus (it covers meetings, deploys, PRs, landlords, travel, dinner, etc.).
@@ -108,6 +115,10 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- #2-#5 (single prompt): style-preserving examples plus "keep everything else" push s5 to .90-.92 and
+  clean_preserved to 1.0, but under-correct grammar (s2 .68-.86: agreement across "of", "most easiest", "alot",
+  double negatives, "has rose") and can't serve transcripts. Grammar needs explicit coverage. A text-only
+  transcript rule is ignored, and a transcript example leaks capitalization into casual text.
 - **Baseline** (commit 75e4a8a prompt): dev pass_rate 0.7627 (s1 .949, s2 .915, s3 .831, s4 .695,
   s5 .424), errors_fixed .958, lowercase_kept .06, slang_kept .29, case_restyled .125, answered 8/14 guard.
   Holdout (gated, 105 cases): pass_rate 0.781 (s1 1.0, s2 .857, s3 .905, s4 .714, s5 .429), errors_fixed .939.
