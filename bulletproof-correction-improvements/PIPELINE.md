@@ -31,7 +31,9 @@ AppState.makeEngine(recordsStats:, instructions:)                               
   per (model, instructions) and copies it into each request. Generation uses `generateTokens` and decodes the
   token IDs once at the end, not `ChatSession`: mlx-swift-lm's streaming detokenizer diffs chunks by grapheme
   count and silently dropped tokens that extend the previous character (skin tones, flags, ZWJ emoji, ❤️, 1️⃣,
-  Devanagari vowel signs; #86). It's only used when the
+  Devanagari vowel signs; #86). The output budget is max(the 3-chars-per-token estimate, input tokens × 2 + 128)
+  and the whole exchange must fit the 4,096-token KV cache, else `inputTooLong` (#88). The character estimate alone
+  truncated Hindi, Tamil, Bengali, Burmese and emoji runs (1.3-3 tokens per character), and pasted the cut text. It's only used when the
   template splits cleanly into prefix + user turn, token for token. The result is 0.57x the original app's median
   latency (#50).
 - **AppleIntelligenceEngine**: `GenerationOptions(sampling: .greedy)` makes output deterministic (#62). The typed

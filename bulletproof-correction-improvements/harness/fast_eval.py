@@ -759,7 +759,7 @@ class Qwen:
             msgs += [{"role": "user", "content": f"<text>\n{a}\n</text>"}, {"role": "assistant", "content": b}]
         msgs.append({"role": "user", "content": f"<text>\n{text}\n</text>"})
         prompt = self.tok.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False)
-        max_tokens = min(MAX_KV, max(16, len(text) // 3) * 2 + 128)
+        max_tokens = max(min(MAX_KV, max(16, len(text) // 3) * 2 + 128), len(self.tok.encode(text)) * 2 + 128)  # LocalModelEngine.tokenBudget
         return generate(self.model, self.tok, prompt, max_tokens=max_tokens, sampler=self.sampler,
                         max_kv_size=MAX_KV)
 
@@ -786,7 +786,7 @@ class Qwen:
         stored_prefix, cache = cache_store[instructions]
         if stored_prefix != prefix:
             return self.generate(instructions, [], text)
-        max_tokens = min(MAX_KV, max(16, len(text) // 3) * 2 + 128)
+        max_tokens = max(min(MAX_KV, max(16, len(text) // 3) * 2 + 128), len(self.tok.encode(text)) * 2 + 128)  # LocalModelEngine.tokenBudget
         return generate(self.model, self.tok, rest, max_tokens=max_tokens, sampler=self.sampler,
                         prompt_cache=copy.deepcopy(cache))
 

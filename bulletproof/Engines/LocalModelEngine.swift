@@ -34,7 +34,7 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
         let prefix = await PrefixCacheStore.shared.cache(for: instructions, container: container,
                                                          parameters: parameters)
         do {
-            let response = try await Self.generate(prompt: ProofreadPrompt.userPrompt(for: text),
+            let response = try await Self.generate(prompt: ProofreadPrompt.userPrompt(for: text), text: text,
                                                    instructions: instructions, prefix: prefix,
                                                    container: container, parameters: parameters)
             await runtime.touch()
@@ -43,6 +43,8 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
                                                  keepsLowercase: !isDictation, sentenceCases: isDictation)
         } catch is CancellationError {
             throw CancellationError()
+        } catch let error as ProofreadingError {
+            throw error
         } catch {
             throw ProofreadingError.inferenceFailed(underlying: error)
         }
@@ -54,13 +56,21 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
     /// a variation selector, Thai or Devanagari vowel signs) was silently
     /// dropped: "👍🏽" came back "👍", "🇨🇦" as "🇨". Same prompt and tokens as
     /// ChatSession: [system, user], or [user] after the cached system prefix.
-    static func generate(prompt: String, instructions: String, prefix: [KVCache]?,
+    static func generate(prompt: String, text: String, instructions: String, prefix: [KVCache]?,
                          container: ModelContainer, parameters: GenerateParameters) async throws -> String {
         try await container.perform(nonSendable: prefix) { context, prefix in
             var messages: [Chat.Message] = prefix == nil ? [.system(instructions)] : []
             messages.append(.user(prompt))
             let input = try await context.processor.prepare(input: UserInput(chat: messages))
             let cache = prefix ?? context.model.newCache(parameters: parameters)
+            let promptTokens = (prefix?.first?.offset ?? 0) + input.text.tokens.size
+            guard let maxTokens = tokenBudget(characterBudget: parameters.maxTokens ?? 0,
+                                              inputTokens: context.tokenizer.encode(text: text).count,
+                                              promptTokens: promptTokens) else {
+                throw ProofreadingError.inputTooLong
+            }
+            var parameters = parameters
+            parameters.maxTokens = maxTokens
             var tokens: [Int] = []
             for await generation in try generateTokens(input: input, cache: cache,
                                                        parameters: parameters, context: context) {
@@ -75,6 +85,18 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
     /// request that follows it.
     func prewarm() async {
         _ = try? await runtime.resource(for: modelDirectory)
+    }
+
+    /// The generation budget in tokens, or nil when the text can't fit. The
+    /// character estimate (3 chars per token) holds for English but not for
+    /// Hindi, Tamil, Bengali or Burmese (1.3-3 tokens per character) or emoji
+    /// runs (1.4), where it cut corrections short and pasted the truncated
+    /// text. So the budget is never below the input's real token count x 2 +
+    /// 128, and the whole exchange must fit the KV cache (no rotation).
+    static func tokenBudget(characterBudget: Int, inputTokens: Int, promptTokens: Int) -> Int? {
+        let needed = inputTokens * 2 + 128
+        guard promptTokens + needed <= maxKVSize else { return nil }
+        return min(max(characterBudget, needed), maxKVSize - promptTokens)
     }
 
     /// Corrections are roughly input-sized; 2x plus slack absorbs expansion
