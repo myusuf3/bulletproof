@@ -205,3 +205,23 @@
 {"id": "s1-k18", "input": "The defence rested its case.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["clean-variants"]}
 {"id": "s1-k19", "input": "I'm fixin' to head out.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["clean-variants"]}
 {"id": "s1-k20", "input": "Ain't nobody got time for that.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["clean-variants"]}
+{"id": "s5-x1", "input": "this is sooooo good", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x2", "input": "noooo i forgot my keys", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x3", "input": "that was SO cool, i cant even", "expected": {"kind": "fix", "acceptableOutputs": ["that was SO cool, i can't even"]}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x4", "input": "THIS IS THE BEST DAY EVER!!!", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x5", "input": "i *really* need coffee rn", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x6", "input": "~vibes~ only tonight", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x7", "input": "oh sUrE, that'll totally work", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x8", "input": "that's c o o l", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x9", "input": "wait what?!?! no way", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x10", "input": "(╯°□°)╯︵ ┻━┻ the build failed again", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x11", "input": "lmaooo stop", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x12", "input": "hahaha yesss finally", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x13", "input": "ugh mondays amirite", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x14", "input": "sooo tired, gonna sleep for like 12 hrs", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x15", "input": "WHY is the printer always broken", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x16", "input": "i'm sooo proud of u!!! 🥹", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x17", "input": "the meeting was looong but productive", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x18", "input": "yesss we won the hackathon, tho the demo almost crashd", "expected": {"kind": "fix", "acceptableOutputs": ["yesss we won the hackathon, tho the demo almost crashed"]}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x19", "input": "thx sm for the help!!", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}
+{"id": "s5-x20", "input": "heyyy are u coming tonite?", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["expressive"]}

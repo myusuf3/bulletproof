@@ -28,4 +28,17 @@ struct SpellingVariantRestorerTests {
         // Without the writer's apostrophe it's a typo the model fixed.
         #expect(SpellingVariantRestorer.restore(original: "I'm fixin to go", corrected: "I'm fixing to go") == "I'm fixing to go")
     }
+
+    @Test func expressiveTypingComesBack() {
+        #expect(SpellingVariantRestorer.restore(original: "oh sUrE, that'll totally work", corrected: "oh sure, that'll totally work")
+                == "oh sUrE, that'll totally work")
+        #expect(SpellingVariantRestorer.restore(original: "WHY is the printer always broken", corrected: "why is the printer always broken?")
+                == "WHY is the printer always broken?")
+        #expect(SpellingVariantRestorer.restore(original: "the meeting was looong", corrected: "The meeting was long.") == "The meeting was looong.")
+        #expect(SpellingVariantRestorer.restore(original: "PLEASE SEND TEH FILE", corrected: "Please send the file")
+                == "PLEASE SEND THE FILE")
+        // Tripled-letter typos of a double stay fixed.
+        #expect(SpellingVariantRestorer.restore(original: "out of the offfice", corrected: "out of the office") == "out of the office")
+        #expect(SpellingVariantRestorer.restore(original: "the foooter", corrected: "the footer") == "the footer")
+    }
 }

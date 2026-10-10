@@ -51,7 +51,10 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 2b. `SpellingVariantRestorer`: a listed British spelling the model Americanized comes back (`colour` → `color` →
    `colour`, `organised`, `travelled`, `centre`, `licence`, …, #128). A curated table of ~600 forms, not suffix rules,
    so real fixes (`four` → `for`, `filled` → `filed`, `expence` → `expense`) are never undone. Dropped-g forms with the writer's
-   apostrophe come back too (`fixin'` → `fixing` → `fixin'`, #130).
+   apostrophe come back too (`fixin'` → `fixing` → `fixin'`, #130). So do expressive forms (#133): deliberate capitals the
+   model only recased (`sUrE`, `WHY`, `NASA`; an ALL-CAPS word keeps caps when corrected, `TEH` → `THE`) and an
+   elongation shortened to one letter (`looong` → `long` → `looong`; a tripled letter written twice is a typo,
+   `offfice` → `office`, and stays fixed).
 3. `ContractionRestorer`: a single typed contraction expanded by the model gets re-contracted (`wasnt` → `was not` → `wasn't`).
 4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added), and
    the whitespace around each break is copied exactly, which removes the markdown hard-break spaces Qwen adds

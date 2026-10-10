@@ -162,7 +162,7 @@ _SLANG = {
     "bday": ["birthday"], "msg": ["message"], "ok": ["okay"], "srsly": ["seriously"],
     "gonna": ["going to"], "wanna": ["want to"], "gotta": ["got to", "have to"], "kinda": ["kind of"],
     "sorta": ["sort of"], "lowkey": ["low-key", "low key"], "mins": ["minutes"], "secs": ["seconds"],
-    "min": ["minute", "minutes"], "hr": ["hour", "hours"], "hrs": ["hours"], "approx": ["approximately"], "info": ["information"], "pic": ["picture", "photo"], "pics": ["pictures", "photos"], "convo": ["conversation"], "abt": ["about"], "cuz": ["because"], "ppl": ["people"], "prob": ["probably"], "tho": ["though", "although"], "thru": ["through"], "wk": ["week"], "wks": ["weeks"], "yr": ["year"], "yrs": ["years"], "esp": ["especially"], "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"], "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"], "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"], "msgs": ["messages"], "kk": ["okay"], "smol": ["small"], "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"], "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"], "sat": ["saturday"], "sun": ["sunday"], "jan": ["january"], "feb": ["february"], "aug": ["august"], "sep": ["september"], "sept": ["september"], "oct": ["october"], "nov": ["november"], "dec": ["december"],
+    "min": ["minute", "minutes"], "hr": ["hour", "hours"], "hrs": ["hours"], "approx": ["approximately"], "info": ["information"], "pic": ["picture", "photo"], "pics": ["pictures", "photos"], "convo": ["conversation"], "abt": ["about"], "cuz": ["because"], "ppl": ["people"], "prob": ["probably"], "tho": ["though", "although"], "thru": ["through"], "wk": ["week"], "wks": ["weeks"], "yr": ["year"], "yrs": ["years"], "esp": ["especially"], "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"], "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"], "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"], "msgs": ["messages"], "kk": ["okay"], "smol": ["small"], "tonite": ["tonight"], "nite": ["night"], "luv": ["love"], "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"], "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"], "sat": ["saturday"], "sun": ["sunday"], "jan": ["january"], "feb": ["february"], "aug": ["august"], "sep": ["september"], "sept": ["september"], "oct": ["october"], "nov": ["november"], "dec": ["december"],
 }
 
 
@@ -473,6 +473,24 @@ def _uk_us_table():
 _UK_US = _uk_us_table()
 
 
+def _runs(w):
+    out = []
+    for ch in w.lower():
+        if out and out[-1][0] == ch:
+            out[-1][1] += 1
+        else:
+            out.append([ch, 1])
+    return out
+
+
+def _shortened_elongation(typed, output):
+    """SpellingVariantRestorer.isShortenedElongation."""
+    a, b = _runs(typed), _runs(output)
+    if len(a) != len(b) or not any(n >= 3 for _, n in a):
+        return False
+    return all(x == y and (bn == 1 if an >= 3 else bn == an) for (x, an), (y, bn) in zip(a, b))
+
+
 def restore_spelling_variants(original, corrected):
     """SpellingVariantRestorer.restore."""
     _, typed = _word_tokens(original)
@@ -482,9 +500,44 @@ def restore_spelling_variants(original, corrected):
     key = lambda w: "".join(c for c in w.lower() if c.isalnum())
     a, b = [key(w) for w, _ in typed], [key(w) for w, _ in out]
     words = [w for w, _ in out]
-    pairs = [(i, j) for i0, i1, j0, j1 in _key_steps(a, b) if i1 - i0 == j1 - j0 for i, j in zip(range(i0, i1), range(j0, j1))]
+    steps = _key_steps(a, b)
+
+    def rebuilt(ow, letters):
+        k = 0
+        while k < len(ow) and not ow[k].isalpha():
+            k += 1
+        e = len(ow)
+        while e > k and not ow[e - 1].isalpha():
+            e -= 1
+        return ow[:k] + letters + ow[e:]
+
+    # Deliberate capitals the model only recased (sUrE, WHY, NASA).
+    kept, i, j = [], 0, 0
+    for i0, i1, j0, j1 in steps:
+        while i < i0:
+            kept.append((i, j))
+            i += 1
+            j += 1
+        i, j = i1, j1
+    while i < len(a) and j < len(b):
+        kept.append((i, j))
+        i += 1
+        j += 1
+    for i, j in kept:
+        tl = "".join(c for c in typed[i][0] if c.isalpha())
+        ol = "".join(c for c in words[j] if c.isalpha())
+        if len(tl) >= 2 and (tl.isupper() or any(c.isupper() for c in tl[1:])) and ol != tl and ol.lower() == tl.lower():
+            words[j] = rebuilt(words[j], tl)
+    pairs = [(i, j) for i0, i1, j0, j1 in steps if i1 - i0 == j1 - j0 for i, j in zip(range(i0, i1), range(j0, j1))]
     for i0, j0 in pairs:
         tl = "".join(c for c in typed[i0][0] if c.isalpha())
+        ol_ = "".join(c for c in words[j0] if c.isalpha())
+        if len(tl) >= 2 and tl.isupper() and any(c.islower() for c in ol_):  # writer's ALL CAPS on a corrected word
+            words[j0] = rebuilt(words[j0], ol_.upper())
+            continue
+        if tl and ol_ and _shortened_elongation(tl, ol_):
+            words[j0] = rebuilt(words[j0], tl[:1].upper() + tl[1:] if ol_[:1].isupper() and not tl[:1].isupper() else tl)
+            continue
         ow = words[j0]
         ol = "".join(c for c in ow if c.isalpha())
         tw = typed[i0][0].lower().replace("\u2019", "'").rstrip(".,;:!?)\"")
