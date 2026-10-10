@@ -45,27 +45,11 @@ nonisolated enum LineBreakRestorer {
         text.trimmingCharacters(in: .whitespacesAndNewlines).filter(\.isNewline).count
     }
 
-    /// Source word index -> output word index for words the LCS keeps,
-    /// walked like EditDiff.spans.
+    /// Source word index -> output word index for words the alignment keeps.
     private static func alignedPairs(_ a: [String], _ b: [String]) -> [Int: Int] {
-        var lcs = Array(repeating: Array(repeating: 0, count: b.count + 1), count: a.count + 1)
-        for i in stride(from: a.count - 1, through: 0, by: -1) {
-            for j in stride(from: b.count - 1, through: 0, by: -1) {
-                lcs[i][j] = a[i] == b[j] ? lcs[i + 1][j + 1] + 1 : max(lcs[i + 1][j], lcs[i][j + 1])
-            }
-        }
         var pairs: [Int: Int] = [:]
-        var i = 0, j = 0
-        while i < a.count, j < b.count {
-            if a[i] == b[j] {
-                pairs[i] = j
-                i += 1
-                j += 1
-            } else if lcs[i + 1][j] >= lcs[i][j + 1] {
-                i += 1
-            } else {
-                j += 1
-            }
+        for case .kept(let source, let output) in WordAlignment.steps(a, b) {
+            pairs[source] = output
         }
         return pairs
     }
@@ -108,5 +92,43 @@ nonisolated struct WordTokens {
         }
         self.leading = leading
         self.tokens = tokens
+    }
+}
+
+/// Word alignment shared by the restorers: the same LCS walk as
+/// EditDiff.spans, over case- and punctuation-free keys, so neighbouring
+/// casing or punctuation fixes don't merge into a changed run.
+nonisolated enum WordAlignment {
+    enum Step: Equatable {
+        /// Source word `source` kept as output word `output`.
+        case kept(source: Int, output: Int)
+        /// Source words `source` replaced by output words `output` (either may be empty).
+        case changed(source: Range<Int>, output: Range<Int>)
+    }
+
+    static func steps(_ a: [String], _ b: [String]) -> [Step] {
+        var lcs = Array(repeating: Array(repeating: 0, count: b.count + 1), count: a.count + 1)
+        for i in stride(from: a.count - 1, through: 0, by: -1) {
+            for j in stride(from: b.count - 1, through: 0, by: -1) {
+                lcs[i][j] = a[i] == b[j] ? lcs[i + 1][j + 1] + 1 : max(lcs[i + 1][j], lcs[i][j + 1])
+            }
+        }
+        var steps: [Step] = []
+        var i = 0, j = 0
+        while i < a.count || j < b.count {
+            if i < a.count, j < b.count, a[i] == b[j] {
+                steps.append(.kept(source: i, output: j))
+                i += 1
+                j += 1
+                continue
+            }
+            let (i0, j0) = (i, j)
+            while i < a.count || j < b.count {
+                if i < a.count, j < b.count, a[i] == b[j] { break }
+                if j == b.count || (i < a.count && lcs[i + 1][j] >= lcs[i][j + 1]) { i += 1 } else { j += 1 }
+            }
+            steps.append(.changed(source: i0..<i, output: j0..<j))
+        }
+        return steps
     }
 }

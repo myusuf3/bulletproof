@@ -31,57 +31,31 @@ nonisolated enum ContractionRestorer {
     }()
 
     static func restore(original: String, corrected: String) -> String {
-        let typed = original.split(whereSeparator: \.isWhitespace).map(String.init)
-        let output = tokens(of: corrected)
-        // Align on case- and punctuation-free keys so neighbouring casing or
-        // punctuation fixes ("i dont" -> "I do not") don't merge into the run.
-        let source = typed.map(alignmentKey), words = output.map { alignmentKey($0.word) }
-        guard !source.isEmpty, !words.isEmpty else { return corrected }
-
-        // Same LCS walk as EditDiff.spans, over the alignment keys.
-        var lcs = Array(repeating: Array(repeating: 0, count: words.count + 1), count: source.count + 1)
-        for i in stride(from: source.count - 1, through: 0, by: -1) {
-            for j in stride(from: words.count - 1, through: 0, by: -1) {
-                lcs[i][j] = source[i] == words[j] ? lcs[i + 1][j + 1] + 1 : max(lcs[i + 1][j], lcs[i][j + 1])
-            }
-        }
+        let typed = WordTokens(original), output = WordTokens(corrected)
+        guard !typed.tokens.isEmpty, !output.tokens.isEmpty else { return corrected }
         var replacements: [(range: Range<Int>, text: String)] = []
-        var i = 0, j = 0
-        while i < source.count || j < words.count {
-            if i < source.count, j < words.count, source[i] == words[j] {
-                i += 1
-                j += 1
-                continue
-            }
-            let originalStart = i, outputStart = j
-            while i < source.count || j < words.count {
-                if i < source.count, j < words.count, source[i] == words[j] { break }
-                if j == words.count || (i < source.count && lcs[i + 1][j] >= lcs[i][j + 1]) {
-                    i += 1
-                } else {
-                    j += 1
-                }
-            }
-            if i - originalStart == 1, let text = contraction(typed: typed[originalStart],
-                                                              expansion: output[outputStart..<j].map(\.word)) {
-                replacements.append((outputStart..<j, text))
+        for case .changed(let source, let outputRange) in WordAlignment.steps(typed.keys, output.keys)
+        where source.count == 1 {
+            if let text = contraction(typed: typed.tokens[source.lowerBound].word,
+                                      expansion: output.tokens[outputRange].map(\.word)) {
+                replacements.append((outputRange, text))
             }
         }
         guard !replacements.isEmpty else { return corrected }
 
-        var result = ""
+        var result = output.leading
         var index = 0
         for replacement in replacements {
-            for token in output[index..<replacement.range.lowerBound] {
+            for token in output.tokens[index..<replacement.range.lowerBound] {
                 result += token.word + token.trailing
             }
-            result += replacement.text + output[replacement.range.upperBound - 1].trailing
+            result += replacement.text + output.tokens[replacement.range.upperBound - 1].trailing
             index = replacement.range.upperBound
         }
-        for token in output[index...] {
+        for token in output.tokens[index...] {
             result += token.word + token.trailing
         }
-        return output[0].leading + result
+        return result
     }
 
     /// The contraction for a typed contraction-shaped word whose aligned
@@ -105,41 +79,5 @@ nonisolated enum ContractionRestorer {
 
     private static func key(for word: String) -> String {
         String(word.lowercased().filter(\.isLetter))
-    }
-
-    private static func alignmentKey(_ word: String) -> String {
-        String(word.lowercased().filter { $0.isLetter || $0.isNumber })
-    }
-
-    private struct Token {
-        let leading: String
-        let word: String
-        let trailing: String
-    }
-
-    /// Words with the whitespace after each, so line breaks survive the rebuild.
-    /// Only the first token carries leading whitespace.
-    private static func tokens(of text: String) -> [Token] {
-        var result: [Token] = []
-        var leading = ""
-        var index = text.startIndex
-        while index < text.endIndex, text[index].isWhitespace {
-            leading.append(text[index])
-            index = text.index(after: index)
-        }
-        while index < text.endIndex {
-            var word = ""
-            while index < text.endIndex, !text[index].isWhitespace {
-                word.append(text[index])
-                index = text.index(after: index)
-            }
-            var trailing = ""
-            while index < text.endIndex, text[index].isWhitespace {
-                trailing.append(text[index])
-                index = text.index(after: index)
-            }
-            result.append(Token(leading: result.isEmpty ? leading : "", word: word, trailing: trailing))
-        }
-        return result
     }
 }

@@ -22,29 +22,12 @@ nonisolated enum SlangRestorer {
     static func restore(original: String, corrected: String) -> String {
         let typed = WordTokens(original), output = WordTokens(corrected)
         guard !typed.tokens.isEmpty, !output.tokens.isEmpty else { return corrected }
-        let a = typed.keys, b = output.keys
-        var lcs = Array(repeating: Array(repeating: 0, count: b.count + 1), count: a.count + 1)
-        for i in stride(from: a.count - 1, through: 0, by: -1) {
-            for j in stride(from: b.count - 1, through: 0, by: -1) {
-                lcs[i][j] = a[i] == b[j] ? lcs[i + 1][j + 1] + 1 : max(lcs[i + 1][j], lcs[i][j + 1])
-            }
-        }
         var words = output.tokens.map(\.word)
         var trailing = output.tokens.map(\.trailing)
         var removed = Set<Int>()
-        var i = 0, j = 0
-        while i < a.count || j < b.count {
-            if i < a.count, j < b.count, a[i] == b[j] {
-                i += 1
-                j += 1
-                continue
-            }
-            let (i0, j0) = (i, j)
-            while i < a.count || j < b.count {
-                if i < a.count, j < b.count, a[i] == b[j] { break }
-                if j == b.count || (i < a.count && lcs[i + 1][j] >= lcs[i][j + 1]) { i += 1 } else { j += 1 }
-            }
-            guard i - i0 == 1, (1...4).contains(j - j0) else { continue }
+        for case .changed(let source, let outputRange) in WordAlignment.steps(typed.keys, output.keys) {
+            let (i0, j0, j) = (source.lowerBound, outputRange.lowerBound, outputRange.upperBound)
+            guard source.count == 1, (1...4).contains(j - j0) else { continue }
             // The typed word may carry punctuation ("thx!", "idk,"): match on its letters,
             // which must be one contiguous run, and keep the correction's punctuation.
             let typedWord = typed.tokens[i0].word
