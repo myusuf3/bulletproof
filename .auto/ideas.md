@@ -76,3 +76,7 @@
   text looks the same, so text alone can't tell them apart. The app could: read the character just past the selection via
   AX (kAXStringForRangeParameterizedAttribute). If the selection starts or ends inside a word, protect the edge fragments
   from edits (restore them like literals).
+- **Chain runtime (#127, measured, no action):** Swift cleanResponse + OutputGate.rejection takes about 20 ms at 1k chars,
+  about 50 ms at 2k, and 120-150 ms at the 3.3k input cap. It grows quadratically: several LCS word alignments plus
+  close-spelling matching. Generation for a 3k-char document takes 8-14 s, so this is about 1% and not worth optimizing
+  now. If it ever matters: one shared alignment per call, and flat Int32 LCS tables instead of [[Int]].
