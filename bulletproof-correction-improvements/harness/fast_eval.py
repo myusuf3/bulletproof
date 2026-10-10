@@ -392,14 +392,15 @@ def restore_line_breaks(original, corrected):
         wanted = nl(ws)
         j = match.get(i)
         if j is not None and match.get(i + 1) == j + 1:
-            if nl(trailing[j]) != wanted:
+            if nl(trailing[j]) != wanted or (wanted > 0 and trailing[j] != ws):
                 trailing[j] = ws
         elif wanted > 0:
+            differs = lambda gap: nl(gap) < wanted or (nl(gap) == wanted and gap != ws)
             jn = match.get(i + 1)
             if jn is not None and jn > 0:
-                if nl(trailing[jn - 1]) < wanted:
+                if differs(trailing[jn - 1]):
                     trailing[jn - 1] = ws
-            elif j is not None and j < m - 1 and nl(trailing[j]) < wanted:
+            elif j is not None and j < m - 1 and differs(trailing[j]):
                 trailing[j] = ws
     rebuilt = lead + "".join(w + t for (w, _), t in zip(out, trailing))
     o = _nl_count(original)

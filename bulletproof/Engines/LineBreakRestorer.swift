@@ -20,14 +20,19 @@ nonisolated enum LineBreakRestorer {
                 // Neighbours aligned on both sides: the gap between them gets
                 // the original's line breaks - restores joined lines and
                 // removes breaks the model added ("\n\n" -> "\n" -> "\n\n").
-                if newlines(trailing[j]) != wanted { trailing[j] = token.trailing }
+                // Around a break, the gap is copied exactly: models also add
+                // markdown hard-break spaces ("milk  \n"), invisible but a change.
+                if newlines(trailing[j]) != wanted
+                    || (wanted > 0 && trailing[j] != token.trailing) { trailing[j] = token.trailing }
             } else if wanted > 0 {
                 // The break sits next to a rewritten word: anchor on the next
                 // line's first word, else on the word before the break.
+                let differs = { (gap: String) in newlines(gap) < wanted
+                    || (newlines(gap) == wanted && gap != token.trailing) }
                 if let j = match[i + 1], j > 0 {
-                    if newlines(trailing[j - 1]) < wanted { trailing[j - 1] = token.trailing }
+                    if differs(trailing[j - 1]) { trailing[j - 1] = token.trailing }
                 } else if let j = match[i], j < output.tokens.count - 1 {
-                    if newlines(trailing[j]) < wanted { trailing[j] = token.trailing }
+                    if differs(trailing[j]) { trailing[j] = token.trailing }
                 }
             }
         }

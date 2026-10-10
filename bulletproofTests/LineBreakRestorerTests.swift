@@ -34,4 +34,10 @@ struct LineBreakRestorerTests {
         #expect(ProofreadPrompt.cleanResponse("Hi Bo, Do not worry.", original: "Hi Bo,\nDont worry.")
                 == "Hi Bo,\nDon't worry.")
     }
+
+    @Test func addedTrailingSpacesBeforeABreakAreRemoved() {
+        #expect(restore("- buy mlik\n- call mom", "- buy milk  \n- call mom") == "- buy milk\n- call mom")
+        // The writer's own trailing spaces stay.
+        #expect(restore("a  \nb", "a  \nb") == "a  \nb")
+    }
 }
