@@ -22,6 +22,13 @@ nonisolated enum LinkRestorer {
         return text
     }
 
+    /// Ranges of the links in `text` (untrimmed), for fixers that must skip them.
+    static func ranges(in text: String) -> [Range<String.Index>] {
+        let ns = text as NSString
+        return pattern.matches(in: text, range: NSRange(location: 0, length: ns.length))
+            .compactMap { Range($0.range, in: text) }
+    }
+
     /// Links in order, with trailing sentence punctuation trimmed.
     static func links(in text: String) -> [String] {
         let ns = text as NSString

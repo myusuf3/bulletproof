@@ -102,7 +102,9 @@ def keep_all_lowercase(original, corrected):
 _APOS_FORMS = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
                "hasn't", "hadn't", "wouldn't", "shouldn't", "couldn't", "mustn't", "needn't",
                "I'm", "I've", "you're", "you've", "you'll", "they're", "they've", "they'll",
-               "that's", "there's", "what's", "who's", "we've", "would've", "should've", "could've"]
+               "that's", "there's", "what's", "who's", "we've", "would've", "should've", "could've",
+               "a lot", "a bit", "a little", "at least", "in fact", "as well", "each other",
+               "no one", "in case", "of course", "in spite"]
 _APOS = {"".join(c for c in f.lower() if c.isalpha()): f for f in _APOS_FORMS}
 
 
@@ -133,7 +135,7 @@ def fix_apostrophes(text):
         word = text[st:i]
         after = i < n and (text[i].isdigit() or text[i] == "_")
         before = st > 0 and (text[st - 1].isdigit() or text[st - 1] in "_@#")
-        inside = any(a <= st < b for a, b in code)
+        inside = any(a <= st < b for a, b in code) or any(m.start() <= st < m.end() for m in _LINK.finditer(text))
         fixed = _APOS.get(word.lower())
         curly = False
         if not (fixed and "'" not in word and "\u2019" not in word):

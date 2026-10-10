@@ -42,4 +42,13 @@ struct ApostropheFixerTests {
         // Real words and correct contractions stay; short stems aren't guessed.
         #expect(ApostropheFixer.fix("don't won't is't `would't`") == "don't won't is't `would't`")
     }
+
+    @Test func runTogetherPhrasesAreSplit() {
+        #expect(ApostropheFixer.fix("thanks alot, atleast it works") == "thanks a lot, at least it works")
+        #expect(ApostropheFixer.fix("Alot of people") == "A lot of people")
+        #expect(ApostropheFixer.fix("ALOT") == "A LOT")
+        // Never inside code, links, hashtags or longer words.
+        #expect(ApostropheFixer.fix("`alot` https://alot.com/dont #alot alotment")
+                == "`alot` https://alot.com/dont #alot alotment")
+    }
 }

@@ -5,14 +5,18 @@ import Foundation
 /// spellings that can't be a real word are fixed - `cant`, `wont`, `were`,
 /// `well`, `ill`, `its`, `lets`, `id`, `hell`, `shell` and `wed` are all
 /// words, so they're left to the model. Misplaced apostrophes ("would'nt")
-/// are fixed the same way. Code spans are never touched.
+/// are fixed the same way, and so are run-together phrases that are never
+/// words ("alot", "atleast", "eachother"). Code spans and links are never touched.
 nonisolated enum ApostropheFixer {
     private static let fixes: [String: String] = {
         let forms = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
                      "hasn't", "hadn't", "wouldn't", "shouldn't", "couldn't", "mustn't", "needn't",
                      "I'm", "I've", "you're", "you've", "you'll", "they're", "they've", "they'll",
                      "that's", "there's", "what's", "who's", "we've",
-                     "would've", "should've", "could've"]
+                     "would've", "should've", "could've",
+                     // Run-together phrases that are never words ("alot" -> "a lot").
+                     "a lot", "a bit", "a little", "at least", "in fact", "as well", "each other",
+                     "no one", "in case", "of course", "in spite"]
         return Dictionary(uniqueKeysWithValues: forms.map { ($0.lowercased().filter(\.isLetter), $0) })
     }()
 
@@ -34,6 +38,7 @@ nonisolated enum ApostropheFixer {
 
     static func fix(_ text: String) -> String {
         let code = CodeSpanRestorer.spans(in: text)
+        let links = LinkRestorer.ranges(in: text)
         var result = ""
         var index = text.startIndex
         while index < text.endIndex {
@@ -51,7 +56,7 @@ nonisolated enum ApostropheFixer {
             let followedByWordChar = index < text.endIndex && (text[index].isNumber || text[index] == "_")
             let precededByWordChar = start > text.startIndex
                 && { let c = text[text.index(before: start)]; return c.isNumber || c == "_" || c == "@" || c == "#" }()
-            let insideCode = code.contains { $0.contains(start) }
+            let insideCode = code.contains { $0.contains(start) } || links.contains { $0.contains(start) }
             if !followedByWordChar, !precededByWordChar, !insideCode,
                !word.contains("'"), !word.contains("\u{2019}"), let fixed = fixes[word.lowercased()] {
                 result += cased(fixed, like: word)
