@@ -24,6 +24,13 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
+## Latest live run (#61, corrected metric, `run-2026-10-10-final-61/`)
+
+Qwen3-4B: **0.735 → 0.915** (dev 0.919 = Python harness, holdout 0.905), p50 **398 ms**, rejected 0.5%.
+Apple Intelligence: **0.635 → 0.745** in this run (0.78 in #48). AI varies run to run (typed pass 0.68-0.80 across
+7 live runs with identical typed code), so read it as roughly **0.75-0.79**. Dictation casing (#60) is confirmed
+live: AI missing-capital failures went from 7 to 1.
+
 ## Metric correction (#53)
 
 `metrics.py` failed some outputs that *exactly match* one of the case's own acceptable outputs, because the

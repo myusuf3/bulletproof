@@ -23,6 +23,11 @@ nonisolated struct DictationCorrection {
 nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
     var instructions = ProofreadPrompt.instructions
 
+    /// Greedy decoding: a proofread has one right answer, and default sampling
+    /// made output vary run to run (typed pass 0.68-0.80 across identical runs).
+    /// Matches the local engine's temperature 0.
+    static let options = GenerationOptions(sampling: .greedy)
+
     /// The dictation path is identified by its prompt (AppState passes
     /// ProofreadPrompt.dictationInstructions), and gets the matching guide.
     var isDictation: Bool { instructions == ProofreadPrompt.dictationInstructions }
@@ -57,8 +62,10 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         do {
             let prompt = ProofreadPrompt.userPrompt(for: text)
             let corrected = isDictation
-                ? try await session.respond(to: prompt, generating: DictationCorrection.self).content.correctedText
-                : try await session.respond(to: prompt, generating: Correction.self).content.correctedText
+                ? try await session.respond(to: prompt, generating: DictationCorrection.self,
+                                            options: Self.options).content.correctedText
+                : try await session.respond(to: prompt, generating: Correction.self,
+                                            options: Self.options).content.correctedText
             return ProofreadPrompt.cleanResponse(corrected, original: text, keepsLowercase: !isDictation,
                                                  sentenceCases: isDictation)
         } catch let error as LanguageModelSession.GenerationError {

@@ -22,6 +22,10 @@ struct AppleIntelligenceEngineTests {
         }
     }
 
+    @Test func decodingIsGreedy() {
+        #expect(AppleIntelligenceEngine.options == GenerationOptions(sampling: .greedy))
+    }
+
     @Test func dictationPromptSelectsTheTranscriptGuide() {
         #expect(!AppleIntelligenceEngine().isDictation)
         #expect(AppleIntelligenceEngine(instructions: ProofreadPrompt.dictationInstructions).isDictation)
