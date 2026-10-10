@@ -67,7 +67,7 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    if it uses only “ ” / — / … (no straight `"`, `--`, `...`), the model's ASCII stand-ins are put back
    (`TypographyRestorer`, #97; Apple Intelligence flattened 5/12 smart-punctuation probes); the writer's clock-time
    spelling comes back when the output respells the same time (`6pm` → `6 pm` → `6pm`, #109), and so does a typed
-   number + unit symbol the model spelled out (`5kg` → `5 kilograms` → `5kg`, #111), and emoticons the model split
+   number + unit symbol the model spelled out or respaced (`5kg` → `5 kilograms` / `5 kg` → `5kg`, #111, #124), and emoticons the model split
    (`:P` → `: P` → `:P`, #112). A bracket or quote the model added at the very edge to "close" a partial selection
    (`(see the attached file` → `…file)`) is removed; not `[]`/`{}`, which introducedStructure needs (#116). Never in code or links.
 8. Typed path: `keepAllLowercase` (an input with no capitals gets none back). Dictation: `sentenceCase` (#60).

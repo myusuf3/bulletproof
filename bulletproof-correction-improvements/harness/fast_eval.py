@@ -370,7 +370,8 @@ def restore_units(original, text):
         names = _UNITS.get(m.group(2).lower())
         if not names or typed in text:
             continue
-        f = re.search(r"(?<![\w.,])" + re.escape(number) + r"\s(?:" + "|".join(map(re.escape, names)) + r")(?!\w)", text, re.I)
+        alts = names + [m.group(2)]  # names, or the symbol respaced/recased
+        f = re.search(r"(?<![\w.,])" + re.escape(number) + r"\s?(?:" + "|".join(map(re.escape, alts)) + r")(?!\w)", text, re.I)
         if f:
             text = text[:f.start()] + typed + text[f.end():]
     return text

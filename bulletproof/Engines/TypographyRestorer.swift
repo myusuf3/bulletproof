@@ -62,17 +62,20 @@ nonisolated enum TypographyRestorer {
         pattern: #"(?<![\w.,])(\d+(?:[.,]\d+)?)\s?([A-Za-z]+)(?![\w])"#)
 
     /// The writer's "5kg" / "10GB" is style: when the output has the same
-    /// number followed by that unit's name ("5 kilograms"), the typed form
-    /// comes back. Restore-only, like SlangRestorer.
+    /// number followed by that unit's name ("5 kilograms") or the same symbol
+    /// respaced or recased ("5 kg", "10 gb"), the typed form comes back.
+    /// Restore-only, like SlangRestorer.
     static func restoreUnits(original: String, corrected: String) -> String {
         var text = corrected
         let ns = original as NSString
         for match in measurement.matches(in: original, range: NSRange(location: 0, length: ns.length)) {
             let typed = ns.substring(with: match.range), number = ns.substring(with: match.range(at: 1))
             guard let names = unitNames[ns.substring(with: match.range(at: 2)).lowercased()], !text.contains(typed) else { continue }
-            let alternatives = names.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|")
+            // The unit's names, or the symbol itself respaced or recased ("450 kg", "10 gb").
+            let unitSymbol = ns.substring(with: match.range(at: 2))
+            let alternatives = (names + [unitSymbol]).map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|")
             guard let spelled = try? NSRegularExpression(
-                pattern: "(?<![\\w.,])" + NSRegularExpression.escapedPattern(for: number) + "\\s(?:" + alternatives + ")(?![\\w])",
+                pattern: "(?<![\\w.,])" + NSRegularExpression.escapedPattern(for: number) + "\\s?(?:" + alternatives + ")(?![\\w])",
                 options: [.caseInsensitive]),
                 let found = spelled.firstMatch(in: text, range: NSRange(location: 0, length: (text as NSString).length)),
                 let range = Range(found.range, in: text) else { continue }

@@ -60,4 +60,11 @@ struct TypographyRestorerTests {
         #expect(TypographyRestorer.restore(original: "Convert this to JSON: name Alice", corrected: "{\"name\": \"Alice\"}")
                 == "{\"name\": \"Alice\"}")
     }
+
+    @Test func respacedUnitsComeBack() {
+        #expect(TypographyRestorer.restore(original: "the materials weigh about 450kg in total", corrected: "the materials weigh about 450 kg in total")
+                == "the materials weigh about 450kg in total")
+        #expect(TypographyRestorer.restore(original: "only 300 MB left", corrected: "only 300MB left") == "only 300 MB left")
+        #expect(TypographyRestorer.restore(original: "a 10GB drive", corrected: "a 10 gb drive") == "a 10GB drive")
+    }
 }
