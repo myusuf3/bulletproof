@@ -115,6 +115,12 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- #41 kept: ApostropheFixer, unambiguous missing-apostrophe contractions (fires 10 times on 5,600 outputs, 5 fail→pass, 0 pass→fail). Small.
+- #40 kept: typed path keeps all-lowercase writing lowercase (fires 251 times on 4,480 typed outputs, 128 fail→pass, 0 pass→fail);
+  AI lowercase .71 → 1.0, AI s5 .63 → .74 (replay).
+- #39 kept: OutputGate droppedContent (26 flags on 5,600 outputs, all on failing rows).
+- **State after #41:** returns from deterministic fixes are now small. Remaining AI failures are mostly grammar under-correction
+  (a model limit) plus a few slang expansions. Natural stopping point: run a final live SWIFT_VERIFY, write the report.
 - **#38 live full-stack verification** (`run-2026-10-09-full-stack-38/`), all 400 vs the original baseline:
   Qwen pass .73 → .905 (s5 .39 → .94, lowercase .07 → 1.0, slang .21 → .97, rejected 4.25% → 1%); Qwen Swift dev = Python .912.
   AI pass .63 → .71 (s5 .38 → .63, lowercase .32 → .71, slang .42 → .67, code .54 → 1.0, line breaks .67 → .87, rejected
