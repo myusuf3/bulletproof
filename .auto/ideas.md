@@ -71,3 +71,8 @@
   half-converts it. Users probably want the address, but the dictation prompt says to keep the speaker's words. If wanted:
   convert "<name> at <word> dot <tld>" deterministically on the dictation path, and teach droppedContent that the address
   keeps the words.
+- **Partial selections, cut-off edge words (#116):** a selection ending mid-word ("…and nobody notic") gets "completed"
+  ("noticed"), so pasting it over a selection that continues ("notice.") produces "noticede.". A typo at the end of a full
+  text looks the same, so text alone can't tell them apart. The app could: read the character just past the selection via
+  AX (kAXStringForRangeParameterizedAttribute). If the selection starts or ends inside a word, protect the edge fragments
+  from edits (restore them like literals).

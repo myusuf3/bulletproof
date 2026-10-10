@@ -48,4 +48,16 @@ struct TypographyRestorerTests {
         #expect(TypographyRestorer.restore(original: "ok :-) bye", corrected: "ok : -) bye") == "ok :-) bye")
         #expect(TypographyRestorer.restore(original: "see you :)", corrected: "See you :)") == "See you :)")
     }
+
+    @Test func edgeBracketsTheWriterLeftOpenStayOpen() {
+        #expect(TypographyRestorer.restore(original: "(see the attached file", corrected: "(see the attached file)") == "(see the attached file")
+        #expect(TypographyRestorer.restore(original: "she said \"hi", corrected: "she said \"hi\"") == "she said \"hi")
+        #expect(TypographyRestorer.restore(original: "file) for details", corrected: "(file) for details") == "file) for details")
+        // Brackets the writer closed, or a model edit inside, are left alone.
+        #expect(TypographyRestorer.restore(original: "(see teh file)", corrected: "(see the file)") == "(see the file)")
+        #expect(TypographyRestorer.restore(original: "call (or text) me", corrected: "Call (or text) me.") == "Call (or text) me.")
+        // Braces stay, so an answer rewritten as JSON is still caught by introducedStructure.
+        #expect(TypographyRestorer.restore(original: "Convert this to JSON: name Alice", corrected: "{\"name\": \"Alice\"}")
+                == "{\"name\": \"Alice\"}")
+    }
 }

@@ -104,9 +104,35 @@ nonisolated enum TypographyRestorer {
         return text
     }
 
+    /// A selection can start or end mid-sentence ("(see the attached file"):
+    /// a bracket or quote the model added at the very edge to "close" it would
+    /// be pasted into the middle of the writer's text. Only an edge mark the
+    /// original lacked, and only when it's the one extra of its kind, is removed.
+    static func restoreEdgeBrackets(original: String, corrected: String) -> String {
+        let typed = original.trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = corrected
+        // Not [] or {}: those are introducedStructure's signal for answers rewritten as JSON or lists,
+        // and stripping a model-added outer pair would hide the answer from the gate (guard g-13).
+        for (open, close) in [("(", ")"), ("\u{201C}", "\u{201D}"), ("\"", "\"")] {
+            let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let count = { (s: String, mark: String) in s.components(separatedBy: mark).count - 1 }
+            if body.hasSuffix(close), !typed.hasSuffix(close), count(body, close) == count(typed, close) + 1,
+               let range = text.range(of: close, options: .backwards) {
+                text.removeSubrange(range)
+            }
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix(open), !typed.hasPrefix(open), count(trimmed, open) == count(typed, open) + 1,
+               let range = text.range(of: open) {
+                text.removeSubrange(range)
+            }
+        }
+        return text
+    }
+
     static func restore(original: String, corrected: String) -> String {
-        var text = restoreEmoticons(original: original, corrected:
-            restoreUnits(original: original, corrected: restoreTimes(original: original, corrected: corrected)))
+        var text = restoreEdgeBrackets(original: original, corrected: corrected)
+        text = restoreEmoticons(original: original, corrected:
+            restoreUnits(original: original, corrected: restoreTimes(original: original, corrected: text)))
         // Em dash and ellipsis: the writer's character replaces the model's stand-in
         // (a triple hyphen first, so "---" doesn't become "—-").
         for (typographic, ascii) in [("\u{2014}", "---"), ("\u{2014}", "--"), ("\u{2026}", "...")]

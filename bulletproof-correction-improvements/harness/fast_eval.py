@@ -386,8 +386,24 @@ def restore_emoticons(original, text):
     return text
 
 
+def restore_edge_brackets(original, text):
+    """TypographyRestorer.restoreEdgeBrackets."""
+    typed = original.strip()
+    for op, cl in (("(", ")"), ("\u201c", "\u201d"), ('"', '"')):  # not [] {}: introducedStructure's signal
+        body = text.strip()
+        if body.endswith(cl) and not typed.endswith(cl) and body.count(cl) == typed.count(cl) + 1:
+            k = text.rfind(cl)
+            text = text[:k] + text[k + len(cl):]
+        trimmed = text.strip()
+        if trimmed.startswith(op) and not typed.startswith(op) and trimmed.count(op) == typed.count(op) + 1:
+            k = text.find(op)
+            text = text[:k] + text[k + len(op):]
+    return text
+
+
 def restore_typography(original, text):
     """TypographyRestorer.restore."""
+    text = restore_edge_brackets(original, text)
     text = restore_emoticons(original, restore_units(original, restore_times(original, text)))
     def prot(t):
         return code_spans(t) + fences(t) + [(m.start(), m.end()) for m in _LINK.finditer(t)]
