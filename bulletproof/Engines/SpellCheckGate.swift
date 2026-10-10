@@ -15,6 +15,16 @@ import AppKit
     /// "neigbor" -> "neighbor". The explicit dictionaries are also stricter than
     /// `language: nil`, whose per-word language guessing accepts "teh", "alot",
     /// "accomodate". Non-English systems keep the automatic behaviour.
+    /// The spell checker's suggested spellings for a word (US and British).
+    static func guesses(for word: String) -> [String] {
+        let checker = NSSpellChecker.shared
+        let range = NSRange(location: 0, length: (word as NSString).length)
+        return ["en", "en_GB"].filter(checker.availableLanguages.contains).flatMap { language in
+            checker.guesses(forWordRange: range, in: word, language: language,
+                            inSpellDocumentWithTag: documentTag) ?? []
+        }
+    }
+
     static func firstMisspelled(in words: [String], language: String? = nil) -> String? {
         let checker = NSSpellChecker.shared
         let english: [String?] = ["en", "en_GB"].filter(checker.availableLanguages.contains)

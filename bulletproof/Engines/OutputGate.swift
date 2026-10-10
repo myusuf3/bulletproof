@@ -193,13 +193,28 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         // A vocabulary word present in the input but gone from the output
         // means the model rewrote away something the user types on purpose
         // ("Jon" -> "John") - deterministic, no scoring needed.
+        // Exception: a lowercase protected word replaced by one of the spell
+        // checker's guesses was a typo the vocabulary learned after the model
+        // missed it twice ("signficantly" -> "significantly") - accept the fix
+        // and forget the entry. Capitalized words (names) stay fully protected:
+        // their guesses include exactly the swaps to block (Caitlin -> Caitlyn).
         let outputWords = Set(OutputGate.wordTokens(in: output).map { $0.lowercased() })
-        if let removed = OutputGate.wordTokens(in: text).first(where: { word in
+        let inputTokens = OutputGate.wordTokens(in: text)
+        var learnedTypos: [String] = []
+        for word in inputTokens {
             let key = word.lowercased()
-            return vocabulary.contains(key) && !outputWords.contains(key)
-        }) {
-            Self.logger.warning("rejected model output: removed protected word \(removed, privacy: .private)")
-            throw ProofreadingError.unusableOutput(.protectedWordRemoved)
+            guard vocabulary.contains(key), !outputWords.contains(key) else { continue }
+            let alwaysLowercase = !inputTokens.contains { $0.lowercased() == key && $0 != key }
+            let guesses = alwaysLowercase ? await MainActor.run { SpellCheckGate.guesses(for: word) } : []
+            let fixedToGuess = guesses.contains { guess in
+                let parts = OutputGate.wordTokens(in: guess).map { $0.lowercased() }
+                return !parts.isEmpty && parts.allSatisfy(outputWords.contains)
+            }
+            guard fixedToGuess else {
+                Self.logger.warning("rejected model output: removed protected word \(word, privacy: .private)")
+                throw ProofreadingError.unusableOutput(.protectedWordRemoved)
+            }
+            learnedTypos.append(word)
         }
         let introduced = OutputGate.introducedWords(original: text, output: output)
             .filter { !vocabulary.contains($0.lowercased()) }
@@ -209,8 +224,10 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         }
         // Learn only from fully accepted proofreads, and only words the
         // correction kept - never the typos it fixed.
-        await MainActor.run { [vocabularyOverride] in
-            (vocabularyOverride ?? PersonalVocabulary.shared).observe(input: text, keptIn: output)
+        await MainActor.run { [vocabularyOverride, learnedTypos] in
+            let vocabulary = vocabularyOverride ?? PersonalVocabulary.shared
+            learnedTypos.forEach(vocabulary.forget)
+            vocabulary.observe(input: text, keptIn: output)
         }
         return output
     }
