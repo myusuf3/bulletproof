@@ -31,4 +31,13 @@ struct SlangRestorerTests {
         // A non-abbreviation in the run keeps its correction.
         #expect(SlangRestorer.restore(original: "im omw rn", corrected: "I'm on my way right now") == "I'm omw rn")
     }
+
+    @Test func unitAndChatAbbreviationsComeBack() {
+        #expect(SlangRestorer.restore(original: "I\u{2019}ll be there in 5 min \u{2014} maybe 10.",
+                                      corrected: "I\u{2019}ll be there in 5 minutes \u{2014} maybe 10.")
+                == "I\u{2019}ll be there in 5 min \u{2014} maybe 10.")
+        #expect(SlangRestorer.restore(original: "ppl r here tho", corrected: "people r here though") == "ppl r here tho")
+        // Only the listed expansion counts: "min" corrected to "mine" stays corrected.
+        #expect(SlangRestorer.restore(original: "that one is min", corrected: "that one is mine") == "that one is mine")
+    }
 }

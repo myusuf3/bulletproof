@@ -17,6 +17,17 @@ nonisolated enum SlangRestorer {
         "bday": ["birthday"], "msg": ["message"], "ok": ["okay"], "srsly": ["seriously"],
         "gonna": ["going to"], "wanna": ["want to"], "gotta": ["got to", "have to"], "kinda": ["kind of"],
         "sorta": ["sort of"], "lowkey": ["low-key", "low key"], "mins": ["minutes"], "secs": ["seconds"],
+        // Common chat and unit abbreviations (restore-only: they come back only
+        // where the model wrote one of these exact expansions).
+        "min": ["minute", "minutes"], "hr": ["hour", "hours"], "hrs": ["hours"],
+        "approx": ["approximately"], "info": ["information"], "pic": ["picture", "photo"],
+        "pics": ["pictures", "photos"], "convo": ["conversation"], "abt": ["about"], "cuz": ["because"],
+        "ppl": ["people"], "prob": ["probably"], "tho": ["though", "although"], "thru": ["through"],
+        "wk": ["week"], "wks": ["weeks"], "yr": ["year"], "yrs": ["years"], "esp": ["especially"],
+        "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"],
+        "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"],
+        "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"],
+        "msgs": ["messages"], "kk": ["okay"],
     ]
 
     static func restore(original: String, corrected: String) -> String {
