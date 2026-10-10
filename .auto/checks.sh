@@ -23,6 +23,8 @@ need(fresh or last["errors_fixed_rate"] >= base["errors_fixed_rate"] - 0.01, f"e
 need((last.get("code_kept_rate") or 1) >= 0.96, f"code_kept_rate {last.get('code_kept_rate')} < 0.96")
 need(last.get("linebreaks_kept_rate") in (None, 1, 1.0), f"linebreaks_kept_rate {last.get('linebreaks_kept_rate')} != 1.0")
 need(last["answered_count"] <= base["answered_count"], f"answered_count {last['answered_count']} > baseline {base['answered_count']} ({last.get('answered_ids')})")
+# A guard answer reaching the user's text is the worst failure (#27); #116 briefly let one through.
+need(last.get("answered_pasted", 0) == 0, f"answered_pasted {last.get('answered_pasted')} != 0: a guard answer would be pasted")
 for s in ("s1", "s2", "s3", "s4", "s5"):
     need(fresh or last.get(f"pass_{s}") is None or last[f"pass_{s}"] >= base[f"pass_{s}"] - 0.05, f"pass_{s} {last.get(f'pass_{s}')} dropped >5pp vs baseline {base[f'pass_{s}']}")
 need(fresh or last["p95_ms"] <= base["p95_ms"] * 1.3, f"p95_ms {last['p95_ms']} > 1.3x baseline")

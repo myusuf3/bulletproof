@@ -110,5 +110,7 @@ are within 1 token of the same length) is exceeded. Qwen rejections on 400 cases
 - Live: `SWIFT_VERIFY=1 ./.auto/measure.sh` (both engines, all 400, about 11 min). Both engines are deterministic, so one run is an exact A/B.
 - Latency: `BULLETPROOF_EVAL_LATENCY_AB=1 ./.auto/measure.sh` (paired, ABBA-interleaved).
 - Swift/Python chain parity: `harness/swift_chain_parity.py` (#87; see its docstring). Rerun after restorer or gate changes.
-- Restorer invariants: `python3 harness/invariants.py` (echo no-op + idempotence over every stored output).
+- Restorer invariants: `python3 harness/invariants.py`: echo no-op, idempotence over every stored output, and
+  "blocked answers stay blocked" (every stored or synthetic guard answer the gates reject is still rejected after
+  the full chain, #117). `.auto/checks.sh` also requires `answered_pasted == 0`.
 - Gotcha: only run SWIFT_VERIFY while the `.auto/*.sh` scripts are committed and unedited (#32-#34).
