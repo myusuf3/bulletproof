@@ -78,4 +78,44 @@ nonisolated enum ApostropheFixer {
         if typed.first?.isUppercase == true { return fixed.prefix(1).uppercased() + fixed.dropFirst() }
         return fixed
     }
+
+    /// Smart-quote writers (macOS turns them on by default) type "it’s"; the
+    /// models and the fixes above write "it's", and a correction elsewhere in
+    /// the text made the model straighten every apostrophe. When the original's
+    /// in-word apostrophes are all curly, the output's become curly too (never
+    /// inside code or links).
+    static func matchApostropheStyle(of original: String, in text: String) -> String {
+        let curly: Character = "\u{2019}", straight: Character = "'"
+        guard inWordCount(of: curly, in: original) > 0, inWordCount(of: straight, in: original) == 0,
+              inWordCount(of: straight, in: text) > 0 else { return text }
+        let protected = CodeSpanRestorer.spans(in: text) + CodeSpanRestorer.fences(in: text) + LinkRestorer.ranges(in: text)
+        var result = ""
+        var previous: Character?
+        for index in text.indices {
+            let character = text[index]
+            let next = text.index(after: index) < text.endIndex ? text[text.index(after: index)] : nil
+            if character == straight, previous?.isLetter == true, next?.isLetter == true,
+               !protected.contains(where: { $0.contains(index) }) {
+                result.append(curly)
+            } else {
+                result.append(character)
+            }
+            previous = character
+        }
+        return result
+    }
+
+    private static func inWordCount(of mark: Character, in text: String) -> Int {
+        var count = 0
+        var previous: Character?
+        var iterator = text.makeIterator()
+        var current = iterator.next()
+        while let character = current {
+            let next = iterator.next()
+            if character == mark, previous?.isLetter == true, next?.isLetter == true { count += 1 }
+            previous = character
+            current = next
+        }
+        return count
+    }
 }

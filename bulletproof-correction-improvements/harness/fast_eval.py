@@ -310,9 +310,27 @@ def restore_links(original, corrected):
     return text
 
 
+def _inword(text, mark):
+    return sum(1 for k, c in enumerate(text) if c == mark and 0 < k < len(text) - 1
+               and text[k - 1].isalpha() and text[k + 1].isalpha())
+
+
+def match_apostrophe_style(original, text):
+    """ApostropheFixer.matchApostropheStyle."""
+    if not (_inword(original, "\u2019") > 0 and _inword(original, "'") == 0 and _inword(text, "'") > 0):
+        return text
+    prot = code_spans(text) + fences(text) + [(m.start(), m.end()) for m in _LINK.finditer(text)]
+    out = list(text)
+    for k, c in enumerate(text):
+        if c == "'" and 0 < k < len(text) - 1 and text[k - 1].isalpha() and text[k + 1].isalpha() \
+                and not any(a <= k < b for a, b in prot):
+            out[k] = "\u2019"
+    return "".join(out)
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned))))))
+    x = match_apostrophe_style(original, fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned)))))))
     return keep_all_lowercase(original, x) if typed else sentence_case(x)
 
 

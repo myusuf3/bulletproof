@@ -51,4 +51,14 @@ struct ApostropheFixerTests {
         #expect(ApostropheFixer.fix("`alot` https://alot.com/dont #alot alotment")
                 == "`alot` https://alot.com/dont #alot alotment")
     }
+
+    @Test func curlyApostropheWritersKeepCurlyApostrophes() {
+        #expect(ApostropheFixer.matchApostropheStyle(of: "I dont think it\u{2019}s ready.", in: "I don't think it's ready.")
+                == "I don\u{2019}t think it\u{2019}s ready.")
+        // Straight or mixed writers, quotes and code are left alone.
+        #expect(ApostropheFixer.matchApostropheStyle(of: "dont", in: "don't") == "don't")
+        #expect(ApostropheFixer.matchApostropheStyle(of: "it's and it\u{2019}s", in: "it's and it's") == "it's and it's")
+        #expect(ApostropheFixer.matchApostropheStyle(of: "it\u{2019}s `run`", in: "it's `don't` 'quoted'")
+                == "it\u{2019}s `don't` 'quoted'")
+    }
 }
