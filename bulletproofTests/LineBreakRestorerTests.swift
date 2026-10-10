@@ -40,4 +40,12 @@ struct LineBreakRestorerTests {
         // The writer's own trailing spaces stay.
         #expect(restore("a  \nb", "a  \nb") == "a  \nb")
     }
+
+    @Test func combiningMarksDontBreakAlignment() {
+        // The model reordered a Thai vowel sign and added a break: still aligned, so the break goes.
+        #expect(restore("\u{0E2A}\u{0E27}\u{0E31}\u{0E2A}\u{0E14}\u{0E35} the meeting is tomorow.",
+                        "\u{0E2A}\u{0E31}\u{0E27}\u{0E2A}\u{0E14}\u{0E35}\nthe meeting is tomorrow.")
+                == "\u{0E2A}\u{0E31}\u{0E27}\u{0E2A}\u{0E14}\u{0E35} the meeting is tomorrow.")
+        #expect(WordTokens("cafe\u{0301} \u{0E2A}\u{0E31}").keys == ["cafe", "\u{0E2A}"])
+    }
 }

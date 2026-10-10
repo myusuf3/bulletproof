@@ -70,8 +70,21 @@ nonisolated struct WordTokens {
 
     let leading: String
     let tokens: [Token]
+    /// Letters and numbers by Unicode scalar, so combining marks (Mn/Mc/Me)
+    /// don't count: a reordered or changed Thai/Hindi vowel sign doesn't break
+    /// alignment. Same keys as the harness's `isalnum` filter.
     var keys: [String] {
-        tokens.map { String($0.word.lowercased().filter { $0.isLetter || $0.isNumber }) }
+        tokens.map { token in
+            var key = String.UnicodeScalarView()
+            key.append(contentsOf: token.word.lowercased().unicodeScalars.filter { scalar in
+                switch scalar.properties.generalCategory {
+                case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
+                     .decimalNumber, .letterNumber, .otherNumber: true
+                default: false
+                }
+            })
+            return String(key)
+        }
     }
 
     init(_ text: String) {
