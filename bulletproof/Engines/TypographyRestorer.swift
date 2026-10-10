@@ -6,8 +6,37 @@ import Foundation
 /// stand-in in the output was introduced by the model, so the writer's form
 /// comes back. Code spans, fences and links are never touched.
 nonisolated enum TypographyRestorer {
-    static func restore(original: String, corrected: String) -> String {
+    /// A clock time with am/pm: "6pm", "8 AM", "3:30 p.m.".
+    private static let clockTime = try! NSRegularExpression(
+        pattern: #"(?<![\w:])(\d{1,2}(?::\d{2})?)\s?([AaPp])\.?\s?[Mm]\.?(?![\w])"#)
+
+    private static func clockTimes(in text: String) -> [(range: Range<String.Index>, token: String, key: String)] {
+        let ns = text as NSString
+        return clockTime.matches(in: text, range: NSRange(location: 0, length: ns.length)).compactMap { match in
+            guard let range = Range(match.range, in: text) else { return nil }
+            let key = ns.substring(with: match.range(at: 1)) + ns.substring(with: match.range(at: 2)).lowercased()
+            return (range, String(text[range]), key)
+        }
+    }
+
+    /// The writer's way of writing a time ("6pm", "3:30pm") is style: when the
+    /// output has the same time spelled differently ("6 pm", "3:30 PM"), the
+    /// writer's spelling comes back.
+    static func restoreTimes(original: String, corrected: String) -> String {
+        let typed = clockTimes(in: original)
+        guard !typed.isEmpty else { return corrected }
         var text = corrected
+        let typedTokens = Set(typed.map(\.token))
+        for time in typed where !text.contains(time.token) {
+            guard let replaced = clockTimes(in: text).first(where: { $0.key == time.key && !typedTokens.contains($0.token) })
+            else { continue }
+            text.replaceSubrange(replaced.range, with: time.token)
+        }
+        return text
+    }
+
+    static func restore(original: String, corrected: String) -> String {
+        var text = restoreTimes(original: original, corrected: corrected)
         // Em dash and ellipsis: the writer's character replaces the model's stand-in
         // (a triple hyphen first, so "---" doesn't become "—-").
         for (typographic, ascii) in [("\u{2014}", "---"), ("\u{2014}", "--"), ("\u{2026}", "...")]

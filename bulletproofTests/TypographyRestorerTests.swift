@@ -20,4 +20,15 @@ struct TypographyRestorerTests {
                                            corrected: "run `a -- b` -- see \"docs\"")
                 == "run `a -- b` \u{2014} see \u{201C}docs\u{201D}")
     }
+
+    @Test func theWritersTimeFormatComesBack() {
+        #expect(TypographyRestorer.restore(original: "Call me at +1 (555) 123-4567 after 6pm.", corrected: "Call me at +1 (555) 123-4567 after 6 pm.")
+                == "Call me at +1 (555) 123-4567 after 6pm.")
+        #expect(TypographyRestorer.restore(original: "Meet me at 3:30pm on 10/12.", corrected: "Meet me at 3:30 PM on 10/12.")
+                == "Meet me at 3:30pm on 10/12.")
+        #expect(TypographyRestorer.restore(original: "at 11 a.m. sharp", corrected: "at 11 AM sharp") == "at 11 a.m. sharp")
+        // A different time is the model's change, not a respelling; untouched times stay.
+        #expect(TypographyRestorer.restore(original: "at 6pm", corrected: "at 7 pm") == "at 7 pm")
+        #expect(TypographyRestorer.restore(original: "from 8am to 6pm", corrected: "From 8am to 6pm.") == "From 8am to 6pm.")
+    }
 }

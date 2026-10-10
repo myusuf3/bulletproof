@@ -333,8 +333,28 @@ def match_apostrophe_style(original, text):
     return "".join(out)
 
 
+_CLOCK = re.compile(r"(?<![\w:])(\d{1,2}(?::\d{2})?)\s?([AaPp])\.?\s?[Mm]\.?(?!\w)")
+
+
+def restore_times(original, text):
+    """TypographyRestorer.restoreTimes."""
+    typed = [(m.group(0), m.group(1) + m.group(2).lower()) for m in _CLOCK.finditer(original)]
+    if not typed:
+        return text
+    tokens = {t for t, _ in typed}
+    for token, key in typed:
+        if token in text:
+            continue
+        for m in _CLOCK.finditer(text):
+            if m.group(1) + m.group(2).lower() == key and m.group(0) not in tokens:
+                text = text[:m.start()] + token + text[m.end():]
+                break
+    return text
+
+
 def restore_typography(original, text):
     """TypographyRestorer.restore."""
+    text = restore_times(original, text)
     def prot(t):
         return code_spans(t) + fences(t) + [(m.start(), m.end()) for m in _LINK.finditer(t)]
     for typo, ascii_ in (("\u2014", "---"), ("\u2014", "--"), ("\u2026", "...")):
