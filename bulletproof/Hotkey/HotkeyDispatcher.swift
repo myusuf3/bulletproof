@@ -46,7 +46,8 @@ nonisolated enum HotkeySlot: CaseIterable {
         },
         shortcutDisplay: { AppState.shared.dictationShortcut.displayString },
         surface: SystemDictationSurface(recorder: dictationRecorder,
-                                        deviceUID: { AppState.shared.microphoneUID })
+                                        deviceUID: { AppState.shared.microphoneUID }),
+        engineLabel: { AppState.shared.engineChoice.telemetryLabel }
     )
 
     /// Set by the onboarding practice step while visible. While installed and

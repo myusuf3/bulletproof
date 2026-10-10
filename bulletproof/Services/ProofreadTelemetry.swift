@@ -6,7 +6,7 @@ import Synchronization
 /// has an answer: gate rejection, engine error, or an aborted flow. Records
 /// character counts and outcomes only, never the text.
 nonisolated enum ProofreadEntryPoint: String, Sendable {
-    case hotkey, service, intent
+    case hotkey, service, intent, dictation
 }
 
 nonisolated enum ProofreadOutcome: Equatable, Sendable {
