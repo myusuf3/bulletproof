@@ -10,6 +10,37 @@ import Foundation
 /// A span the model rewrote beyond recognition is left alone.
 nonisolated enum CodeSpanRestorer {
     static func restore(original: String, corrected: String) -> String {
+        restoreInline(original: original, corrected: restoreFences(original: original, corrected: corrected))
+    }
+
+    /// Fenced blocks (```...```, possibly multi-line) are code too: with the
+    /// same number of fences on both sides, each block's text comes back
+    /// verbatim ("npm instal" inside a fence stays as typed).
+    static func restoreFences(original: String, corrected: String) -> String {
+        let source = fences(in: original)
+        guard !source.isEmpty else { return corrected }
+        let output = fences(in: corrected)
+        guard output.count == source.count else { return corrected }
+        var text = corrected
+        for (range, block) in zip(output, source).reversed() where text[range] != original[block] {
+            text.replaceSubrange(range, with: String(original[block]))
+        }
+        return text
+    }
+
+    /// Ranges of whole ``` fenced blocks, fences included.
+    static func fences(in text: String) -> [Range<String.Index>] {
+        var result: [Range<String.Index>] = []
+        var searchStart = text.startIndex
+        while let open = text.range(of: "```", range: searchStart..<text.endIndex),
+              let close = text.range(of: "```", range: open.upperBound..<text.endIndex) {
+            result.append(open.lowerBound..<close.upperBound)
+            searchStart = close.upperBound
+        }
+        return result
+    }
+
+    private static func restoreInline(original: String, corrected: String) -> String {
         let source = spans(in: original).map { String(original[$0]) }
         guard !source.isEmpty else { return corrected }
         var text = corrected

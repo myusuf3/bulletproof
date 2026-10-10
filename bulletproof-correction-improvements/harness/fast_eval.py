@@ -322,7 +322,34 @@ def _bare_occurrence(content, text):
         start = i + 1
 
 
+def fences(text):
+    """CodeSpanRestorer.fences: (start, end) of whole ``` blocks, fences included."""
+    res, i = [], 0
+    while True:
+        a = text.find("```", i)
+        if a < 0:
+            break
+        b = text.find("```", a + 3)
+        if b < 0:
+            break
+        res.append((a, b + 3))
+        i = b + 3
+    return res
+
+
+def restore_fences(original, corrected):
+    src, out = fences(original), fences(corrected)
+    if not src or len(src) != len(out):
+        return corrected
+    text = corrected
+    for (a, b), (c, d) in reversed(list(zip(out, src))):
+        if text[a:b] != original[c:d]:
+            text = text[:a] + original[c:d] + text[b:]
+    return text
+
+
 def restore_code_spans(original, corrected):
+    corrected = restore_fences(original, corrected)
     source = [original[a:b] for a, b in code_spans(original)]
     if not source:
         return corrected

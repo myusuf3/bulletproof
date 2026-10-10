@@ -36,4 +36,10 @@ struct CodeSpanRestorerTests {
         #expect(ProofreadPrompt.cleanResponse("Run the npm test command", original: "Run teh `npm test` command")
                 == "Run the `npm test` command")
     }
+
+    @Test func fencedBlocksAreNeverProofread() {
+        let original = "Run this:\n```bash\nnpm instal --save-dev eslint\n```\nthen try agian."
+        let corrected = "Run this:\n```bash\nnpm install --save-dev eslint\n```\nthen try again."
+        #expect(restore(original, corrected) == "Run this:\n```bash\nnpm instal --save-dev eslint\n```\nthen try again.")
+    }
 }
