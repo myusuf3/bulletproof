@@ -1,6 +1,6 @@
 # Results: correction-quality autoresearch (2026-10-09)
 
-Branch `autoresearch/correction-quality-2026-10-09`, 125 experiments (log: `.auto/log.jsonl`, playbook and history:
+Branch `autoresearch/correction-quality-2026-10-09`, 131 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
 ## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
@@ -24,7 +24,7 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
-## Latest live run (#125, corrected metric, `run-2026-10-10-live-125/`; corpus output identical to #104)
+## Latest live run (#131, corrected metric, `run-2026-10-10-live-131/`; corpus output identical to #104)
 
 | | Qwen3-4B, original → now | Apple Intelligence, original → now |
 |---|---|---|
@@ -38,13 +38,13 @@ The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
 Both engines are deterministic (Qwen at temperature 0, Apple Intelligence greedy since #62), so these are exact.
 
-**Beyond the corpus (live Swift, #125):**
+**Beyond the corpus (live Swift, #131):**
 
 | Set (never tuned on) | Qwen3-4B | Apple Intelligence |
 |---|---|---|
 | Fresh set 1 (35 cases, #45/#66) | 0.971 | 0.829 |
 | Fresh set 2 (30 realistic messages written after #100, #101) | 26/30 | 25/30 |
-| Robustness: 187 unusual inputs (8 rounds: typed, dictation, partial selections, mixed documents) + 14 multilingual | 187/201 | 152/201 |
+| Robustness: 207 unusual inputs (9 rounds: typed, dictation, partial selections, mixed documents, clean text) + 14 multilingual | 207/221 | 169/221 |
 | Smart typography probes (12) keep the writer's punctuation | 12/12 | 11/12 |
 | Dictation round (20 transcripts, #113) | 18/20 | 16/20 |
 
@@ -81,6 +81,13 @@ Probing unusual inputs found these real bugs, all fixed and each checked by repl
   reject with `droppedContent`.
 - #121, #124: a lowercase abbreviation recased mid-sentence (`thurs` → `Thurs`) and respaced units (`450kg` →
   `450 kg`) get the writer's form back.
+
+- #128, #130: British spellings Americanized (`colour` → `color`, `favourite`, `cancelled`) and dialect standardized
+  (`fixin'` → `fixing`, `smol` → `small`) get the writer's form back (a curated ~600-form table, so real fixes like
+  `four` → `for` are never undone).
+
+Post-processing cost (#127): ~20 ms at 1k characters, ~120-150 ms at the 3.3k input cap, about 1% of a long
+document's generation time.
 
 Guardrails added along the way: `harness/invariants.py` checks echo no-op, idempotence and "blocked answers stay
 blocked" (every gate-rejected guard answer must stay rejected after the full chain, #117); `.auto/checks.sh`
@@ -168,7 +175,7 @@ data point is a week on the current build.
   numbers before #62 are single runs; from #62 on they're exact.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
   soundalikes. Apple Intelligence still expands some slang (0.88) and rewords more than Qwen (out of sample:
-  0.83 vs 0.97 on the fresh set, #66; 152 vs 187 of 201 robustness inputs, #125), so **Qwen is the recommended default**.
+  0.83 vs 0.97 on the fresh set, #66; 169 vs 207 of 221 robustness inputs, #131), so **Qwen is the recommended default**.
 - The corpus is synthetic, and the judge-free metric can't see subtle meaning changes. Re-judge a sample before release.
 - Before pushing the branch: commit db65f20 contains `context/real-usage.md` (personal data), so rewrite it.
 - Owner decision (#113): dictated email addresses ("jane at example dot com") are kept as spoken today (Qwen's
