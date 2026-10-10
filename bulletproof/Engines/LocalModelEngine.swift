@@ -25,22 +25,18 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
             throw ProofreadingError.engineUnavailable(reason:
                 "The local model couldn't be loaded. Re-download it in Settings > Models, or switch to Apple Intelligence.")
         }
-        // Fresh session per request: ChatSession isn't thread-safe and
-        // proofreading is stateless. No guided generation on MLX - the
-        // instructions plus cleanResponse() are the output-shaping mechanism.
-        // The system prompt is identical on every call, so its KV cache is
-        // computed once and copied into each session (prefill of ~460 prompt
-        // tokens dominated latency); output is token-identical either way.
+        // Fresh KV cache per request: proofreading is stateless. No guided
+        // generation on MLX - the instructions plus cleanResponse() are the
+        // output-shaping mechanism. The system prompt is identical on every
+        // call, so its KV cache is computed once and copied into each request
+        // (prefill of ~460 prompt tokens dominated latency).
         let parameters = Self.parameters(for: text)
-        let session: ChatSession
-        if let prefix = await PrefixCacheStore.shared.cache(for: instructions, container: container,
-                                                             parameters: parameters) {
-            session = ChatSession(container, cache: prefix, generateParameters: parameters)
-        } else {
-            session = ChatSession(container, instructions: instructions, generateParameters: parameters)
-        }
+        let prefix = await PrefixCacheStore.shared.cache(for: instructions, container: container,
+                                                         parameters: parameters)
         do {
-            let response = try await session.respond(to: ProofreadPrompt.userPrompt(for: text))
+            let response = try await Self.generate(prompt: ProofreadPrompt.userPrompt(for: text),
+                                                   instructions: instructions, prefix: prefix,
+                                                   container: container, parameters: parameters)
             await runtime.touch()
             let isDictation = instructions == ProofreadPrompt.dictationInstructions
             return ProofreadPrompt.cleanResponse(response, original: text,
@@ -49,6 +45,29 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
             throw CancellationError()
         } catch {
             throw ProofreadingError.inferenceFailed(underlying: error)
+        }
+    }
+
+    /// Generates token IDs and decodes them once at the end. ChatSession's
+    /// streaming detokenizer diffs chunks by grapheme count, so a token that
+    /// extends the previous character (a skin tone, a flag's second half, ZWJ,
+    /// a variation selector, Thai or Devanagari vowel signs) was silently
+    /// dropped: "👍🏽" came back "👍", "🇨🇦" as "🇨". Same prompt and tokens as
+    /// ChatSession: [system, user], or [user] after the cached system prefix.
+    static func generate(prompt: String, instructions: String, prefix: [KVCache]?,
+                         container: ModelContainer, parameters: GenerateParameters) async throws -> String {
+        try await container.perform(nonSendable: prefix) { context, prefix in
+            var messages: [Chat.Message] = prefix == nil ? [.system(instructions)] : []
+            messages.append(.user(prompt))
+            let input = try await context.processor.prepare(input: UserInput(chat: messages))
+            let cache = prefix ?? context.model.newCache(parameters: parameters)
+            var tokens: [Int] = []
+            for await generation in try generateTokens(input: input, cache: cache,
+                                                       parameters: parameters, context: context) {
+                if let token = generation.token { tokens.append(token) }
+            }
+            try Task.checkCancellation()
+            return context.tokenizer.decode(tokenIds: tokens)
         }
     }
 

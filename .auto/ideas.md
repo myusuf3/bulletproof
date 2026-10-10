@@ -52,3 +52,11 @@
   all stored outputs fired 20 times on 3 cases, every one correct, but 0 fail→pass, because those rows fail for other reasons.
   Worth adding if real-usage telemetry shows names being lowercased. The probe is in /tmp/caps_probe.py, and it must treat
   `- ` bullets as line starts.
+- **Adversarial round 3 leftovers (#85, not fixed):** `1\u00a0200 kg` → `1,200 kg` (the model rewrote an SI thousands
+  separator); a combining-accent `café` comes back NFC-normalized (it looks the same but the bytes differ; Swift `==`
+  treats them as equal anyway). Both are rare and cosmetic.
+- **Upstream bug report (owner):** in mlx-swift-lm (bd4b7434), `NaiveStreamingDetokenizer.next()` takes the new text as
+  `newSegment.suffix(newSegment.count - segment.count)`, which counts grapheme clusters. Any token that extends the
+  previous character is dropped: skin tones, regional-indicator pairs, ZWJ, VS16, keycaps, Indic and Thai combining marks.
+  This affects every `ChatSession` user. The fix would diff by unicodeScalars or UTF-8 bytes. bulletproof avoids it as of #86
+  (generateTokens plus one decode). Worth filing upstream with the 👍🏽 repro.

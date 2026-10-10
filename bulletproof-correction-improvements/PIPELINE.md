@@ -28,7 +28,10 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 
 ## 2. Engines
 - **LocalModelEngine** (Qwen3-4B 2507, temperature 0): `PrefixCacheStore` builds the system prompt's KV cache once
-  per (model, instructions) and copies it into each `ChatSession(container, cache:)`. It's only used when the
+  per (model, instructions) and copies it into each request. Generation uses `generateTokens` and decodes the
+  token IDs once at the end, not `ChatSession`: mlx-swift-lm's streaming detokenizer diffs chunks by grapheme
+  count and silently dropped tokens that extend the previous character (skin tones, flags, ZWJ emoji, ❤️, 1️⃣,
+  Devanagari vowel signs; #86). It's only used when the
   template splits cleanly into prefix + user turn, token for token. The result is 0.57x the original app's median
   latency (#50).
 - **AppleIntelligenceEngine**: `GenerationOptions(sampling: .greedy)` makes output deterministic (#62). The typed
@@ -45,8 +48,9 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    (`milk  \n`, 41% of its multi-line outputs, #77).
 5. `CodeSpanRestorer`: code is never proofread. Fenced ``` blocks come back verbatim (#78), then backticked spans
    are restored, re-quoted or re-wrapped.
-6. `LinkRestorer`: URLs and emails are never proofread. An input link missing from the output goes back over the
-   closest-spelled new link (`exmaple.com` stays `exmaple.com`, #76).
+6. `LinkRestorer`: URLs, emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments) and hashtags are never
+   proofread. An input literal missing from the output goes back over the closest-spelled new one
+   (`exmaple.com`, `Documnets`, `#teh` stay as typed, #76, #85).
 7. `ApostropheFixer` (skipped when the text is confidently non-English, so German `im` and French `dont` stay, #73):
    missing apostrophes (`Im`, `dont`, `wasnt`; not `cant`/`wont`/`were`/`its`), misplaced ones and the model's
    half-fixes (`would'nt`, `would't` → `wouldn't`, #80), and run-together phrases that are never words (`alot`,
