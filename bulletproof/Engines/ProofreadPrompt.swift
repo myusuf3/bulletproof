@@ -78,15 +78,21 @@ nonisolated enum ProofreadPrompt {
         return maxInputTokens * 3
     }
 
-    /// Strips marker echoes the model may leak, restores the original's edge
-    /// whitespace, and puts back contractions the model expanded, line breaks
-    /// it joined, and backticked code it unwrapped or edited. Only anchored markers are leaks - mid-content
-    /// occurrences are legitimate text the user is proofreading.
-    /// `keepsLowercase` is for typed text: a writer who used no capitals at all
-    /// gets none back. The dictation path passes false, since transcripts are
-    /// lowercase by accident and need sentence casing.
-    /// `sentenceCases` is for the dictation path: transcripts are lowercase by
-    /// accident, so sentence starts and the pronoun "I" always get capitals.
+    /// Turns a model reply into the text pasted over the selection, in order:
+    /// 1. strip a leaked `<text>` marker (unless the writer's own text starts or ends with one),
+    ///    and restore the original's edge whitespace;
+    /// 2. writer's words: `SlangRestorer` (abbreviations, recased ones), `SpellingVariantRestorer`
+    ///    (British spellings, dropped-g forms, deliberate capitals, elongations), `ContractionRestorer`;
+    /// 3. layout and literals: `LineBreakRestorer` (breaks and their whitespace), `CodeSpanRestorer`
+    ///    (backticks and fences), `LinkRestorer` (links, paths, mentions, handles, hashtags, identifiers);
+    /// 4. typing fixes: `ApostropheFixer.fix` (English text only) and its apostrophe-style match;
+    /// 5. writer's typography: `TypographyRestorer` (edge brackets, times, units, emoticons, quotes,
+    ///    dashes, ellipses);
+    /// 6. casing: `keepAllLowercase` on the typed path, `sentenceCase` on the dictation path.
+    /// Each step changes only text where it applies; `harness/invariants.py` checks that every
+    /// step is a no-op on an echo and that the whole chain is idempotent.
+    /// `keepsLowercase` is for typed text (a writer who uses no sentence capitals gets none back);
+    /// `sentenceCases` is for the dictation path (transcripts are lowercase by accident).
     static func cleanResponse(_ response: String, original: String, keepsLowercase: Bool = false,
                               sentenceCases: Bool = false) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -101,17 +107,18 @@ nonisolated enum ProofreadPrompt {
             || output.dropLast("</text>".count).trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("</text>") {
             output.removeLast("</text>".count)
         }
-        let restored = restoreEdgeWhitespace(of: original, onto: output)
-        let recontracted = ContractionRestorer.restore(original: original, corrected: SpellingVariantRestorer.restore(
-            original: original, corrected: SlangRestorer.restore(original: original, corrected: restored)))
-        let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
-        let recoded = LinkRestorer.restore(
-            original: original, corrected: CodeSpanRestorer.restore(original: original, corrected: rebroken))
+        var text = restoreEdgeWhitespace(of: original, onto: output)
+        let restorers: [(String, String) -> String] = [
+            SlangRestorer.restore, SpellingVariantRestorer.restore, ContractionRestorer.restore,
+            LineBreakRestorer.restore, CodeSpanRestorer.restore, LinkRestorer.restore,
+        ]
+        for restore in restorers { text = restore(original, text) }
         // English-only: "dont" is French ("of which"), "im" German ("in the").
-        let apostrophized = TypographyRestorer.restore(original: original, corrected: ApostropheFixer.matchApostropheStyle(
-            of: original, in: TextLanguage.confidentNonEnglish(recoded) == nil ? ApostropheFixer.fix(recoded) : recoded))
-        if keepsLowercase { return keepAllLowercase(original: original, corrected: apostrophized) }
-        return sentenceCases ? sentenceCase(apostrophized) : apostrophized
+        if TextLanguage.confidentNonEnglish(text) == nil { text = ApostropheFixer.fix(text) }
+        text = ApostropheFixer.matchApostropheStyle(of: original, in: text)
+        text = TypographyRestorer.restore(original: original, corrected: text)
+        if keepsLowercase { return keepAllLowercase(original: original, corrected: text) }
+        return sentenceCases ? sentenceCase(text) : text
     }
 
     /// Capitalizes the first letter, the first letter after . ! ? and a space or

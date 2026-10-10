@@ -1,12 +1,14 @@
 import Foundation
 
-/// British (and Commonwealth) spellings are the writer's style, not errors,
-/// but models Americanize them ("colour" -> "color", "favourite" ->
-/// "favorite"). Where the writer typed a listed British form and the model
-/// replaced exactly that word with its American form, the writer's spelling
-/// comes back (with the output's capitalization), and so does a dropped-g
-/// form ("fixin'" -> "fixing" -> "fixin'"). A curated table, not
-/// suffix rules: "four" -> "for" or "filled" -> "filed" are real fixes.
+/// The writer's word forms are style, not errors, but models normalize them.
+/// Where the model changed exactly one typed word, the writer's form comes back:
+/// - a listed British spelling it Americanized ("colour" -> "color"); a curated
+///   table, not suffix rules, so "four" -> "for" or "filled" -> "filed" stay fixed;
+/// - a dropped-g form with the writer's apostrophe ("fixin'" -> "fixing");
+/// - deliberate capitals it only recased ("sUrE", "WHY", "NASA"), and ALL-CAPS on
+///   a corrected word ("TEH" -> "the" -> "THE");
+/// - an elongation it wrote with one letter ("looong" -> "long"); a tripled
+///   letter written twice is a typo of a double ("offfice" -> "office").
 nonisolated enum SpellingVariantRestorer {
     static let table: [String: String] = {
         var t: [String: String] = [
