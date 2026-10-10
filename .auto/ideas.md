@@ -80,3 +80,11 @@
   about 50 ms at 2k, and 120-150 ms at the 3.3k input cap. It grows quadratically: several LCS word alignments plus
   close-spelling matching. Generation for a 3k-char document takes 8-14 s, so this is about 1% and not worth optimizing
   now. If it ever matters: one shared alignment per call, and flat Int32 LCS tables instead of [[Int]].
+- **From fresh set 3 (#136). Don't tune fresh3 on these; validate any fix on a new fresh set:**
+  (a) Apple Intelligence recased a bare @handle (`@jordan` → `@Jordan,`). @handles could become LinkRestorer literals,
+  like `<@U…>` mentions.
+  (b) Apple Intelligence capitalized the first word of a writer who never capitalizes sentence starts but uses
+  ALL-CAPS emphasis (`the new cafe … SO good` → `The new cafe…`). keepAllLowercase only covers inputs with no
+  capitals at all. It could generalize to "no Titlecase words in the input", lowercasing Titlecase output words
+  whose typed counterpart is lowercase.
+  (c) Both engines add a trailing `?` to casual questions. That's a judgment call; leave it.
