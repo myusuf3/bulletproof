@@ -3,6 +3,8 @@
 # Emits METRIC lines; writes .auto/runs/{dev,guard}.jsonl and last.json.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# Opt-in checkpoint: the real Swift runner on both engines (~15 min, not the fast loop).
+[ "${SWIFT_VERIFY:-0}" != "1" ] || exec ./.auto/swift_verify.sh
 B=bulletproof-correction-improvements
 PY=$B/harness/.venv/bin/python
 mkdir -p .auto/runs

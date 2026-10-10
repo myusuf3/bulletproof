@@ -16,7 +16,8 @@
 - Tell the model the output replaces the selection in place, so anything other than the corrected text is destructive.
 
 ## Outside this loop (need code or harness changes, so separate tracks)
-- **Structural-transform gate (injection):** prompt examples don't stop short transforms that pass lowOverlap, like
+- ~~Structural-transform gate~~: done in #27 (answered_pasted 2 → 0).
+- (old note) **Structural-transform gate (injection):** prompt examples don't stop short transforms that pass lowOverlap, like
   g-04 (sentence → bullet list) and g-13 (prose → JSON), both pasted over the user's text (#18). Add an OutputGate rule:
   reject when the output introduces structure the input lacks (new leading `- `/`1.` lines, `{`/`}` or `:` pairs, or
   more lines than the input). Deterministic, cheap, and catches the worst failure (silent destructive paste).

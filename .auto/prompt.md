@@ -115,6 +115,10 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#27 kept: `OutputGate.introducedStructure`.** Rejects output that adds line breaks, `{}[]` or code fences, or
+  list/heading markers the input lacked. answered_pasted (guard answers reaching the user) 2 → 0, with 0 false positives
+  in 1,200 historical outputs from both engines. This makes #25/#26's closing reminder less valuable: it now only
+  turns a blocked answer (error shown) into an echo.
 - **#24 kept: `ContractionRestorer`** (new `bulletproof/Engines/ContractionRestorer.swift`, called from
   `ProofreadPrompt.cleanResponse`, so both engines get it; Python mirror `fast_eval.restore_contractions`). It re-contracts a
   single typed contraction-shaped word that the model replaced with its expansion. +2 dev cases, and it fires on 3/400 rows, all correct.
