@@ -144,6 +144,11 @@ def row_flags(case, out):
     }
     errs = [error_fixed(e, inp, text) for e in case.get("errors", [])]
     errs = [e for e in errs if e is not None]
+    # An output identical to one of the case's own acceptable outputs fixed every error by the
+    # corpus's definition, even where an errors regex names one variant ("q three -> Q3"
+    # while "Q three" is listed acceptable; "could have" while "could've" is acceptable).
+    if flags["fix_exact"]:
+        errs = [True] * len(errs)
     flags["errors_fixed"], flags["errors_checkable"] = sum(errs), len(errs)
     flags["style_broken"] = bool(flags["contraction_expanded"] or flags["case_edits"] > 0
                                  or flags["missed_caps"] or any(
