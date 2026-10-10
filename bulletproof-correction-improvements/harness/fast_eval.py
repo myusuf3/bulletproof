@@ -96,7 +96,63 @@ def clean_response(response, original):
         out = out[: -len("</text>")]
     lead = re.match(r"\s*", original).group(0)
     trail = re.search(r"\s*$", original).group(0) if original.strip() else ""
-    return restore_contractions(original, lead + out.strip() + trail)
+    return restore_line_breaks(original, restore_contractions(original, lead + out.strip() + trail))
+
+
+# --- LineBreakRestorer.swift ---
+
+def _word_tokens(text):
+    m = re.match(r"\s*", text)
+    return m.group(0), re.findall(r"(\S+)(\s*)", text[m.end():])
+
+
+def _nl_count(t):
+    return sum(c in "\n\r\u000b\u000c\u0085\u2028\u2029" for c in t.strip())
+
+
+def _has_nl(t):
+    return any(c in "\n\r\u000b\u000c\u0085\u2028\u2029" for c in t)
+
+
+def restore_line_breaks(original, corrected):
+    if _nl_count(corrected) >= _nl_count(original):
+        return corrected
+    _, src = _word_tokens(original)
+    lead, out = _word_tokens(corrected)
+    if not src or not out:
+        return corrected
+    key = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    a, b = [key(w) for w, _ in src], [key(w) for w, _ in out]
+    n, m = len(a), len(b)
+    lcs = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            lcs[i][j] = lcs[i + 1][j + 1] + 1 if a[i] == b[j] else max(lcs[i + 1][j], lcs[i][j + 1])
+    match, i, j = {}, 0, 0
+    while i < n and j < m:
+        if a[i] == b[j]:
+            match[i] = j
+            i += 1
+            j += 1
+        elif lcs[i + 1][j] >= lcs[i][j + 1]:
+            i += 1
+        else:
+            j += 1
+    trailing = [ws for _, ws in out]
+    for i in range(n - 1):
+        ws = src[i][1]
+        if not _has_nl(ws):
+            continue
+        j = match.get(i + 1)
+        if j is not None and j > 0:
+            if not _has_nl(trailing[j - 1]):
+                trailing[j - 1] = ws
+        else:
+            j = match.get(i)
+            if j is not None and j < m - 1 and not _has_nl(trailing[j]):
+                trailing[j] = ws
+    rebuilt = lead + "".join(w + t for (w, _), t in zip(out, trailing))
+    return rebuilt if _nl_count(rebuilt) <= _nl_count(original) else corrected
 
 
 # --- ContractionRestorer.swift ---
@@ -437,7 +493,7 @@ def main():
         if hit:
             # Cached rows hold cleaned output; cleaning is idempotent, so re-apply
             # the post-processing in case it changed since the row was cached.
-            raws.append((restore_contractions(c["input"], hit["raw"]), hit["ms"]))
+            raws.append((restore_line_breaks(c["input"], restore_contractions(c["input"], hit["raw"])), hit["ms"]))
             continue
         s = time.time()
         raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])

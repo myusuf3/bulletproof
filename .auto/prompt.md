@@ -115,6 +115,9 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#29 kept: H10, style policy in Apple Intelligence's `@Guide`** (Swift run, `run-2026-10-09-ai-guide-29/`). AI:
+  lowercase_kept .20 → .66, slang .36 → .64, clean .78 → .88, s5 .39 → .54, pass .688 → .698. Regression: AI now joins
+  multi-line text into one line (linebreaks .60 → .40). Next: a deterministic LineBreakRestorer in cleanResponse.
 - **#28 verification (Swift, both engines, `run-2026-10-09-both-engines-27/`):** Qwen dev .909 / holdout .895
   (matches Python). Correct Swift values: pass_s4 .814, pass_s5 .932, p50 1329 ms; the #28 log row lists s4 .797,
   s5 .949 and p50 1322 by mistake (copied from the fast run). **Apple Intelligence**, all 400: pass .638 → .688,
