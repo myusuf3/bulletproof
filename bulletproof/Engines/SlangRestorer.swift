@@ -42,7 +42,21 @@ nonisolated enum SlangRestorer {
         var words = output.tokens.map(\.word)
         var trailing = output.tokens.map(\.trailing)
         var removed = Set<Int>()
-        for case .changed(let source, let outputRange) in WordAlignment.steps(typed.keys, output.keys) {
+        let steps = WordAlignment.steps(typed.keys, output.keys)
+        // A lowercase abbreviation the model only recased mid-sentence ("thurs" -> "Thurs",
+        // "tbh" -> "TBH") gets the writer's casing back; sentence starts are left to the model.
+        for case .kept(let i, let j) in steps {
+            let typedWord = typed.tokens[i].word
+            let core = String(typedWord.filter(\.isLetter))
+            guard core.allSatisfy(\.isLowercase), table[core] != nil else { continue }
+            let atSentenceStart = i == 0 || typed.tokens[i - 1].trailing.contains(where: \.isNewline)
+                || typed.tokens[i - 1].word.last.map { ".!?:".contains($0) } == true
+            let outputLetters = String(words[j].filter(\.isLetter))
+            guard !atSentenceStart, outputLetters != core, outputLetters.lowercased() == core else { continue }
+            var letters = core.makeIterator()
+            words[j] = String(words[j].map { $0.isLetter ? (letters.next() ?? $0) : $0 })
+        }
+        for case .changed(let source, let outputRange) in steps {
             // Adjacent abbreviations change together ("u tmrw" -> "you tomorrow"),
             // so a changed run is split into one piece per typed word.
             guard (1...6).contains(source.count), !outputRange.isEmpty,

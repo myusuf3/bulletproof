@@ -224,6 +224,12 @@ def restore_slang(original, corrected):
     i = j = 0
     while i < n or j < m:
         if i < n and j < m and a[i] == b[j]:
+            core = "".join(ch for ch in typed[i][0] if ch.isalpha())
+            start = i == 0 or _has_nl(typed[i - 1][1]) or (typed[i - 1][0][-1:] in (".", "!", "?", ":"))
+            letters = "".join(ch for ch in words[j] if ch.isalpha())
+            if core and core.islower() and core in _SLANG and not start and letters != core and letters.lower() == core:
+                it = iter(core)
+                words[j] = "".join(next(it) if ch.isalpha() else ch for ch in words[j])
             i += 1
             j += 1
             continue

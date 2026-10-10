@@ -46,7 +46,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
 2. `SlangRestorer`: chat abbreviations the model expanded come back (`bc of` → `because of` → `bc of`), including
    ones carrying punctuation (`bday!!`, #54), adjacent ones that change together (`u tmrw` → `you tomorrow`, #94),
    and common chat/unit/weekday/month abbreviations (`min`, `ttyl`, `thurs`, `sept`, #98, #102). Restore-only: an
-   abbreviation comes back only where the model wrote one of its listed expansions.
+   abbreviation comes back only where the model wrote one of its listed expansions. A lowercase abbreviation the
+   model only recased mid-sentence (`thurs` → `Thurs`, `tbh` → `TBH`) gets the writer's casing back (#121).
 3. `ContractionRestorer`: a single typed contraction expanded by the model gets re-contracted (`wasnt` → `was not` → `wasn't`).
 4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added), and
    the whitespace around each break is copied exactly, which removes the markdown hard-break spaces Qwen adds

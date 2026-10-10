@@ -48,4 +48,12 @@ struct SlangRestorerTests {
         // "sun" the star is never rewritten as Sunday, so nothing to undo.
         #expect(SlangRestorer.restore(original: "the sun is out", corrected: "The sun is out.") == "The sun is out.")
     }
+
+    @Test func recasedAbbreviationsGetTheWritersCasing() {
+        #expect(SlangRestorer.restore(original: "launch moved to thurs, 10am PT", corrected: "launch moved to Thurs, 10am PT")
+                == "launch moved to thurs, 10am PT")
+        #expect(SlangRestorer.restore(original: "ok tbh it was fine", corrected: "Ok TBH, it was fine") == "Ok tbh, it was fine")
+        // Sentence starts are the model's call.
+        #expect(SlangRestorer.restore(original: "Done. tbh it was fine", corrected: "Done. Tbh it was fine") == "Done. Tbh it was fine")
+    }
 }
