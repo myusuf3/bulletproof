@@ -30,6 +30,10 @@ private struct SpanRow: Encodable {
     let replacementScore: Double?
     let originalScore: Double?
     let suffixScore: Double?
+    let replacementTotal: Double?
+    let originalTotal: Double?
+    let replacementTokenCount: Int?
+    let originalTokenCount: Int?
     let verdict: String
 }
 
@@ -48,19 +52,26 @@ struct ZZScratchCorrectionEval {
     }
 
     /// Mirrors ScoredGateEngine: only outputs with 1...4 changed spans are
-    /// scored (its maxSpansToScore is private), and whitespace-only
-    /// replacements are skipped.
+    /// scored (its maxSpansToScore is private), whitespace-only replacements
+    /// are skipped, and cosmetic / typo-fix spans are accepted unscored
+    /// ("triaged").
     private static func spanRows(input: String, output: String, scorer: any SpanScorer) async -> [SpanRow] {
         let spans = EditDiff.spans(original: input, corrected: output)
         guard (1...4).contains(spans.count) else { return [] }
+        let gate = ScoredGateEngine(wrapped: FixedOutputEngine(output: output), scorer: scorer)
         var rows: [SpanRow] = []
         for span in spans where !span.replacement.trimmingCharacters(in: .whitespaces).isEmpty {
+            if await gate.isAcceptedWithoutScoring(span) {
+                rows.append(SpanRow(original: span.original, replacement: span.replacement,
+                                    replacementScore: nil, originalScore: nil, suffixScore: nil,
+                                    replacementTotal: nil, originalTotal: nil,
+                                    replacementTokenCount: nil, originalTokenCount: nil, verdict: "triaged"))
+                continue
+            }
             let scores = await scorer.scores(for: span)
             let verdict: String
-            if let replacement = scores.replacement {
-                verdict = switch ScoredVerdict.evaluate(
-                    replacementScore: replacement, originalScore: scores.original,
-                    suffixScore: scores.suffixAfterReplacement, thresholds: ScoringThresholds()) {
+            if scores.replacement != nil {
+                verdict = switch ScoredVerdict.evaluate(scores, thresholds: ScoringThresholds()) {
                 case .accepted: "accepted"
                 case .rejected(let reason): reason
                 }
@@ -69,7 +80,10 @@ struct ZZScratchCorrectionEval {
             }
             rows.append(SpanRow(original: span.original, replacement: span.replacement,
                                 replacementScore: scores.replacement, originalScore: scores.original,
-                                suffixScore: scores.suffixAfterReplacement, verdict: verdict))
+                                suffixScore: scores.suffixAfterReplacement,
+                                replacementTotal: scores.replacementTotal, originalTotal: scores.originalTotal,
+                                replacementTokenCount: scores.replacementTokenCount,
+                                originalTokenCount: scores.originalTokenCount, verdict: verdict))
         }
         return rows
     }
@@ -136,7 +150,7 @@ struct ZZScratchCorrectionEval {
                     // scored instead of scoring every span a second time. Matched
                     // the real ScoredGateEngine on 400/400 rows of the 2026-10-09
                     // Qwen re-run; re-check if ScoredGateEngine's logic changes.
-                    let vetoed = spans.contains { !["accepted", "unscored"].contains($0.verdict) }
+                    let vetoed = spans.contains { !["accepted", "unscored", "triaged"].contains($0.verdict) }
                     scored = gated.hasPrefix("REJECTED(") ? gated
                         : vetoed ? "REJECTED(\(ProofreadOutcome.from(ProofreadingError.unusableOutput(.implausibleEdit)).label))"
                         : raw

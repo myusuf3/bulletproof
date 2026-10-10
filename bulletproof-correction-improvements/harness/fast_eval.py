@@ -73,8 +73,9 @@ def load_prompt():
 def load_thresholds():
     src = EDITSPAN_SWIFT.read_text()
     get = lambda k: float(re.search(k + r"\s*=\s*(-?[\d.]+)", src).group(1))
-    return {"floor": get("minimumMeanLogProbability"), "margin": get("originalVetoMargin"),
-            "suffix": get("minimumSuffixMeanLogProbability")}
+    return {"margin": get("originalVetoMargin"), "total_margin": get("totalVetoMargin"),
+            "max_count_diff": int(get("maxTokenCountDifferenceForTotals")),
+            "typo_similarity": get("minimumTypoSimilarity")}
 
 
 # --- ProofreadPrompt.cleanResponse ---
@@ -211,30 +212,60 @@ class Qwen:
         logits = self.model(mx.array(full)[None]).astype(mx.float32)[0]
         logp = logits - mx.logsumexp(logits, axis=-1, keepdims=True)
 
-        def mean(s, e):
+        def total(s, e):
             idx = mx.array(full[s:e])
-            return float(mx.mean(logp[s - 1: e - 1][mx.arange(e - s), idx]).item())
-        return mean(ms, me), (mean(me, len(full)) if len(full) > me else None)
+            return float(mx.sum(logp[s - 1: e - 1][mx.arange(e - s), idx]).item())
+        mid = total(ms, me)
+        nsuf = len(full) - me
+        suf = total(me, len(full)) if nsuf else None
+        return {"mean": mid / (me - ms), "suffix_mean": suf / nsuf if nsuf else None,
+                "total": mid + (suf or 0.0), "count": me - ms + nsuf}
 
     def span_scores(self, span):
+        """MLXSpanScorer.scores: (replacement pass, original pass), each None if unscorable."""
         if not span["replacement"].strip():
-            return None, None, None
-        r, suf = self._score(span["anchor"], span["replacement"], span["suffix"])
-        o = None
-        if span["original"].strip():
-            o, _ = self._score(span["anchor"], span["original"], span["suffix"])
-        return r, o, suf
+            return None, None
+        r = self._score(span["anchor"], span["replacement"], span["suffix"])
+        o = self._score(span["anchor"], span["original"], span["suffix"]) if span["original"].strip() else None
+        return r, o
 
 
-def verdict(r, o, suf, t):
+# --- SpanTriage + ScoredVerdict (EditSpan.swift) ---
+
+def letters(s):
+    return "".join(c for c in s.lower() if c.isalnum())
+
+
+def similarity(a, b):
+    if not a and not b:
+        return 1.0
+    prev = [0] * (len(b) + 1)
+    for x in a:
+        cur = [0]
+        for j, y in enumerate(b):
+            cur.append(prev[j] + 1 if x == y else max(prev[j + 1], cur[j]))
+        prev = cur
+    return 2 * prev[-1] / (len(a) + len(b))
+
+
+def triaged(span, bad_words, t):
+    o = letters(span["original"])
+    if o and o == letters(span["replacement"]):
+        return True
+    if not any(w in bad_words for w in word_tokens(span["original"])):
+        return False
+    if any(w in bad_words for w in word_tokens(span["replacement"])):
+        return False
+    return similarity(o, letters(span["replacement"])) >= t["typo_similarity"]
+
+
+def verdict(r, o, t):
     if r is None:
         return "unscored"
-    if r < t["floor"]:
-        return "belowFloor"
-    if o is not None and o > r + t["margin"]:
+    if o is not None and o["mean"] > r["mean"] + t["margin"]:
         return "originalMoreLikely"
-    if suf is not None and suf < t["suffix"]:
-        return "suffixBroken"
+    if o is not None and abs(r["count"] - o["count"]) <= t["max_count_diff"] and o["total"] > r["total"] + t["total_margin"]:
+        return "totalOriginalMoreLikely"
     return "accepted"
 
 
@@ -291,28 +322,36 @@ def main():
             cf.flush()
     gen_s = time.time() - t0
 
-    # OutputGate, with one batched spell-check call.
+    # OutputGate and span triage, with one batched spell-check call.
     pre = [output_gate(c["input"], raw) for c, (raw, _) in zip(cases, raws)]
     intro = [introduced_words(c["input"], raw) if p is None else [] for c, (raw, _), p in zip(cases, raws, pre)]
-    bad = misspelled(sorted({w for ws in intro for w in ws}))
+    all_spans = [edit_spans(c["input"], raw) for c, (raw, _) in zip(cases, raws)]
+    span_words = {w for spans in all_spans if 1 <= len(spans) <= MAX_SPANS_TO_SCORE
+                  for sp in spans for w in word_tokens(sp["original"]) + word_tokens(sp["replacement"])}
+    bad = misspelled(sorted({w for ws in intro for w in ws} | span_words))
     rows = []
-    for c, (raw, ms), p, ws in zip(cases, raws, pre, intro):
+    for c, (raw, ms), p, ws, spans in zip(cases, raws, pre, intro, all_spans):
         reason = p or ("introducedMisspelling" if any(w in bad for w in ws) else None)
         gated = f"REJECTED(GATE_REJECT({reason}))" if reason else raw
-        spans = edit_spans(c["input"], raw)
         span_rows = []
         if 1 <= len(spans) <= MAX_SPANS_TO_SCORE:
             for sp in spans:
                 if not sp["replacement"].strip(" "):
                     continue
-                r, o, suf = qwen.span_scores(sp)
-                row = {"original": sp["original"], "replacement": sp["replacement"],
-                       "verdict": verdict(r, o, suf, thresholds)}
-                for k, v in (("replacementScore", r), ("originalScore", o), ("suffixScore", suf)):
-                    if v is not None:
-                        row[k] = v
+                row = {"original": sp["original"], "replacement": sp["replacement"]}
+                if triaged(sp, bad, thresholds):
+                    row["verdict"] = "triaged"
+                    span_rows.append(row)
+                    continue
+                r, o = qwen.span_scores(sp)
+                row["verdict"] = verdict(r, o, thresholds)
+                for k, d in (("replacement", r), ("original", o)):
+                    if d is not None:
+                        row[f"{k}Score"], row[f"{k}Total"], row[f"{k}TokenCount"] = d["mean"], d["total"], d["count"]
+                if r is not None and r["suffix_mean"] is not None:
+                    row["suffixScore"] = r["suffix_mean"]
                 span_rows.append(row)
-        vetoed = any(s["verdict"] not in ("accepted", "unscored") for s in span_rows)
+        vetoed = any(s["verdict"] not in ("accepted", "unscored", "triaged") for s in span_rows)
         scored = gated if reason else ("REJECTED(GATE_REJECT(implausibleEdit))" if vetoed else raw)
         rows.append({"id": c["id"], "engine": "qwen3-4b", "input": c["input"], "raw": raw, "ms": ms,
                      "gated": gated, "scored": scored, "spans": span_rows})
