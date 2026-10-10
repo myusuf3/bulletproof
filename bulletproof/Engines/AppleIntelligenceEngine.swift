@@ -5,7 +5,9 @@ import FoundationModels
 /// the on-device model drifts into answering request-like text.
 @Generable
 nonisolated struct Correction {
-    @Guide(description: "The input text with spelling, grammar, and punctuation corrected. Identical wording otherwise. Never a reply to the text.")
+    // The guide is a second instruction channel only this engine sees, so it
+    // carries the same keep-the-writer's-style policy as the system prompt.
+    @Guide(description: "The input text with its spelling and grammar mistakes fixed. Everything else stays exactly as written: wording, capitalization (lowercase stays lowercase), slang, contractions, emoji, punctuation style, line breaks, and backticked code. Never a reply to the text.")
     var correctedText: String
 }
 

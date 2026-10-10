@@ -115,6 +115,12 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#28 verification (Swift, both engines, `run-2026-10-09-both-engines-27/`):** Qwen dev .909 / holdout .895
+  (matches Python). Correct Swift values: pass_s4 .814, pass_s5 .932, p50 1329 ms; the #28 log row lists s4 .797,
+  s5 .949 and p50 1322 by mistake (copied from the fast run). **Apple Intelligence**, all 400: pass .638 → .688,
+  errors_fixed .826 → .885, rejections 4.75% → 1.5%, code_kept .54 → .77, but its style is *worse*: lowercase_kept
+  .32 → .20, clean_preserved .88 → .78, slang .42 → .36. AI doesn't follow the system-prompt style rules, so H10
+  (style in the @Guide) is next. Swift latency: Qwen p50 1329 / p95 2616, but Swift latency varies ~±40% per run.
 - **#27 kept: `OutputGate.introducedStructure`.** Rejects output that adds line breaks, `{}[]` or code fences, or
   list/heading markers the input lacked. answered_pasted (guard answers reaching the user) 2 → 0, with 0 false positives
   in 1,200 historical outputs from both engines. This makes #25/#26's closing reminder less valuable: it now only
