@@ -594,6 +594,33 @@ class Qwen:
         return generate(self.model, self.tok, prompt, max_tokens=max_tokens, sampler=self.sampler,
                         max_kv_size=MAX_KV)
 
+    def generate_cached(self, instructions, text):
+        """generate() with the system-prompt KV computed once per instructions and copied per call
+        (mirrors LocalModelEngine's prefix cache). Falls back to generate() if the chat template
+        doesn't split cleanly into system prefix + user turn."""
+        import copy
+        from mlx_lm import generate
+        from mlx_lm.models.cache import make_prompt_cache
+        user = [{"role": "user", "content": f"<text>\n{text}\n</text>"}]
+        full = self.tok.encode(self.tok.apply_chat_template(
+            [{"role": "system", "content": instructions}] + user, add_generation_prompt=True, tokenize=False))
+        rest = self.tok.encode(self.tok.apply_chat_template(user, add_generation_prompt=True, tokenize=False))
+        prefix = full[: len(full) - len(rest)]
+        if full[len(prefix):] != rest:
+            return self.generate(instructions, [], text)
+        cache_store = self.__dict__.setdefault("_prefix_caches", {})
+        if instructions not in cache_store:
+            cache = make_prompt_cache(self.model, max_kv_size=MAX_KV)
+            self.model(self.mx.array(prefix)[None], cache=cache)
+            self.mx.eval([c.state for c in cache])
+            cache_store[instructions] = (prefix, cache)
+        stored_prefix, cache = cache_store[instructions]
+        if stored_prefix != prefix:
+            return self.generate(instructions, [], text)
+        max_tokens = min(MAX_KV, max(16, len(text) // 3) * 2 + 128)
+        return generate(self.model, self.tok, rest, max_tokens=max_tokens, sampler=self.sampler,
+                        prompt_cache=copy.deepcopy(cache))
+
     def _score(self, anchor, middle, suffix):
         mx = self.mx
         enc = lambda s: self.tok.encode(s, add_special_tokens=True)
@@ -706,7 +733,9 @@ def main():
     CACHE.mkdir(exist_ok=True)
     caches, keys = {}, {}
     for name, (instr, ex) in prompts.items():
-        keys[name] = hashlib.sha256(json.dumps([instr, ex]).encode()).hexdigest()[:16]
+        # "prefix-cache": generations come from the cached-system-prompt path (as
+        # LocalModelEngine does since #50), which can flip near-tie tokens.
+        keys[name] = hashlib.sha256(json.dumps([instr, ex, "prefix-cache"]).encode()).hexdigest()[:16]
         path = CACHE / f"gen-{keys[name]}.jsonl"
         caches[name] = {json.loads(l)["input"]: json.loads(l) for l in path.read_text().splitlines()} \
             if path.exists() and not a.no_cache else {}
@@ -723,7 +752,8 @@ def main():
             raws.append((post_process(c["input"], hit["raw"], name == "instructions"), hit["ms"]))
             continue
         s = time.time()
-        raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"], typed=name == "instructions")
+        out = qwen.generate_cached(instructions, c["input"]) if not examples else qwen.generate(instructions, examples, c["input"])
+        raw = clean_response(out, c["input"], typed=name == "instructions")
         ms = (time.time() - s) * 1000
         raws.append((raw, ms))
         with (CACHE / f"gen-{keys[name]}.jsonl").open("a") as cf:

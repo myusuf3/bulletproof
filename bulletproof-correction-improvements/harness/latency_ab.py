@@ -34,14 +34,17 @@ def run(n=60, seed=7):
     cases = cases[:n]
     q = F.Qwen()
     q.generate(current, [], "warm up teh cache")  # load + Metal warm-up, not timed
-    arms = {"baseline": base, "current": current}
+    q.generate_cached(current, "warm up teh cache")  # builds the prefix cache once, not timed
+    arms = {"baseline": base, "current": current, "current_cached": current}
     ms = {k: [] for k in arms}
     out_tokens = {k: [] for k in arms}
     for i, c in enumerate(cases):
-        order = ["baseline", "current"] if i % 2 == 0 else ["current", "baseline"]
+        order = ["baseline", "current", "current_cached"]
+        order = order if i % 2 == 0 else order[::-1]
         for arm in order:
             t = time.perf_counter()
-            text = q.generate(arms[arm], [], c["input"])
+            text = (q.generate_cached(arms[arm], c["input"]) if arm == "current_cached"
+                    else q.generate(arms[arm], [], c["input"]))
             ms[arm].append((time.perf_counter() - t) * 1000)
             out_tokens[arm].append(len(q.tok.encode(text)))
     prompt_tokens = {k: len(q.tok.encode(v)) for k, v in arms.items()}
@@ -52,9 +55,11 @@ def run(n=60, seed=7):
         res[f"{k}_p95_ms"] = round(pct(ms[k], 0.95), 1)
         res[f"{k}_mean_out_tokens"] = round(statistics.mean(out_tokens[k]), 1)
         res[f"{k}_prompt_tokens"] = prompt_tokens[k]
-    paired = [c / b for b, c in zip(ms["baseline"], ms["current"])]
+    # Primary: what ships (current prompt, prefix-cached) vs the original app (baseline prompt, uncached).
+    paired = [c / b for b, c in zip(ms["baseline"], ms["current_cached"])]
     res["latency_ratio_p50"] = round(statistics.median(paired), 4)
-    res["latency_ratio_mean"] = round(sum(ms["current"]) / sum(ms["baseline"]), 4)
+    res["latency_ratio_mean"] = round(sum(ms["current_cached"]) / sum(ms["baseline"]), 4)
+    res["uncached_ratio_p50"] = round(statistics.median([c / b for b, c in zip(ms["baseline"], ms["current"])]), 4)
     res["n"] = len(cases)
     return res
 
