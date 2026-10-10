@@ -59,7 +59,7 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
             let corrected = isDictation
                 ? try await session.respond(to: prompt, generating: DictationCorrection.self).content.correctedText
                 : try await session.respond(to: prompt, generating: Correction.self).content.correctedText
-            return ProofreadPrompt.cleanResponse(corrected, original: text)
+            return ProofreadPrompt.cleanResponse(corrected, original: text, keepsLowercase: !isDictation)
         } catch let error as LanguageModelSession.GenerationError {
             throw Self.mapped(error)
         } catch {

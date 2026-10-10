@@ -53,4 +53,16 @@ struct ProofreadPromptTests {
         let result = ProofreadPrompt.cleanResponse("the cat", original: " teh cat ")
         #expect(result == " the cat ")
     }
+
+    @Test func allLowercaseTypedTextStaysLowercase() {
+        #expect(ProofreadPrompt.cleanResponse("Idk if that's right, LOL.", original: "idk if thats rihgt, lol.",
+                                              keepsLowercase: true) == "idk if that's right, lol.")
+    }
+
+    @Test func writersWhoUseCapitalsAndTheDictationPathAreUnaffected() {
+        #expect(ProofreadPrompt.cleanResponse("Hey Sam, the cat", original: "hey Sam, teh cat",
+                                              keepsLowercase: true) == "Hey Sam, the cat")
+        #expect(ProofreadPrompt.cleanResponse("I can't come.", original: "i cant come", keepsLowercase: false)
+                == "I can't come.")
+    }
 }

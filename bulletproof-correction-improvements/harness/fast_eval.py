@@ -88,7 +88,20 @@ def swift_ws(c):
     return c.isspace()
 
 
-def clean_response(response, original):
+def keep_all_lowercase(original, corrected):
+    """ProofreadPrompt.keepAllLowercase (typed path only)."""
+    if any(c.isupper() for c in original) or not any(c.isalpha() for c in original):
+        return corrected
+    return corrected.lower()
+
+
+def post_process(original, cleaned, typed):
+    """The restorer chain after edge-whitespace restore, as in cleanResponse."""
+    x = restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, cleaned)))
+    return keep_all_lowercase(original, x) if typed else x
+
+
+def clean_response(response, original, typed=False):
     out = response.strip()
     if out.startswith("<text>"):
         out = out[len("<text>"):]
@@ -96,7 +109,7 @@ def clean_response(response, original):
         out = out[: -len("</text>")]
     lead = re.match(r"\s*", original).group(0)
     trail = re.search(r"\s*$", original).group(0) if original.strip() else ""
-    return restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, lead + out.strip() + trail)))
+    return post_process(original, lead + out.strip() + trail, typed)
 
 
 # --- CodeSpanRestorer.swift ---
@@ -597,10 +610,10 @@ def main():
         if hit:
             # Cached rows hold cleaned output; cleaning is idempotent, so re-apply
             # the post-processing in case it changed since the row was cached.
-            raws.append((restore_code_spans(c["input"], restore_line_breaks(c["input"], restore_contractions(c["input"], hit["raw"]))), hit["ms"]))
+            raws.append((post_process(c["input"], hit["raw"], name == "instructions"), hit["ms"]))
             continue
         s = time.time()
-        raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])
+        raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"], typed=name == "instructions")
         ms = (time.time() - s) * 1000
         raws.append((raw, ms))
         with (CACHE / f"gen-{keys[name]}.jsonl").open("a") as cf:

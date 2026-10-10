@@ -82,7 +82,10 @@ nonisolated enum ProofreadPrompt {
     /// whitespace, and puts back contractions the model expanded, line breaks
     /// it joined, and backticked code it unwrapped or edited. Only anchored markers are leaks - mid-content
     /// occurrences are legitimate text the user is proofreading.
-    static func cleanResponse(_ response: String, original: String) -> String {
+    /// `keepsLowercase` is for typed text: a writer who used no capitals at all
+    /// gets none back. The dictation path passes false, since transcripts are
+    /// lowercase by accident and need sentence casing.
+    static func cleanResponse(_ response: String, original: String, keepsLowercase: Bool = false) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
         if output.hasPrefix("<text>") {
             output.removeFirst("<text>".count)
@@ -93,7 +96,15 @@ nonisolated enum ProofreadPrompt {
         let restored = restoreEdgeWhitespace(of: original, onto: output)
         let recontracted = ContractionRestorer.restore(original: original, corrected: restored)
         let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
-        return CodeSpanRestorer.restore(original: original, corrected: rebroken)
+        let recoded = CodeSpanRestorer.restore(original: original, corrected: rebroken)
+        return keepsLowercase ? keepAllLowercase(original: original, corrected: recoded) : recoded
+    }
+
+    /// An input with no uppercase letters is deliberately lowercase (casual
+    /// typing). The fixes stay, the capitals the model added go.
+    static func keepAllLowercase(original: String, corrected: String) -> String {
+        guard !original.contains(where: \.isUppercase), original.contains(where: \.isLetter) else { return corrected }
+        return corrected.lowercased()
     }
 
     /// Models strip edge whitespace from their output; in-place replacement must

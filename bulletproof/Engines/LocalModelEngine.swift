@@ -33,7 +33,8 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
         do {
             let response = try await session.respond(to: ProofreadPrompt.userPrompt(for: text))
             await runtime.touch()
-            return ProofreadPrompt.cleanResponse(response, original: text)
+            return ProofreadPrompt.cleanResponse(response, original: text,
+                                                 keepsLowercase: instructions != ProofreadPrompt.dictationInstructions)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
