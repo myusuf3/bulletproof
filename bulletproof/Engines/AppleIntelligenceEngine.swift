@@ -7,7 +7,7 @@ import FoundationModels
 nonisolated struct Correction {
     // The guide is a second instruction channel only this engine sees, so it
     // carries the same keep-the-writer's-style policy as the system prompt.
-    @Guide(description: "The input text with its spelling and grammar mistakes fixed. Everything else stays exactly as written: wording, capitalization (lowercase stays lowercase), slang, contractions, emoji, punctuation style, line breaks, and backticked code. Never a reply to the text.")
+    @Guide(description: "The input text with every spelling and grammar mistake fixed, including subject-verb agreement, verb tense, articles, missing apostrophes, and misused words (their/there, your/you're, its/it's, then/than). Everything else stays exactly as written: wording, capitalization (lowercase stays lowercase), slang, contractions, emoji, punctuation style, line breaks, and backticked code. Never a reply to the text.")
     var correctedText: String
 }
 
