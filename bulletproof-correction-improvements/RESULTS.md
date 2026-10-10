@@ -3,22 +3,25 @@
 Branch `autoresearch/correction-quality-2026-10-09`, 42 experiments (log: `.auto/log.jsonl`, playbook and history:
 `.auto/prompt.md`). Final live Swift run of both engines on all 400 cases: `run-2026-10-09-final-42/outputs.jsonl`.
 
-## Against the original baseline (all 400 cases, what the user sees)
+## Against the original baseline (all 400 cases, what the user sees; final live Swift run #48)
 
 | | Qwen3-4B before → after | Apple Intelligence before → after |
 |---|---|---|
-| **Strict pass rate** | 0.73 → **0.905** | 0.63 → **0.75** |
-| s5 casual + technical | 0.39 → **0.94** | 0.38 → **0.70** |
-| Errors fixed | 0.915 → **0.941** | 0.826 → **0.862** |
-| Clean text untouched | 0.76 → **0.96** | 0.88 → 0.88 |
+| **Strict pass rate** | 0.73 → **0.91** | 0.63 → **0.77** |
+| s5 casual + technical | 0.39 → **0.95** | 0.38 → **0.76** |
+| Errors fixed | 0.915 → **0.943** | 0.826 → **0.876** |
+| Clean text untouched | 0.76 → **0.96** | 0.88 → **0.92** |
 | Intentional lowercase kept | 0.07 → **1.0** | 0.32 → **1.0** |
-| Slang kept | 0.21 → **0.97** | 0.42 → **0.76** |
+| Slang kept | 0.21 → **1.0** | 0.42 → **0.88** |
 | Backticked code kept | 0.96 → **1.0** | 0.54 → **1.0** |
+| Must-preserve tokens kept | 0.61 → **1.0** | 0.59 → **0.93** |
 | Line breaks kept | 1.0 → 1.0 | 0.67 → **1.0** |
-| Rejected (nothing pasted) | 4.25% → **1%** | 4.75% → **1.5%** |
+| Rejected (nothing pasted) | 4.25% → **0.75%** | 4.75% → **1%** |
 | Request-like text answered and pasted (14-case guard set, Qwen) | 2 → **0** | |
 
-Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.75.
+Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGate locale, #47 SlangRestorer.
+
+Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
 ## Out-of-sample check (fresh set, `fresh-2026-10-10/`)
@@ -50,7 +53,7 @@ introduced words in every stored output, no new word is flagged.
    guide is used for transcripts (H10).
 3. **Deterministic post-processing in `cleanResponse`**, each one firing only where it applies:
    `ContractionRestorer` (re-contract expanded contractions), `LineBreakRestorer` (symmetric layout restore),
-   `CodeSpanRestorer` (code is never proofread), `ApostropheFixer` (unambiguous `dont` → `don't`), and
+   `CodeSpanRestorer` (code is never proofread), `SlangRestorer` (chat abbreviations the model expanded), `ApostropheFixer` (unambiguous `dont` → `don't`), and
    `keepAllLowercase` (typed only: an all-lowercase writer gets no capitals). Replayed over 4,480-5,600 stored
    outputs, these went fail→pass 128 + 38 + 14 + 5 + 2 times, and **pass→fail 0 times**.
 4. **Gates** (`OutputGate`): `introducedStructure` (answers rewritten as bullets or JSON) and `droppedContent`

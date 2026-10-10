@@ -683,6 +683,12 @@ def load_cases(split, ids_file, cases_file=None):
 
 
 def main():
+    if os.environ.get("BULLETPROOF_EVAL_LATENCY_AB") == "1" and "--split" in sys.argv:
+        # Opt-in latency A/B (harness/latency_ab.py), printed as METRIC lines on the dev
+        # pass of measure.sh; the normal dev run still follows so report.py has its input.
+        import latency_ab
+        for k, v in latency_ab.run().items():
+            print(f"METRIC {k}={v}")
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--split", default="dev", choices=["dev", "holdout", "all"])
