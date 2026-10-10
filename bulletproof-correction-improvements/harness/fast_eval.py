@@ -134,9 +134,74 @@ def fix_apostrophes(text):
     return "".join(out)
 
 
+_SLANG = {
+    "idk": ["i don't know", "i do not know", "i dont know"], "tbh": ["to be honest"],
+    "ngl": ["not gonna lie", "not going to lie"], "imo": ["in my opinion"], "imho": ["in my humble opinion"],
+    "btw": ["by the way"], "fyi": ["for your information"], "brb": ["be right back"], "omw": ["on my way"],
+    "tmrw": ["tomorrow"], "tmr": ["tomorrow"], "thx": ["thanks", "thank you"], "thnx": ["thanks", "thank you"],
+    "ty": ["thank you", "thanks"], "pls": ["please"], "plz": ["please"], "bc": ["because"], "rn": ["right now"],
+    "u": ["you"], "ur": ["your", "you're", "you are"], "lmk": ["let me know"], "nvm": ["never mind"],
+    "bday": ["birthday"], "msg": ["message"], "ok": ["okay"], "srsly": ["seriously"],
+    "gonna": ["going to"], "wanna": ["want to"], "gotta": ["got to", "have to"], "kinda": ["kind of"],
+    "sorta": ["sort of"], "lowkey": ["low-key", "low key"], "mins": ["minutes"], "secs": ["seconds"],
+}
+
+
+def restore_slang(original, corrected):
+    """SlangRestorer.restore."""
+    _, typed = _word_tokens(original)
+    lead, out = _word_tokens(corrected)
+    if not typed or not out:
+        return corrected
+    key = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    a, b = [key(w) for w, _ in typed], [key(w) for w, _ in out]
+    n, m = len(a), len(b)
+    lcs = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            lcs[i][j] = lcs[i + 1][j + 1] + 1 if a[i] == b[j] else max(lcs[i + 1][j], lcs[i][j + 1])
+    words = [w for w, _ in out]
+    trailing = [t for _, t in out]
+    removed = set()
+    i = j = 0
+    while i < n or j < m:
+        if i < n and j < m and a[i] == b[j]:
+            i += 1
+            j += 1
+            continue
+        i0, j0 = i, j
+        while i < n or j < m:
+            if i < n and j < m and a[i] == b[j]:
+                break
+            if j == m or (i < n and lcs[i + 1][j] >= lcs[i][j + 1]):
+                i += 1
+            else:
+                j += 1
+        if i - i0 != 1 or not 1 <= j - j0 <= 4:
+            continue
+        tw = typed[i0][0]
+        core = "".join(c for c in tw.lower() if c.isalpha())
+        if core != tw.lower() or core not in _SLANG:
+            continue
+        phrase = " ".join(words[j0:j])
+        k = 0
+        while k < len(phrase) and not phrase[k].isalpha():
+            k += 1
+        e = len(phrase)
+        while e > k and not phrase[e - 1].isalpha() and phrase[e - 1] != "'":
+            e -= 1
+        bare = phrase[k:e]
+        if bare.lower().replace("\u2019", "'") not in _SLANG[core]:
+            continue
+        words[j0] = phrase[:k] + tw + phrase[e:]
+        trailing[j0] = trailing[j - 1]
+        removed.update(range(j0 + 1, j))
+    return lead + "".join(words[x] + trailing[x] for x in range(len(words)) if x not in removed)
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = fix_apostrophes(restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, cleaned))))
+    x = fix_apostrophes(restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned)))))
     return keep_all_lowercase(original, x) if typed else x
 
 

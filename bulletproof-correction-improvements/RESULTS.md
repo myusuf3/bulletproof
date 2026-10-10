@@ -35,8 +35,11 @@ examples. Python harness, Qwen3-4B, what the user sees:
 | Errors fixed | 0.929 | 0.929 |
 
 The gain on fresh cases (+0.20) is at least as large as on the tuning set (+0.15), so this isn't overfitting.
-It also found a **gate bug**: this Mac's spell checker is British English, so `introducedMisspelling`
-rejects the US spelling "neighbor" (s1-f07). The gate should accept a word that any English variant knows.
+It also found a **gate bug**, now fixed (#46): the gate used the system dictionary (en_CA here) with per-word
+language guessing. That rejected the US "neighbor" and *accepted* "teh", "alot" and "accomodate". On English systems
+`SpellCheckGate` now flags a word only if both the US and British dictionaries do. Fresh set .914 → .943;
+dev and holdout user_sees +1 each (the last verify-gate veto of a good fix, "accomodate", is gone). Over 406
+introduced words in every stored output, no new word is flagged.
 
 ## What changed (in pipeline order)
 
