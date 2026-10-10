@@ -34,3 +34,10 @@ Generations are cached per prompt hash in `cache/`, so re-scoring an unchanged p
 - metrics within 0.5 pp of the Swift run
 
 Confirm any winning prompt with the Swift runner (`baseline-2026-10-09/README.md`) before shipping.
+
+## Swift chain parity (#87)
+
+`harness/swift_chain_parity.py` (see its docstring) runs the Swift `cleanResponse` + `OutputGate.rejection` on
+stored and synthetic (input, model output) pairs and diffs them against this mirror. #87: 0 differences on 5,849
+pairs (1,618 rewritten by the chain, 118 rejected), so the metric measures exactly what ships. Rerun it after any
+restorer or gate change. Model-side differences (the runtime, the detokenizer) need `SWIFT_VERIFY=1` instead (#86).
