@@ -110,6 +110,10 @@ nonisolated enum OutputGate {
 
     static func dropsContent(original: String, output: String) -> Bool {
         if deletesWords(original: original, output: output) { return true }
+        // Links, emails, paths, mentions, hashtags and identifiers are never proofread, and
+        // LinkRestorer has already put back respelled ones: a literal still missing was deleted
+        // or rewritten (Apple Intelligence dropped a leading "<@U02ZZ9K1>").
+        if LinkRestorer.links(in: original).contains(where: { !output.contains($0) }) { return true }
         let inputKeys = original.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
         let outputKeys = output.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
         let kept = surviving(inputKeys, in: outputKeys)

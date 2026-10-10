@@ -862,6 +862,8 @@ def drops_content(original, output):
     """OutputGate.dropsContent."""
     if deletes_words(original, output):
         return True
+    if any(link not in output for link in links(original)):  # a literal LinkRestorer couldn't put back
+        return True
     ck = lambda w: "".join(c for c in _fold(w) if c.isalnum())
     kept = surviving([k for k in (ck(w) for w in original.split()) if k], [k for k in (ck(w) for w in output.split()) if k])
     lines = [l for l in re.split("[" + _NEWLINES + "]", original) if l != ""]

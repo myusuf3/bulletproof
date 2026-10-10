@@ -83,7 +83,8 @@ symbol/emoji the writer didn't type: AI's "$€1,299.99", #100), overExpansion, 
 **introducedStructure** (new line breaks, `{}[]`, code fences, list or heading markers: answers rewritten as
 bullets or JSON, #27), **droppedContent** (a 4+ word sentence keeps < half its words, or a short line such as a
 sign-off vanishes in multi-line text, #39, or 2+ of the writer's words are deleted outright: aligned to nothing,
-not elsewhere in the output and not a close spelling, #119), **droppedMarkup** (an HTML/XML tag of the input is missing; Apple
+not elsewhere in the output and not a close spelling, #119, or a typed link/email/path/mention/hashtag/identifier
+is still missing after LinkRestorer, i.e. deleted or rewritten, #123), **droppedMarkup** (an HTML/XML tag of the input is missing; Apple
 Intelligence strips markup, #93), **appendedContent** (the writer's whole text and then 3+ more non-punctuation
 characters after a word boundary: the model kept generating, #107), protectedWordRemoved, introducedMisspelling.
 - `SpellCheckGate`: on English systems a word is misspelled only if both the US and British dictionaries flag it (#46).

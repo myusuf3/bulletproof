@@ -269,4 +269,11 @@ struct OutputGatedEngineTests {
         #expect(!OutputGate.deletesWords(original: "I do not know", output: "I don't know"))
         #expect(!OutputGate.deletesWords(original: "um so we should go", output: "So we should go."))
     }
+
+    @Test func rejectsADroppedLiteral() {
+        #expect(OutputGate.rejection(original: "<@U02ZZ9K1> re: the PR, two nits", output: "re: the PR, two nits") == .droppedContent)
+        #expect(OutputGate.rejection(original: "commit a1b2c3d is bad", output: "this commit is bad") == .droppedContent)
+        // Kept literals are fine.
+        #expect(OutputGate.rejection(original: "docs at https://example.com/a for detials", output: "docs at https://example.com/a for details") == nil)
+    }
 }
