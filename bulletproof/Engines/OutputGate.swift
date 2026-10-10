@@ -218,7 +218,8 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
         }
         let introduced = OutputGate.introducedWords(original: text, output: output)
             .filter { !vocabulary.contains($0.lowercased()) }
-        if let misspelled = await SpellCheckGate.firstMisspelled(in: introduced) {
+        let dictionary = await MainActor.run { SpellCheckGate.dictionary(forText: output) }
+        if let misspelled = await SpellCheckGate.firstMisspelled(in: introduced, language: dictionary) {
             Self.logger.warning("rejected model output: introduced misspelling \(misspelled, privacy: .private)")
             throw ProofreadingError.unusableOutput(.introducedMisspelling)
         }

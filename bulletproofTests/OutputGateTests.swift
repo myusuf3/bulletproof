@@ -190,6 +190,16 @@ struct OutputGatedEngineTests {
         }
     }
 
+    @Test func correctNonEnglishFixesAreNotMisspellings() async throws {
+        // On an English system the US/British dictionaries flag "très" and
+        // "réunion"; the text's own language decides instead.
+        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "La réunion est très importante pour nous."),
+                                       vocabulary: await isolatedVocabulary())
+        #expect(try await engine.proofread("La reunion est tres importante pour nous.")
+                == "La réunion est très importante pour nous.")
+        #expect(await MainActor.run { SpellCheckGate.dictionary(forText: "I think the meeting went well today.") } == nil)
+    }
+
     @Test func throwsUnusableOutputOnRejection() async {
         let engine = OutputGatedEngine(wrapped: CannedEngine(output: ""))
         do {

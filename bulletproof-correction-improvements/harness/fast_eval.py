@@ -564,9 +564,22 @@ def introduced_words(original, output):
     return res
 
 
-def misspelled(words):
+def text_dictionaries(texts):
+    """SpellCheckGate.dictionary(forText:) per text: '' = English rule, else a dictionary code."""
+    if not texts:
+        return []
+    p = subprocess.run([str(HERE / "bin/langdet")], input="\n".join(json.dumps(t) for t in texts),
+                       capture_output=True, text=True, check=True)
+    out = p.stdout.split("\n")
+    return [out[i] if i < len(out) else "" for i in range(len(texts))]
+
+
+def misspelled(words, language=None):
     if not words:
         return set()
+    if language:
+        p = subprocess.run([str(SPELLCHECK), language], input="\n".join(words), capture_output=True, text=True, check=True)
+        return set(p.stdout.split())
     if not SPELLCHECK.exists():
         sys.exit(f"build the spell-check helper first: swiftc -O {HERE}/spellcheck.swift -o {SPELLCHECK}")
     p = subprocess.run([str(SPELLCHECK)], input="\n".join(words), capture_output=True, text=True, check=True)
@@ -801,8 +814,14 @@ def main():
                   for sp in spans for w in word_tokens(sp["original"]) + word_tokens(sp["replacement"])}
     bad = misspelled(sorted({w for ws in intro for w in ws} | span_words))
     rows = []
-    for c, (raw, ms), p, ws, spans in zip(cases, raws, pre, intro, all_spans):
-        reason = p or ("introducedMisspelling" if any(w in bad for w in ws) else None)
+    # Non-English outputs check introduced words against their own dictionary (#72).
+    dicts = text_dictionaries([raw for raw, _ in raws])
+    for k, d in enumerate(dicts):
+        if d and intro[k]:
+            intro[k] = [w for w in intro[k] if w in misspelled(intro[k], d)]
+    for c, (raw, ms), p, ws, spans, d in zip(cases, raws, pre, intro, all_spans, dicts):
+        flagged = (lambda w: True) if d else (lambda w: w in bad)
+        reason = p or ("introducedMisspelling" if any(flagged(w) for w in ws) else None)
         gated = f"REJECTED(GATE_REJECT({reason}))" if reason else raw
         span_rows = []
         if 1 <= len(spans) <= MAX_SPANS_TO_SCORE:
