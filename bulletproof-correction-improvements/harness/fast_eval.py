@@ -205,10 +205,10 @@ class Qwen:
         wm = enc(join(anchor, middle))
         full = wm if not suffix else enc(join(join(anchor, middle), suffix))
         if wm[: len(at)] != at or full[: len(wm)] != wm:
-            return None, None
+            return None
         ms, me = max(len(at), 1), len(wm)
         if me <= ms:
-            return None, None
+            return None
         logits = self.model(mx.array(full)[None]).astype(mx.float32)[0]
         logp = logits - mx.logsumexp(logits, axis=-1, keepdims=True)
 
