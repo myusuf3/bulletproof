@@ -45,15 +45,19 @@ nonisolated enum SlangRestorer {
                 if j == b.count || (i < a.count && lcs[i + 1][j] >= lcs[i][j + 1]) { i += 1 } else { j += 1 }
             }
             guard i - i0 == 1, (1...4).contains(j - j0) else { continue }
+            // The typed word may carry punctuation ("thx!", "idk,"): match on its letters,
+            // which must be one contiguous run, and keep the correction's punctuation.
             let typedWord = typed.tokens[i0].word
-            let core = typedWord.lowercased().filter { $0.isLetter }
-            guard core == typedWord.lowercased(), let expansions = table[core] else { continue }
+            let typedLetters = typedWord.drop(while: { !$0.isLetter }).reversed().drop(while: { !$0.isLetter }).reversed()
+            let core = String(typedLetters).lowercased()
+            guard !core.isEmpty, core.allSatisfy(\.isLetter), let expansions = table[core] else { continue }
+            let typedCore = String(typedLetters)
             let phrase = words[j0..<j].joined(separator: " ")
             let leading = String(phrase.prefix(while: { !$0.isLetter }))
             let tail = String(phrase.reversed().prefix(while: { !$0.isLetter && $0 != "'" }).reversed())
             let bare = phrase.dropFirst(leading.count).dropLast(tail.count)
             guard expansions.contains(bare.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")) else { continue }
-            words[j0] = leading + typedWord + tail
+            words[j0] = leading + typedCore + tail
             trailing[j0] = trailing[j - 1]
             removed.formUnion((j0 + 1)..<j)
         }

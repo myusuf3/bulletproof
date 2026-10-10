@@ -11,6 +11,9 @@ struct SlangRestorerTests {
         #expect(restore("tbh its fine", "To be honest, it's fine") == "tbh, it's fine")
         #expect(restore("thx for the help", "Thanks for the help") == "thx for the help")
         #expect(restore("idk if it werks", "I don't know if it works") == "idk if it works")
+        // Punctuation attached to the typed abbreviation.
+        #expect(restore("happy bday!! hope its fun", "happy birthday!! hope it's fun") == "happy bday!! hope it's fun")
+        #expect(restore("thx, see you", "Thanks, see you") == "thx, see you")
     }
 
     @Test func otherEditsAndRealWordsAreLeftAlone() {

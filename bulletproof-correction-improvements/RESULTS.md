@@ -24,6 +24,14 @@ Outputs: `run-2026-10-10-final-48/outputs.jsonl`. Later fixes: #46 SpellCheckGat
 Held-out split (105 cases, never tuned on): Qwen 0.781 → 0.895; Apple Intelligence dev and holdout are both 0.77.
 The strict pass rate agrees with the LLM judges on 94% of baseline rows.
 
+## Metric correction (#53)
+
+`metrics.py` failed some outputs that *exactly match* one of the case's own acceptable outputs, because the
+errors regex names a single variant (`q three -> Q3` while "Q three" is listed acceptable; `could have`
+while "could've" is). An exact acceptable match now counts its errors as fixed. Applied to every run equally,
+this moves the original baseline to Qwen .735 / AI .635 and the final #48 run to Qwen .915 / AI .78, so the
+deltas are unchanged. Agreement with the LLM judges goes from 94.0% to 94.5%. The tables above use the old metric.
+
 ## Out-of-sample check (fresh set, `fresh-2026-10-10/`)
 
 35 new cases written after tuning, before any model saw them, on topics outside the corpus and the prompt

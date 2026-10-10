@@ -180,8 +180,14 @@ def restore_slang(original, corrected):
         if i - i0 != 1 or not 1 <= j - j0 <= 4:
             continue
         tw = typed[i0][0]
-        core = "".join(c for c in tw.lower() if c.isalpha())
-        if core != tw.lower() or core not in _SLANG:
+        a0, b0 = 0, len(tw)
+        while a0 < b0 and not tw[a0].isalpha():
+            a0 += 1
+        while b0 > a0 and not tw[b0 - 1].isalpha():
+            b0 -= 1
+        typed_core = tw[a0:b0]
+        core = typed_core.lower()
+        if not core or not core.isalpha() or core not in _SLANG:
             continue
         phrase = " ".join(words[j0:j])
         k = 0
@@ -193,7 +199,7 @@ def restore_slang(original, corrected):
         bare = phrase[k:e]
         if bare.lower().replace("\u2019", "'") not in _SLANG[core]:
             continue
-        words[j0] = phrase[:k] + tw + phrase[e:]
+        words[j0] = phrase[:k] + typed_core + phrase[e:]
         trailing[j0] = trailing[j - 1]
         removed.update(range(j0 + 1, j))
     return lead + "".join(words[x] + trailing[x] for x in range(len(words)) if x not in removed)
