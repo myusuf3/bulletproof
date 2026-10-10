@@ -106,9 +106,19 @@ _APOS_FORMS = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren
 _APOS = {"".join(c for c in f.lower() if c.isalpha()): f for f in _APOS_FORMS}
 
 
+_MISPLACED = {}
+for _f in ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't", "hasn't", "hadn't",
+           "wouldn't", "shouldn't", "couldn't", "mustn't", "needn't", "can't", "won't", "shan't", "ain't"]:
+    _MISPLACED[_f[:-3] + "'nt"] = _f
+    if len(_f) - 3 > 2:
+        _MISPLACED[_f[:-3] + "'t"] = _f
+
+
 def fix_apostrophes(text):
     """ApostropheFixer.fix, applied only when the text isn't confidently non-English (cleanResponse)."""
-    if any(w.lower() in _APOS for w in re.findall(r"[A-Za-z]+", text)) and text_dictionaries([text])[0]:
+    if (any(w.lower() in _APOS for w in re.findall(r"[A-Za-z]+", text))
+            or any(w.lower().replace("\u2019", "'") in _MISPLACED for w in re.findall(r"[A-Za-z'\u2019]+", text))) \
+            and text_dictionaries([text])[0]:
         return text
     code = code_spans(text)
     out, i, n = [], 0, len(text)
@@ -125,12 +135,16 @@ def fix_apostrophes(text):
         before = st > 0 and (text[st - 1].isdigit() or text[st - 1] in "_@#")
         inside = any(a <= st < b for a, b in code)
         fixed = _APOS.get(word.lower())
-        if fixed and not after and not before and not inside and "'" not in word and "\u2019" not in word:
+        curly = False
+        if not (fixed and "'" not in word and "\u2019" not in word):
+            fixed = _MISPLACED.get(word.lower().replace("\u2019", "'"))
+            curly = "\u2019" in word
+        if fixed and not after and not before and not inside:
             if len(word) > 1 and all((not c.isalpha()) or c.isupper() for c in word):
                 fixed = fixed.upper()
             elif word[0].isupper():
                 fixed = fixed[0].upper() + fixed[1:]
-            out.append(fixed)
+            out.append(fixed.replace("'", "\u2019") if curly else fixed)
         else:
             out.append(word)
     return "".join(out)

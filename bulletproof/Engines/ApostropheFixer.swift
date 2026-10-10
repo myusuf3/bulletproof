@@ -4,7 +4,8 @@ import Foundation
 /// typos the user wants fixed, and the models sometimes leave them. Only the
 /// spellings that can't be a real word are fixed - `cant`, `wont`, `were`,
 /// `well`, `ill`, `its`, `lets`, `id`, `hell`, `shell` and `wed` are all
-/// words, so they're left to the model. Code spans are never touched.
+/// words, so they're left to the model. Misplaced apostrophes ("would'nt")
+/// are fixed the same way. Code spans are never touched.
 nonisolated enum ApostropheFixer {
     private static let fixes: [String: String] = {
         let forms = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
@@ -13,6 +14,22 @@ nonisolated enum ApostropheFixer {
                      "that's", "there's", "what's", "who's", "we've",
                      "would've", "should've", "could've"]
         return Dictionary(uniqueKeysWithValues: forms.map { ($0.lowercased().filter(\.isLetter), $0) })
+    }()
+
+    /// Misplaced apostrophes in "n't" contractions ("would'nt", "does'nt",
+    /// "ca'nt") and the model's own half-fix of them ("would't"). None is a word.
+    /// The dropped-n form is only matched for longer stems ("is't" and "do't" are left alone).
+    private static let misplaced: [String: String] = {
+        let forms = ["don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't",
+                     "hasn't", "hadn't", "wouldn't", "shouldn't", "couldn't", "mustn't", "needn't",
+                     "can't", "won't", "shan't", "ain't"]
+        var map: [String: String] = [:]
+        for form in forms {
+            let stem = String(form.dropLast(3))
+            map[stem + "'nt"] = form
+            if stem.count > 2 { map[stem + "'t"] = form }
+        }
+        return map
     }()
 
     static func fix(_ text: String) -> String {
@@ -38,6 +55,11 @@ nonisolated enum ApostropheFixer {
             if !followedByWordChar, !precededByWordChar, !insideCode,
                !word.contains("'"), !word.contains("\u{2019}"), let fixed = fixes[word.lowercased()] {
                 result += cased(fixed, like: word)
+            } else if !followedByWordChar, !precededByWordChar, !insideCode,
+                      let fixed = misplaced[word.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")] {
+                // Keep the writer's apostrophe style (curly stays curly).
+                let mark = word.contains("\u{2019}") ? "\u{2019}" : "'"
+                result += cased(fixed, like: word).replacingOccurrences(of: "'", with: mark)
             } else {
                 result += word
             }

@@ -33,4 +33,13 @@ struct ApostropheFixerTests {
         #expect(ProofreadPrompt.cleanResponse("im on my way, dont wait", original: "im on my way, dont wait",
                                               keepsLowercase: true) == "i'm on my way, don't wait")
     }
+
+    @Test func misplacedApostrophesAreFixed() {
+        #expect(ApostropheFixer.fix("the view would't load") == "the view wouldn't load")
+        #expect(ApostropheFixer.fix("It does'nt work, I ca'nt tell") == "It doesn't work, I can't tell")
+        #expect(ApostropheFixer.fix("WOULD'NT") == "WOULDN'T")
+        #expect(ApostropheFixer.fix("it does\u{2019}t") == "it doesn\u{2019}t")
+        // Real words and correct contractions stay; short stems aren't guessed.
+        #expect(ApostropheFixer.fix("don't won't is't `would't`") == "don't won't is't `would't`")
+    }
 }
