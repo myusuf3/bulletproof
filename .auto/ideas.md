@@ -66,3 +66,8 @@
   corpus outputs and 0 stored pasted rows would be flagged; it only catches already-rejected guard answers plus this probe.
   Low value unless it shows up in real use.
 - **From fresh set 2 (#101):** (a) Apple Intelligence swaps the writer's emoji (🙂 → 😊). introducedSymbol blocks it, so it's safe but shows an error. An emoji restorer (the input's emoji are literals: put each one back where the model swapped a different emoji in) would turn the error into a correct paste. (b) Weekday abbreviations (mon, tues, wed, thurs, fri) are missing from SlangRestorer's table. AI wrote `thurs` → `thursday`, and the spell checker then rejected the lowercase `thursday`. Add restore-only entries.
+- **Dictation spoken-email/URL forms (#113, a product question for the owner):** both engines turn "jane at example dot com"
+  into "jane@example.com". Qwen's version is rejected by droppedContent, so the raw transcript is kept; Apple Intelligence
+  half-converts it. Users probably want the address, but the dictation prompt says to keep the speaker's words. If wanted:
+  convert "<name> at <word> dot <tld>" deterministically on the dictation path, and teach droppedContent that the address
+  keeps the words.
