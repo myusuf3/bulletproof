@@ -23,7 +23,7 @@ struct AppleIntelligenceEngineTests {
     }
 
     @Test func decodingIsGreedy() {
-        #expect(AppleIntelligenceEngine.options == GenerationOptions(samplingMode: .greedy))
+        #expect(AppleIntelligenceEngine.options == GenerationOptions(sampling: .greedy))
     }
 
     @Test func dictationPromptSelectsTheTranscriptGuide() {

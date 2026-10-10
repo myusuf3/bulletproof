@@ -25,8 +25,10 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
 
     /// Greedy decoding: a proofread has one right answer, and default sampling
     /// made output vary run to run (typed pass 0.68-0.80 across identical runs).
-    /// Matches the local engine's temperature 0.
-    static let options = GenerationOptions(samplingMode: .greedy)
+    /// Matches the local engine's temperature 0. `sampling:` is deprecated in
+    /// the Xcode 27 SDK (renamed `samplingMode:`), but CI builds with Xcode 26,
+    /// which only has `sampling:`.
+    static let options = GenerationOptions(sampling: .greedy)
 
     /// The dictation path is identified by its prompt (AppState passes
     /// ProofreadPrompt.dictationInstructions), and gets the matching guide.
