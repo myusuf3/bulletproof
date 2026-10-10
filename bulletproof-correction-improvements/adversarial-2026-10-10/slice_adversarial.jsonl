@@ -65,12 +65,12 @@
 {"id": "s5-c19", "input": "...", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
 {"id": "s1-c20", "input": "Version 3 adds a new API: GET /v3/users/{id}/prefernces.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
 {"id": "s5-z01", "input": "sounds good 👍🏽 see u tmrw", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
-{"id": "s5-z02", "input": "landed in 🇨🇦 finaly!!", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
+{"id": "s5-z02", "input": "landed in 🇨🇦 finaly!!", "expected": {"kind": "fix", "acceptableOutputs": ["landed in 🇨🇦 finally!!"]}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s5-z03", "input": "love this ❤️ thx", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s5-z04", "input": "step 1️⃣ is done", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s1-z05", "input": "She ordered café au lait.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
-{"id": "s1-z06", "input": "नमस्ते, the meeting is tomorow.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
-{"id": "s1-z07", "input": "สวัสดี the meeting is tomorow.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
+{"id": "s1-z06", "input": "नमस्ते, the meeting is tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["नमस्ते, the meeting is tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
+{"id": "s1-z07", "input": "สวัสดี the meeting is tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["สวัสดี the meeting is tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s5-z08", "input": "great job 👏🏾👏🏾 team", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s5-z09", "input": "🏳️‍🌈 pride month starts tmrw", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
 {"id": "s1-z10", "input": "Ich möchte einen Kaffee, bitte.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["grapheme"]}
