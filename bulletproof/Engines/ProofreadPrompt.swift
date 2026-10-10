@@ -78,8 +78,8 @@ nonisolated enum ProofreadPrompt {
         return maxInputTokens * 3
     }
 
-    /// Strips marker echoes the model may leak, then restores the original's
-    /// edge whitespace. Only anchored markers are leaks - mid-content
+    /// Strips marker echoes the model may leak, restores the original's edge
+    /// whitespace, and puts back contractions the model expanded. Only anchored markers are leaks - mid-content
     /// occurrences are legitimate text the user is proofreading.
     static func cleanResponse(_ response: String, original: String) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -89,7 +89,8 @@ nonisolated enum ProofreadPrompt {
         if output.hasSuffix("</text>") {
             output.removeLast("</text>".count)
         }
-        return restoreEdgeWhitespace(of: original, onto: output)
+        let restored = restoreEdgeWhitespace(of: original, onto: output)
+        return ContractionRestorer.restore(original: original, corrected: restored)
     }
 
     /// Models strip edge whitespace from their output; in-place replacement must

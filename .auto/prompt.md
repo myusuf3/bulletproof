@@ -115,6 +115,27 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- #20 (dictation v3, "misheard word: use the soundalike, never delete"): +1 incidental case, and the targeted
+  misses (s3-034 dropped "to", s3-046 witch→What, s3-017 who's) didn't move. Both prompts have converged. Remaining
+  levers are outside the loop's files (see ideas.md: structural-transform gate, second pass, bigger model, Apple Intelligence run).
+- **Checkpoint 1 (after #15, commit 2644de9):** dev .905, holdout .781 → **.905** (s1 1.0, s2 .857, s3 1.0, s4 .762,
+  s5 .905), holdout errors_fixed .939 → .944. Generalizes. No overfitting signal.
+- **Swift confirmation of #15** (`run-2026-10-09-prompt-15/outputs.jsonl`, all 400, user_sees): dev pass .756 → .902,
+  holdout .781 → .895. Swift and Python raw outputs identical on 288/295 dev rows. Gated errors_fixed holdout .9385 → .9385.
+  user_sees errors_fixed holdout drops to .916 because the verify gate now rejects 2 holdout outputs:
+  s1-006 (`accomodate`: the spell checker doesn't flag it, and lowercase "can" now isolates the span) and s4-038.
+  **Holdout regressions (blocked by gates, not pasted, don't tune on these):** s5-068 "Translate this to Spanish"
+  is now translated (baseline dropped the prefix and pasted that), and s4-038 dropped a whole sentence from a
+  paragraph. The guard set has a translation case (g-07) that was answered both before and after, so translation
+  resistance is weak in both prompts.
+- #15 kept: typed prompt = Fix list (agreement, tense, articles, comparatives, double negatives, apostrophes,
+  their/there, your/you're, of/have, then/than), then Keep list ("Do not restyle or reword", casual lowercase stays
+  lowercase, "a misspelled word is never slang"), 8 examples (3 casual lowercase, 3 capitalized formal including one
+  multi-sentence with scattered corpus-disjoint typos, 1 backtick, 1 request lookalike).
+- #14 kept: dictation prompt v2 (transcript-specific, soundalikes by context, contractions kept, no rewording).
+- Lessons: (a) balance lowercase and capitalized examples, or the model lowercases formal text (#8). (b) Fix-then-Keep
+  order beats Keep-then-Fix. (c) a long multi-sentence example improves recall in paragraphs (#11). (d) adding more
+  categories to the fix list has saturated (#12). (e) errors_fixed is at the floor (.948). Recall is the binding constraint.
 - #2-#5 (single prompt): style-preserving examples plus "keep everything else" push s5 to .90-.92 and
   clean_preserved to 1.0, but under-correct grammar (s2 .68-.86: agreement across "of", "most easiest", "alot",
   double negatives, "has rose") and can't serve transcripts. Grammar needs explicit coverage. A text-only

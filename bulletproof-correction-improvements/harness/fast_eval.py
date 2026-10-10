@@ -96,7 +96,94 @@ def clean_response(response, original):
         out = out[: -len("</text>")]
     lead = re.match(r"\s*", original).group(0)
     trail = re.search(r"\s*$", original).group(0) if original.strip() else ""
-    return lead + out.strip() + trail
+    return restore_contractions(original, lead + out.strip() + trail)
+
+
+# --- ContractionRestorer.swift ---
+
+_CONTRACTIONS = [
+    ("don't", ["do not"]), ("doesn't", ["does not"]), ("didn't", ["did not"]),
+    ("can't", ["cannot", "can not"]), ("won't", ["will not"]), ("isn't", ["is not"]),
+    ("aren't", ["are not"]), ("wasn't", ["was not"]), ("weren't", ["were not"]),
+    ("haven't", ["have not"]), ("hasn't", ["has not"]), ("hadn't", ["had not"]),
+    ("wouldn't", ["would not"]), ("shouldn't", ["should not"]), ("couldn't", ["could not"]),
+    ("mustn't", ["must not"]), ("needn't", ["need not"]),
+    ("it's", ["it is", "it has"]), ("that's", ["that is", "that has"]),
+    ("there's", ["there is", "there has"]), ("what's", ["what is", "what has"]),
+    ("here's", ["here is"]), ("who's", ["who is", "who has"]),
+    ("he's", ["he is", "he has"]), ("she's", ["she is", "she has"]),
+    ("let's", ["let us"]),
+    ("I'm", ["i am"]), ("I've", ["i have"]), ("I'll", ["i will"]), ("I'd", ["i would", "i had"]),
+    ("you're", ["you are"]), ("you've", ["you have"]), ("you'll", ["you will"]), ("you'd", ["you would", "you had"]),
+    ("we're", ["we are"]), ("we've", ["we have"]), ("we'll", ["we will"]),
+    ("they're", ["they are"]), ("they've", ["they have"]), ("they'll", ["they will"]), ("they'd", ["they would", "they had"]),
+]
+_CKEY = lambda w: "".join(c for c in w.lower() if c.isalpha())
+_CTABLE = {_CKEY(c): (c, e) for c, e in _CONTRACTIONS}
+
+
+def _contraction(typed, expansion):
+    if not 1 <= len(expansion) <= 2 or _CKEY(typed) not in _CTABLE:
+        return None
+    contracted, expansions = _CTABLE[_CKEY(typed)]
+    last, first = expansion[-1], expansion[0]
+    k = len(last)
+    while k > 0 and not last[k - 1].isalpha():
+        k -= 1
+    trailing = last[k:]
+    i = 0
+    while i < len(first) and not first[i].isalpha():
+        i += 1
+    leading = first[:i]
+    phrase = " ".join(expansion)
+    bare = phrase[len(leading): len(phrase) - len(trailing)]
+    if not bare or bare.lower() not in expansions or not all(c.isalpha() or c == " " for c in bare):
+        return None
+    text = contracted
+    if bare[0].isupper() and text[0].islower():
+        text = text[0].upper() + text[1:]
+    return leading + text + trailing
+
+
+def restore_contractions(original, corrected):
+    typed = original.split()
+    m = re.match(r"\s*", corrected)
+    lead, rest = m.group(0), corrected[m.end():]
+    toks = re.findall(r"(\S+)(\s*)", rest)
+    if not typed or not toks:
+        return corrected
+    key = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    a, b = [key(w) for w in typed], [key(w) for w, _ in toks]
+    n, mm = len(a), len(b)
+    lcs = [[0] * (mm + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(mm - 1, -1, -1):
+            lcs[i][j] = lcs[i + 1][j + 1] + 1 if a[i] == b[j] else max(lcs[i + 1][j], lcs[i][j + 1])
+    reps, i, j = [], 0, 0
+    while i < n or j < mm:
+        if i < n and j < mm and a[i] == b[j]:
+            i += 1
+            j += 1
+            continue
+        oi, oj = i, j
+        while i < n or j < mm:
+            if i < n and j < mm and a[i] == b[j]:
+                break
+            if j == mm or (i < n and lcs[i + 1][j] >= lcs[i][j + 1]):
+                i += 1
+            else:
+                j += 1
+        if i - oi == 1:
+            t = _contraction(typed[oi], [w for w, _ in toks[oj:j]])
+            if t is not None:
+                reps.append((oj, j, t))
+    if not reps:
+        return corrected
+    out, idx = lead, 0
+    for s_, e_, t in reps:
+        out += "".join(w + ws for w, ws in toks[idx:s_]) + t + toks[e_ - 1][1]
+        idx = e_
+    return out + "".join(w + ws for w, ws in toks[idx:])
 
 
 # --- OutputGate ---
@@ -319,7 +406,9 @@ def main():
         instructions, examples = prompts[name]
         hit = caches[name].get(c["input"])
         if hit:
-            raws.append((hit["raw"], hit["ms"]))
+            # Cached rows hold cleaned output; cleaning is idempotent, so re-apply
+            # the post-processing in case it changed since the row was cached.
+            raws.append((restore_contractions(c["input"], hit["raw"]), hit["ms"]))
             continue
         s = time.time()
         raw = clean_response(qwen.generate(instructions, examples, c["input"]), c["input"])
