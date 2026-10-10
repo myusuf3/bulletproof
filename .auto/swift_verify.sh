@@ -11,7 +11,9 @@ cat $D/corpus/slice*.jsonl > $OUT/all.jsonl
 # Never share the build DB with a still-running xcodebuild (#32 crashed on that).
 while pgrep -x xcodebuild >/dev/null; do sleep 5; done
 cp $D/runner/ZZScratchCorrectionEval.swift bulletproofTests/
-trap 'rm -f bulletproofTests/ZZScratchCorrectionEval.swift' EXIT
+# Absolute path: the script cd's elsewhere before exiting (the relative trap
+# left the runner in bulletproofTests/ and it got committed in #28).
+trap 'rm -f /Users/myusuf3/workspace/bulletproof/bulletproofTests/ZZScratchCorrectionEval.swift' EXIT
 TEST_RUNNER_BULLETPROOF_EVAL_CORPUS=$OUT/all.jsonl TEST_RUNNER_BULLETPROOF_EVAL_OUT=$OUT/outputs.jsonl \
   xcodebuild test -project bulletproof.xcodeproj -scheme bulletproof -destination 'platform=macOS' \
   -derivedDataPath /tmp/dd-main -only-testing:bulletproofTests/ZZScratchCorrectionEval > $OUT/xcode.log 2>&1

@@ -115,6 +115,14 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **Housekeeping after #35:** `bulletproofTests/ZZScratchCorrectionEval.swift` was committed by the #28 keep, because
+  swift_verify.sh's EXIT trap used a relative path after a `cd`. It's env-gated, so it never ran in normal tests.
+  It's now `git rm`'d (lands with the next keep), and the trap uses an absolute path.
+- **#35 kept: AI dictation `@Generable DictationCorrection`** (selected when the engine has dictationInstructions). AI s3
+  missed-caps fails 15 → 2 (another run: 7), AI s3 pass .588 → .688. This fixes the #29 bug.
+  **AI run-to-run noise:** typed-slice pass .68-.73 across 5 runs with identical typed code, so treat AI deltas under ~5 pp
+  as noise. **Tool gotcha (#32-#34):** run SWIFT_VERIFY only when `.auto/*.sh` are committed and unmodified. Edited,
+  uncommitted .auto scripts were misparsed at run start 3 times. The scripts are now function-wrapped too.
 - **#31 verification (Swift, both engines, `run-2026-10-09-both-engines-30/`):** AI vs the original baseline, all 400:
   pass .638 → .705, errors_fixed .826 → .885, lowercase .32 → .71, slang .42 → .67, linebreaks .67 → 1.0, rejections
   4.75% → 1.25%. **Bug from #29:** the style `@Guide` also applies on the dictation path, so AI leaves transcripts

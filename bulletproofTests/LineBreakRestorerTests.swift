@@ -23,8 +23,11 @@ struct LineBreakRestorerTests {
     @Test func keptBreaksAndSingleLineTextAreUntouched() {
         #expect(restore("a\nb", "a\nb") == "a\nb")
         #expect(restore("teh cat sat", "the cat sat") == "the cat sat")
-        // More breaks than the original is not this restorer's business.
-        #expect(restore("one two", "one\ntwo") == "one\ntwo")
+    }
+
+    @Test func breaksTheModelAddedOrShrankAreUndone() {
+        #expect(restore("one two three", "one\ntwo three") == "one two three")
+        #expect(restore("Thanks.\n\nBest,\nBo", "Thanks.\nBest,\nBo") == "Thanks.\n\nBest,\nBo")
     }
 
     @Test func cleanResponseRestoresBreaks() {

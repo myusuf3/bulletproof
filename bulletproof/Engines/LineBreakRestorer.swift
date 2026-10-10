@@ -5,27 +5,40 @@ import Foundation
 /// "Hi Marcus,\n\nThanks" -> "Hi Marcus, thanks"). When the correction has
 /// fewer line breaks than the original, put each lost break back in front of
 /// the word that started that line, found by aligning the two texts' words.
-/// Never adds breaks the original didn't have.
+/// Symmetric: a break the model added between two words the original kept
+/// on one line is removed (a correction never adds layout).
 nonisolated enum LineBreakRestorer {
     static func restore(original: String, corrected: String) -> String {
-        guard breaks(in: corrected) < breaks(in: original) else { return corrected }
         let source = WordTokens(original), output = WordTokens(corrected)
-        guard !source.tokens.isEmpty, !output.tokens.isEmpty else { return corrected }
+        guard source.tokens.count > 1, !output.tokens.isEmpty else { return corrected }
 
         let match = alignedPairs(source.keys, output.keys)
         var trailing = output.tokens.map(\.trailing)
-        for (i, token) in source.tokens.enumerated().dropLast() where token.trailing.contains(where: \.isNewline) {
-            // Anchor on the next line's first word; fall back to the word
-            // before the break if that one was rewritten.
-            if let j = match[i + 1], j > 0 {
-                if !trailing[j - 1].contains(where: \.isNewline) { trailing[j - 1] = token.trailing }
-            } else if let j = match[i], j < output.tokens.count - 1 {
-                if !trailing[j].contains(where: \.isNewline) { trailing[j] = token.trailing }
+        for (i, token) in source.tokens.enumerated().dropLast() {
+            let wanted = newlines(token.trailing)
+            if let j = match[i], match[i + 1] == j + 1 {
+                // Neighbours aligned on both sides: the gap between them gets
+                // the original's line breaks - restores joined lines and
+                // removes breaks the model added ("\n\n" -> "\n" -> "\n\n").
+                if newlines(trailing[j]) != wanted { trailing[j] = token.trailing }
+            } else if wanted > 0 {
+                // The break sits next to a rewritten word: anchor on the next
+                // line's first word, else on the word before the break.
+                if let j = match[i + 1], j > 0 {
+                    if newlines(trailing[j - 1]) < wanted { trailing[j - 1] = token.trailing }
+                } else if let j = match[i], j < output.tokens.count - 1 {
+                    if newlines(trailing[j]) < wanted { trailing[j] = token.trailing }
+                }
             }
         }
         let rebuilt = output.leading + zip(output.tokens, trailing).map { $0.word + $1 }.joined()
-        // Only accept a rebuild that ends with no more breaks than the original had.
-        return breaks(in: rebuilt) <= breaks(in: original) ? rebuilt : corrected
+        // Only accept a rebuild that moves the break count toward the original's.
+        return abs(breaks(in: rebuilt) - breaks(in: original)) <= abs(breaks(in: corrected) - breaks(in: original))
+            ? rebuilt : corrected
+    }
+
+    private static func newlines(_ whitespace: String) -> Int {
+        whitespace.filter(\.isNewline).count
     }
 
     private static func breaks(in text: String) -> Int {

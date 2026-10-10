@@ -115,11 +115,9 @@ def _has_nl(t):
 
 
 def restore_line_breaks(original, corrected):
-    if _nl_count(corrected) >= _nl_count(original):
-        return corrected
     _, src = _word_tokens(original)
     lead, out = _word_tokens(corrected)
-    if not src or not out:
+    if len(src) < 2 or not out:
         return corrected
     key = lambda w: "".join(c for c in w.lower() if c.isalnum())
     a, b = [key(w) for w, _ in src], [key(w) for w, _ in out]
@@ -138,21 +136,25 @@ def restore_line_breaks(original, corrected):
             i += 1
         else:
             j += 1
+    nl = lambda t: sum(c in "\n\r\u000b\u000c\u0085\u2028\u2029" for c in t)
     trailing = [ws for _, ws in out]
     for i in range(n - 1):
         ws = src[i][1]
-        if not _has_nl(ws):
-            continue
-        j = match.get(i + 1)
-        if j is not None and j > 0:
-            if not _has_nl(trailing[j - 1]):
-                trailing[j - 1] = ws
-        else:
-            j = match.get(i)
-            if j is not None and j < m - 1 and not _has_nl(trailing[j]):
+        wanted = nl(ws)
+        j = match.get(i)
+        if j is not None and match.get(i + 1) == j + 1:
+            if nl(trailing[j]) != wanted:
+                trailing[j] = ws
+        elif wanted > 0:
+            jn = match.get(i + 1)
+            if jn is not None and jn > 0:
+                if nl(trailing[jn - 1]) < wanted:
+                    trailing[jn - 1] = ws
+            elif j is not None and j < m - 1 and nl(trailing[j]) < wanted:
                 trailing[j] = ws
     rebuilt = lead + "".join(w + t for (w, _), t in zip(out, trailing))
-    return rebuilt if _nl_count(rebuilt) <= _nl_count(original) else corrected
+    o = _nl_count(original)
+    return rebuilt if abs(_nl_count(rebuilt) - o) <= abs(_nl_count(corrected) - o) else corrected
 
 
 # --- ContractionRestorer.swift ---
