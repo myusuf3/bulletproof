@@ -71,8 +71,12 @@ introduced words in every stored output, no new word is flagged.
 
 ## Caveats and open items
 
-- **Latency:** the longer typed prompt adds about 400 prefill tokens. Swift Qwen p50/p95 measured 1.3/2.6 s, against
-  0.68/1.8 s in the baseline run, but Swift latency varies about ±40% between runs. Do an idle-machine A/B before shipping.
+- **Latency, measured and fixed (#49, #50):** the longer typed prompt (460 vs 158 tokens) made Qwen 1.92x slower
+  (paired A/B), all from re-prefilling the instructions on every call. `LocalModelEngine` now builds the system
+  prompt's KV cache once (`PrefixCacheStore`) and copies it into each session. The shipping config is now
+  **0.57x the original app's median latency** (353 vs 609 ms paired; Swift all-400 p50 1304 → 401 ms, p95
+  2577 → 1837 ms). Outputs are identical on 398/400 (2 near-tie flips, pass unchanged). Apple Intelligence
+  exposes no KV cache, so its latency is unchanged (p50 ~0.68 s).
 - **Apple Intelligence is non-deterministic**: about ±5-10 pp per slice between runs. Its numbers are single runs.
 - **Remaining failures are mostly model under-correction**: pronoun case, homophones in long text, dictation
   soundalikes. Apple Intelligence still expands some slang (0.76).
