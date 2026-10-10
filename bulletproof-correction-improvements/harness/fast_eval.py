@@ -693,7 +693,21 @@ def output_gate(original, output):
         return "droppedContent"
     if drops_markup(original, output):
         return "droppedMarkup"
+    if appends_content(original, output):
+        return "appendedContent"
     return None
+
+
+def appends_content(original, output):
+    """OutputGate.appendsContent."""
+    i, o = original.strip(), output.strip()
+    if not i or len(o) <= len(i) or not o.startswith(i):
+        return False
+    extra = o[len(i):]
+    word = lambda c: unicodedata.category(c)[0] in "LNM"  # letters, numbers, marks (Thai/Indic vowel signs)
+    if word(i[-1]) and word(extra[0]):
+        return False
+    return sum(1 for c in extra if not (c.isspace() or unicodedata.category(c).startswith("P"))) >= 3
 
 
 _TAG = re.compile(r"""</?[A-Za-z][A-Za-z0-9:-]*(?:\s+[A-Za-z_:][\w:.-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*/?>""")

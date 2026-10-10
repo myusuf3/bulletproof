@@ -247,4 +247,16 @@ struct OutputGatedEngineTests {
         // The writer's own symbols, skin tones and flags are fine.
         #expect(OutputGate.rejection(original: "it's $5 \u{1F44D}\u{1F3FD} \u{1F1E8}\u{1F1E6}", output: "It's $5 \u{1F44D}\u{1F3FD} \u{1F1E8}\u{1F1E6}") == nil)
     }
+
+    @Test func rejectsContentAppendedAfterTheWritersText() {
+        let run = String(repeating: "\u{1F64C}\u{1F3FD}\u{1F389}\u{1F680}", count: 20)
+        #expect(OutputGate.rejection(original: run, output: run + String(repeating: "\u{1F64C}\u{1F3FD}\u{1F389}", count: 10))
+                == .appendedContent)
+        #expect(OutputGate.appendsContent(original: "thanks for the help", output: "thanks for the help, see you soon"))
+        // Punctuation, a completed cut-off word, or a corrected text are fine.
+        #expect(!OutputGate.appendsContent(original: "how are you", output: "how are you?"))
+        #expect(!OutputGate.appendsContent(original: "see you tomorr", output: "see you tomorrow"))
+        #expect(!OutputGate.appendsContent(original: "the meeting is at 3", output: "the meeting is at 3pm"))
+        #expect(!OutputGate.appendsContent(original: "teh cat", output: "the cat sat"))
+    }
 }

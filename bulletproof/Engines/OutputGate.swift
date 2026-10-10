@@ -16,6 +16,7 @@ nonisolated enum OutputGate {
         case introducedStructure
         case droppedContent
         case droppedMarkup
+        case appendedContent
         case introducedMisspelling
         case protectedWordRemoved
         case implausibleEdit
@@ -72,6 +73,9 @@ nonisolated enum OutputGate {
         }
         if dropsMarkup(original: original, output: output) {
             return .droppedMarkup
+        }
+        if appendsContent(original: original, output: output) {
+            return .appendedContent
         }
         return nil
     }
@@ -182,6 +186,22 @@ nonisolated enum OutputGate {
     /// backticks are already restored by CodeSpanRestorer.
     private static let markupTag = try! NSRegularExpression(
         pattern: #"</?[A-Za-z][A-Za-z0-9:-]*(?:\s+[A-Za-z_:][\w:.-]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*\s*/?>"#)
+
+    /// The output is the writer's whole text and then more: the model kept
+    /// generating after its echo (a 300-emoji run came back 2.3x long, under
+    /// overExpansion's 3x). Punctuation-only additions ("How are you?") and a
+    /// completed cut-off word ("tomorr" -> "tomorrow") don't count.
+    static func appendsContent(original: String, output: String) -> Bool {
+        let typed = original.trimmingCharacters(in: .whitespacesAndNewlines)
+        let result = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let last = typed.unicodeScalars.last, result.unicodeScalars.count > typed.unicodeScalars.count,
+              result.unicodeScalars.starts(with: typed.unicodeScalars) else { return false }
+        let extra = result.unicodeScalars.dropFirst(typed.unicodeScalars.count)
+        // Letters, numbers and marks (Thai and Indic vowel signs) are word characters.
+        let wordScalar = { (scalar: Unicode.Scalar) in scalar.properties.generalCategory.isWordCharacter }
+        if let first = extra.first, wordScalar(last), wordScalar(first) { return false }
+        return extra.filter { !$0.properties.isWhitespace && !$0.properties.generalCategory.isPunctuation }.count >= 3
+    }
 
     static func dropsMarkup(original: String, output: String) -> Bool {
         let tags = { (text: String) -> [String: Int] in
@@ -315,5 +335,23 @@ nonisolated struct OutputGatedEngine: ProofreadingEngine {
 
     func prewarm() async {
         await wrapped.prewarm()
+    }
+}
+
+private extension Unicode.GeneralCategory {
+    var isWordCharacter: Bool {
+        switch self {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
+             .decimalNumber, .letterNumber, .otherNumber, .nonspacingMark, .spacingMark, .enclosingMark: true
+        default: false
+        }
+    }
+
+    var isPunctuation: Bool {
+        switch self {
+        case .connectorPunctuation, .dashPunctuation, .openPunctuation, .closePunctuation,
+             .initialPunctuation, .finalPunctuation, .otherPunctuation: true
+        default: false
+        }
     }
 }

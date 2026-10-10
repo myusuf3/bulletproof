@@ -60,7 +60,7 @@
   previous character is dropped: skin tones, regional-indicator pairs, ZWJ, VS16, keycaps, Indic and Thai combining marks.
   This affects every `ChatSession` user. The fix would diff by unicodeScalars or UTF-8 bytes. bulletproof avoids it as of #86
   (generateTokens plus one decode). Worth filing upstream with the 👍🏽 repro.
-- **Appended-continuation gate (from #88):** a 300-emoji run (the input pattern ×30) was echoed and then continued (420 → 968
+- ~~Appended-continuation gate~~ (done in #107). Original note (from #88): a 300-emoji run (the input pattern ×30) was echoed and then continued (420 → 968
   code points). That's 2.3×, under overExpansion's 3×. Before #88 it was cut off and pasted instead, so neither version is good.
   Candidate OutputGate rule: the output starts with the whole input and adds 3+ non-punctuation characters. 0 acceptable
   corpus outputs and 0 stored pasted rows would be flagged; it only catches already-rejected guard answers plus this probe.
