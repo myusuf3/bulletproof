@@ -86,7 +86,30 @@ nonisolated enum OutputGate {
     /// line, must survive: a sentence of 4+ words with fewer than half its
     /// words left, or (in multi-line text) a short line with none left, means
     /// content was dropped.
+    /// Two or more of the writer's words deleted outright: aligned to nothing,
+    /// and found nowhere else in the output (so "Me and Sam" -> "Sam and I"
+    /// moves words rather than losing them; close spellings count as kept, as in
+    /// lowOverlap). A repeated word ("the the") isn't
+    /// content. Catches short deletions the per-sentence rule below misses
+    /// ('"I dont know," she said' -> "I don't know,").
+    static func deletesWords(original: String, output: String) -> Bool {
+        let tokens = WordTokens(original)
+        let source = tokens.keys, result = WordTokens(output).keys
+        // Survival as in lowOverlap: kept verbatim or as a close spelling ("Teh" -> "The").
+        let kept = surviving(original.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty },
+                             in: output.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty })
+        var lost = 0
+        for case .changed(let removed, let added) in WordAlignment.steps(source, result) where added.isEmpty {
+            for k in removed where !source[k].isEmpty && !(k > 0 && source[k - 1] == source[k])
+                && !kept.contains(contentKey(Substring(tokens.tokens[k].word))) {
+                lost += 1
+            }
+        }
+        return lost >= 2
+    }
+
     static func dropsContent(original: String, output: String) -> Bool {
+        if deletesWords(original: original, output: output) { return true }
         let inputKeys = original.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
         let outputKeys = output.split(whereSeparator: \.isWhitespace).map(contentKey).filter { !$0.isEmpty }
         let kept = surviving(inputKeys, in: outputKeys)

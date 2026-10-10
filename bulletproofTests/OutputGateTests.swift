@@ -259,4 +259,14 @@ struct OutputGatedEngineTests {
         #expect(!OutputGate.appendsContent(original: "the meeting is at 3", output: "the meeting is at 3pm"))
         #expect(!OutputGate.appendsContent(original: "teh cat", output: "the cat sat"))
     }
+
+    @Test func rejectsShortDeletions() {
+        #expect(OutputGate.rejection(original: "\"I dont know,\" she said", output: "I don't know,") == .droppedContent)
+        #expect(OutputGate.rejection(original: "Thanks for the contract.\n\nBest,\nDana", output: "Thanks for the contract.") == .droppedContent)
+        // Moved words, a removed duplicate, contractions and one-word fixes are fine.
+        #expect(!OutputGate.deletesWords(original: "Me and Sam went home", output: "Sam and I went home"))
+        #expect(!OutputGate.deletesWords(original: "send me the the report", output: "send me the report"))
+        #expect(!OutputGate.deletesWords(original: "I do not know", output: "I don't know"))
+        #expect(!OutputGate.deletesWords(original: "um so we should go", output: "So we should go."))
+    }
 }

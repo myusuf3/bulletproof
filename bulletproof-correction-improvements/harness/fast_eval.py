@@ -811,8 +811,51 @@ def _sentences(line):
     return res
 
 
+def _key_steps(a, b):
+    """WordAlignment.steps on keys: [(i0, i1, j0, j1)] for changed runs."""
+    n, m = len(a), len(b)
+    lcs = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            lcs[i][j] = lcs[i + 1][j + 1] + 1 if a[i] == b[j] else max(lcs[i + 1][j], lcs[i][j + 1])
+    i = j = 0
+    out = []
+    while i < n or j < m:
+        if i < n and j < m and a[i] == b[j]:
+            i += 1
+            j += 1
+            continue
+        i0, j0 = i, j
+        while i < n or j < m:
+            if i < n and j < m and a[i] == b[j]:
+                break
+            if j == m or (i < n and lcs[i + 1][j] >= lcs[i][j + 1]):
+                i += 1
+            else:
+                j += 1
+        out.append((i0, i, j0, j))
+    return out
+
+
+def deletes_words(original, output):
+    """OutputGate.deletesWords."""
+    key = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    words = [w for w, _ in _word_tokens(original)[1]]
+    a = [key(w) for w in words]
+    b = [key(w) for w, _ in _word_tokens(output)[1]]
+    ck = lambda w: "".join(c for c in _fold(w) if c.isalnum())
+    kept = surviving([k for k in (ck(w) for w in original.split()) if k], [k for k in (ck(w) for w in output.split()) if k])
+    lost = 0
+    for i0, i1, j0, j1 in _key_steps(a, b):
+        if j0 == j1:
+            lost += sum(1 for k in range(i0, i1) if a[k] and not (k > 0 and a[k - 1] == a[k]) and ck(words[k]) not in kept)
+    return lost >= 2
+
+
 def drops_content(original, output):
     """OutputGate.dropsContent."""
+    if deletes_words(original, output):
+        return True
     ck = lambda w: "".join(c for c in _fold(w) if c.isalnum())
     kept = surviving([k for k in (ck(w) for w in original.split()) if k], [k for k in (ck(w) for w in output.split()) if k])
     lines = [l for l in re.split("[" + _NEWLINES + "]", original) if l != ""]
