@@ -36,6 +36,20 @@ struct ProofreadPromptTests {
         #expect(result == "the cat")
     }
 
+    @Test func cleanResponseKeepsTheWritersOwnEdgeMarkers() {
+        // SVG/XML: the writer's text itself ends (or starts) with the marker.
+        #expect(ProofreadPrompt.cleanResponse(#"<text x="10">Total revenue</text>"#,
+                                              original: #"<text x="10">Totla revenue</text>"#)
+                == #"<text x="10">Total revenue</text>"#)
+        #expect(ProofreadPrompt.cleanResponse("the label is <text>Submit</text>",
+                                              original: "the label is <text>Sumbit</text>")
+                == "the label is <text>Submit</text>")
+        #expect(ProofreadPrompt.cleanResponse("<text>", original: "<text>") == "<text>")
+        // A doubled wrapper is still a leak.
+        #expect(ProofreadPrompt.cleanResponse("<text>\n<text>Hello world</text>\n</text>", original: "<text>Helo world</text>")
+                == "<text>Hello world</text>")
+    }
+
     @Test func cleanResponseKeepsLiteralMarkersInsideContent() {
         // Users legitimately proofread text ABOUT markup; mid-content markers
         // are content, not leaks.

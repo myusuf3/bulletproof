@@ -90,10 +90,15 @@ nonisolated enum ProofreadPrompt {
     static func cleanResponse(_ response: String, original: String, keepsLowercase: Bool = false,
                               sentenceCases: Bool = false) -> String {
         var output = response.trimmingCharacters(in: .whitespacesAndNewlines)
-        if output.hasPrefix("<text>") {
+        // A marker is a leak unless the writer's own text starts or ends with
+        // it (SVG/XML `<text>` elements); then only a doubled one is a leak.
+        let typed = original.trimmingCharacters(in: .whitespacesAndNewlines)
+        if output.hasPrefix("<text>"), !typed.hasPrefix("<text>")
+            || output.dropFirst("<text>".count).trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("<text>") {
             output.removeFirst("<text>".count)
         }
-        if output.hasSuffix("</text>") {
+        if output.hasSuffix("</text>"), !typed.hasSuffix("</text>")
+            || output.dropLast("</text>".count).trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix("</text>") {
             output.removeLast("</text>".count)
         }
         let restored = restoreEdgeWhitespace(of: original, onto: output)

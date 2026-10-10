@@ -292,9 +292,11 @@ def post_process(original, cleaned, typed):
 
 def clean_response(response, original, typed=False):
     out = response.strip()
-    if out.startswith("<text>"):
+    typed_text = original.strip()
+    # A marker is a leak unless the writer's own text starts or ends with it; then only a doubled one is.
+    if out.startswith("<text>") and (not typed_text.startswith("<text>") or out[len("<text>"):].strip().startswith("<text>")):
         out = out[len("<text>"):]
-    if out.endswith("</text>"):
+    if out.endswith("</text>") and (not typed_text.endswith("</text>") or out[: -len("</text>")].strip().endswith("</text>")):
         out = out[: -len("</text>")]
     lead = re.match(r"\s*", original).group(0)
     trail = re.search(r"\s*$", original).group(0) if original.strip() else ""
