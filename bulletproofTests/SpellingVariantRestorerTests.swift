@@ -19,4 +19,13 @@ struct SpellingVariantRestorerTests {
         #expect(SpellingVariantRestorer.restore(original: "the expence report", corrected: "the expense report") == "the expense report")
         #expect(SpellingVariantRestorer.restore(original: "I love the color", corrected: "I love the color.") == "I love the color.")
     }
+
+    @Test func droppedGFormsComeBack() {
+        #expect(SpellingVariantRestorer.restore(original: "I'm fixin' to head out.", corrected: "I'm fixing to head out.")
+                == "I'm fixin' to head out.")
+        #expect(SpellingVariantRestorer.restore(original: "nothin' to see", corrected: "Nothing to see.") == "Nothin' to see.")
+        #expect(SpellingVariantRestorer.restore(original: "we're goin', ok", corrected: "We're going, ok") == "We're goin', ok")
+        // Without the writer's apostrophe it's a typo the model fixed.
+        #expect(SpellingVariantRestorer.restore(original: "I'm fixin to go", corrected: "I'm fixing to go") == "I'm fixing to go")
+    }
 }

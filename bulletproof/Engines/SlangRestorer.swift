@@ -27,7 +27,7 @@ nonisolated enum SlangRestorer {
         "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"],
         "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"],
         "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"],
-        "msgs": ["messages"], "kk": ["okay"],
+        "msgs": ["messages"], "kk": ["okay"], "smol": ["small"],
         // Weekday and month abbreviations ("thurs" -> "Thursday").
         "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"],
         "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"],

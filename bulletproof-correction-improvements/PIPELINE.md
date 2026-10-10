@@ -50,7 +50,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    model only recased mid-sentence (`thurs` → `Thurs`, `tbh` → `TBH`) gets the writer's casing back (#121).
 2b. `SpellingVariantRestorer`: a listed British spelling the model Americanized comes back (`colour` → `color` →
    `colour`, `organised`, `travelled`, `centre`, `licence`, …, #128). A curated table of ~600 forms, not suffix rules,
-   so real fixes (`four` → `for`, `filled` → `filed`, `expence` → `expense`) are never undone.
+   so real fixes (`four` → `for`, `filled` → `filed`, `expence` → `expense`) are never undone. Dropped-g forms with the writer's
+   apostrophe come back too (`fixin'` → `fixing` → `fixin'`, #130).
 3. `ContractionRestorer`: a single typed contraction expanded by the model gets re-contracted (`wasnt` → `was not` → `wasn't`).
 4. `LineBreakRestorer`: line breaks are made to match the input between aligned words (lost, shrunk or added), and
    the whitespace around each break is copied exactly, which removes the markdown hard-break spaces Qwen adds

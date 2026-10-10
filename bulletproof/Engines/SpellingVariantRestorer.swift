@@ -4,7 +4,8 @@ import Foundation
 /// but models Americanize them ("colour" -> "color", "favourite" ->
 /// "favorite"). Where the writer typed a listed British form and the model
 /// replaced exactly that word with its American form, the writer's spelling
-/// comes back (with the output's capitalization). A curated table, not
+/// comes back (with the output's capitalization), and so does a dropped-g
+/// form ("fixin'" -> "fixing" -> "fixin'"). A curated table, not
 /// suffix rules: "four" -> "for" or "filled" -> "filed" are real fixes.
 nonisolated enum SpellingVariantRestorer {
     static let table: [String: String] = {
@@ -65,6 +66,19 @@ nonisolated enum SpellingVariantRestorer {
             let typedLetters = String(typed.tokens[i].word.filter(\.isLetter))
             let outputWord = words[j]
             let outputLetters = String(outputWord.filter(\.isLetter))
+            var typedWord = typed.tokens[i].word.lowercased().replacingOccurrences(of: "\u{2019}", with: "'")
+            while let last = typedWord.last, ".,;:!?)\"".contains(last) { typedWord.removeLast() }
+            // Dropped-g forms are the writer's voice: "fixin'" written as "fixing" comes back.
+            if typedWord.hasSuffix("in'"), typedLetters.count >= 4, outputLetters.lowercased() == typedLetters.lowercased() + "g" {
+                let leading = outputWord.prefix(while: { !$0.isLetter })
+                var trailing = String(outputWord.reversed().prefix(while: { !$0.isLetter }).reversed())
+                if trailing.hasPrefix("'") || trailing.hasPrefix("\u{2019}") { trailing.removeFirst() }
+                let apostrophe = typed.tokens[i].word.contains("\u{2019}") ? "\u{2019}" : "'"
+                var form = typedLetters.lowercased()
+                if outputLetters.first?.isUppercase == true { form = form.prefix(1).uppercased() + form.dropFirst() }
+                words[j] = leading + form + apostrophe + trailing
+                continue
+            }
             guard let american = table[typedLetters.lowercased()], american == outputLetters.lowercased() else { continue }
             // Writer's letters, output's capitalization of the first letter, output's punctuation.
             var british = typedLetters.lowercased()

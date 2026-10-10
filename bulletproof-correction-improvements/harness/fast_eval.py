@@ -162,7 +162,7 @@ _SLANG = {
     "bday": ["birthday"], "msg": ["message"], "ok": ["okay"], "srsly": ["seriously"],
     "gonna": ["going to"], "wanna": ["want to"], "gotta": ["got to", "have to"], "kinda": ["kind of"],
     "sorta": ["sort of"], "lowkey": ["low-key", "low key"], "mins": ["minutes"], "secs": ["seconds"],
-    "min": ["minute", "minutes"], "hr": ["hour", "hours"], "hrs": ["hours"], "approx": ["approximately"], "info": ["information"], "pic": ["picture", "photo"], "pics": ["pictures", "photos"], "convo": ["conversation"], "abt": ["about"], "cuz": ["because"], "ppl": ["people"], "prob": ["probably"], "tho": ["though", "although"], "thru": ["through"], "wk": ["week"], "wks": ["weeks"], "yr": ["year"], "yrs": ["years"], "esp": ["especially"], "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"], "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"], "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"], "msgs": ["messages"], "kk": ["okay"], "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"], "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"], "sat": ["saturday"], "sun": ["sunday"], "jan": ["january"], "feb": ["february"], "aug": ["august"], "sep": ["september"], "sept": ["september"], "oct": ["october"], "nov": ["november"], "dec": ["december"],
+    "min": ["minute", "minutes"], "hr": ["hour", "hours"], "hrs": ["hours"], "approx": ["approximately"], "info": ["information"], "pic": ["picture", "photo"], "pics": ["pictures", "photos"], "convo": ["conversation"], "abt": ["about"], "cuz": ["because"], "ppl": ["people"], "prob": ["probably"], "tho": ["though", "although"], "thru": ["through"], "wk": ["week"], "wks": ["weeks"], "yr": ["year"], "yrs": ["years"], "esp": ["especially"], "appt": ["appointment"], "mtg": ["meeting"], "sec": ["second", "seconds"], "np": ["no problem"], "jk": ["just kidding"], "omg": ["oh my god", "oh my gosh"], "ttyl": ["talk to you later"], "hbu": ["how about you"], "wyd": ["what are you doing"], "rly": ["really"], "sry": ["sorry"], "msgs": ["messages"], "kk": ["okay"], "smol": ["small"], "mon": ["monday"], "tue": ["tuesday"], "tues": ["tuesday"], "wed": ["wednesday"], "thu": ["thursday"], "thur": ["thursday"], "thurs": ["thursday"], "fri": ["friday"], "sat": ["saturday"], "sun": ["sunday"], "jan": ["january"], "feb": ["february"], "aug": ["august"], "sep": ["september"], "sept": ["september"], "oct": ["october"], "nov": ["november"], "dec": ["december"],
 }
 
 
@@ -487,6 +487,22 @@ def restore_spelling_variants(original, corrected):
         tl = "".join(c for c in typed[i0][0] if c.isalpha())
         ow = words[j0]
         ol = "".join(c for c in ow if c.isalpha())
+        tw = typed[i0][0].lower().replace("\u2019", "'").rstrip(".,;:!?)\"")
+        if tw.endswith("in'") and len(tl) >= 4 and ol.lower() == tl.lower() + "g":  # dropped-g form
+            k = 0
+            while k < len(ow) and not ow[k].isalpha():
+                k += 1
+            e = len(ow)
+            while e > k and not ow[e - 1].isalpha():
+                e -= 1
+            trail = ow[e:]
+            if trail[:1] in ("'", "\u2019"):
+                trail = trail[1:]
+            form = tl.lower()
+            if ol[:1].isupper():
+                form = form[:1].upper() + form[1:]
+            words[j0] = ow[:k] + form + ("\u2019" if "\u2019" in typed[i0][0] else "'") + trail
+            continue
         if _UK_US.get(tl.lower()) != ol.lower():
             continue
         brit = tl.lower()
