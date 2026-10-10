@@ -19,4 +19,17 @@ struct LinkRestorerTests {
                 == "go to https://totally-other.org")
         #expect(LinkRestorer.restore(original: "no links here", corrected: "No links here.") == "No links here.")
     }
+
+    @Test func pathsAndHashtagsAreNeverProofread() {
+        #expect(LinkRestorer.restore(original: #"copy it to C:\Users\bo\Documnets\backup first"#,
+                                     corrected: #"copy it to C:\Users\bo\Documents\backup first"#)
+                == #"copy it to C:\Users\bo\Documnets\backup first"#)
+        #expect(LinkRestorer.restore(original: "posting it with #teh lol", corrected: "posting it with #the lol")
+                == "posting it with #teh lol")
+        #expect(LinkRestorer.restore(original: "GET /v3/users/{id}/prefernces.",
+                                     corrected: "GET /v3/users/{id}/preferences.")
+                == "GET /v3/users/{id}/prefernces.")
+        // Not literals: dates, and/or, single-segment slash commands, headings.
+        #expect(LinkRestorer.links(in: "on 10/12, and/or /remind me\n# Notes").isEmpty)
+    }
 }

@@ -1,12 +1,18 @@
 import Foundation
 
-/// URLs and email addresses are never proofread: a typo-looking domain
-/// ("exmaple.com") is still the address the user meant, and a "fixed" link
-/// silently points somewhere else. Each input link missing from the output is
-/// put back over the output link that replaced it (the closest-spelled new link).
+/// URLs, email addresses, file paths and hashtags are never proofread: a
+/// typo-looking domain ("exmaple.com"), folder ("Documnets") or tag ("#teh")
+/// is still the one the user meant, and a "fixed" one silently points
+/// somewhere else. Each input literal missing from the output is put back
+/// over the output literal that replaced it (the closest-spelled new one).
 nonisolated enum LinkRestorer {
-    private static let pattern = try! NSRegularExpression(
-        pattern: #"https?://[^\s<>()"'`]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+"#)
+    private static let pattern = try! NSRegularExpression(pattern: [
+        #"https?://[^\s<>()"'`]+"#,                              // URL
+        #"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"#,                          // email
+        #"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+"#, // Unix path or route, 2+ segments
+        #"\b[A-Za-z]:\\[^\s"'`]+"#,                              // Windows path
+        #"(?<![\w&#])#[A-Za-z][\w-]*"#,                           // hashtag
+    ].joined(separator: "|"))
 
     static func restore(original: String, corrected: String) -> String {
         let typed = links(in: original)
@@ -15,7 +21,8 @@ nonisolated enum LinkRestorer {
         for link in typed where !text.contains(link) {
             let candidates = links(in: text).filter { !typed.contains($0) }
             guard let replaced = candidates.max(by: { similarity(link, $0) < similarity(link, $1) }),
-                  similarity(link, replaced) >= 0.8,
+                  similarity(link, replaced) >= 0.8
+                    || OutputGate.isCloseSpelling(link.lowercased(), replaced.lowercased()),
                   let range = text.range(of: replaced) else { continue }
             text.replaceSubrange(range, with: link)
         }

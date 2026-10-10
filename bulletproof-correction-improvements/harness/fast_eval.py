@@ -250,7 +250,10 @@ def sentence_case(text):
     return "".join(out)
 
 
-_LINK = re.compile(r"""https?://[^\s<>()"'`]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+""")
+_LINK = re.compile("|".join([
+    r"""https?://[^\s<>()"'`]+""", r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+",
+    r"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+", r"""\b[A-Za-z]:\\[^\s"'`]+""",
+    r"(?<![\w&#])#[A-Za-z][\w-]*"]))
 
 
 def links(text):
@@ -276,7 +279,7 @@ def restore_links(original, corrected):
         if not cands:
             continue
         best = max(cands, key=lambda c: similarity(link.lower(), c.lower()))
-        if similarity(link.lower(), best.lower()) >= 0.8 and best in text:
+        if (similarity(link.lower(), best.lower()) >= 0.8 or _close_spelling(link.lower(), best.lower())) and best in text:
             text = text.replace(best, link, 1)
     return text
 

@@ -44,3 +44,23 @@
 {"id": "s4-b10", "input": "    indented line with a tpyo\nnormal line", "expected": {"kind": "fix", "acceptableOutputs": ["    indented line with a typo\nnormal line"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial2"]}
 {"id": "s5-b11", "input": "✅ deploy done\n❌ tests faild\n⏳ docs pending", "expected": {"kind": "fix", "acceptableOutputs": ["✅ deploy done\n❌ tests failed\n⏳ docs pending"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial2"]}
 {"id": "s5-b12", "input": "TODO(bo): handle the edge case wehn the list is empty", "expected": {"kind": "fix", "acceptableOutputs": ["TODO(bo): handle the edge case when the list is empty"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial2"]}
+{"id": "s5-c01", "input": "the config lives in /usr/local/etc/bulletprof.conf, dont move it", "expected": {"kind": "fix", "acceptableOutputs": ["the config lives in /usr/local/etc/bulletprof.conf, don't move it"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c02", "input": "copy it to C:\\Users\\bo\\Documnets\\backup first", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c03", "input": "upgrade to v2.3.1-rc2 befor friday", "expected": {"kind": "fix", "acceptableOutputs": ["upgrade to v2.3.1-rc2 before friday"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c04", "input": "ping 10.0.0.12 and check the respone time", "expected": {"kind": "fix", "acceptableOutputs": ["ping 10.0.0.12 and check the response time"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c05", "input": "make the header #1e90ff insted of grey", "expected": {"kind": "fix", "acceptableOutputs": ["make the header #1e90ff instead of grey"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c06", "input": "type /remind me tmrw to send the invoce", "expected": {"kind": "fix", "acceptableOutputs": ["type /remind me tmrw to send the invoice"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c07", "input": "thanks @jonh for the quick reveiw", "expected": {"kind": "fix", "acceptableOutputs": ["thanks @jonh for the quick review"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c08", "input": "posting it with #teh and #tbt lol", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s4-c09", "input": "- [ ] write the taks list\n- [x] book the venue", "expected": {"kind": "fix", "acceptableOutputs": ["- [ ] write the task list\n- [x] book the venue"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c10", "input": "read [this artcle](https://example.org/p?id=7) first", "expected": {"kind": "fix", "acceptableOutputs": ["read [this article](https://example.org/p?id=7) first"]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c11", "input": "I don’t think it’s ready, but we’ll see.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c12", "input": "I dont think it’s ready.", "expected": {"kind": "fix", "acceptableOutputs": ["I don’t think it’s ready.", "I don't think it’s ready."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c13", "input": "The total is 1 200 kg.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c14", "input": "family pic 👨‍👩‍👧 so cute", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c15", "input": "שלום! The meeting is tomorow.", "expected": {"kind": "fix", "acceptableOutputs": ["שלום! The meeting is tomorrow."]}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c16", "input": "She ordered café au lait and a croissant.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c17", "input": "Supercalifragilisticexpialidocious is my favourite word.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c18", "input": "?!?!", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s5-c19", "input": "...", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
+{"id": "s1-c20", "input": "Version 3 adds a new API: GET /v3/users/{id}/prefernces.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["adversarial3"]}
