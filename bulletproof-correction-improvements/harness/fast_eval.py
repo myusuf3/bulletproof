@@ -280,7 +280,7 @@ def sentence_case(text):
 _LINK = re.compile("|".join([
     r"""https?://[^\s<>()"'`]+""", r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+",
     r"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+", r"""\b[A-Za-z]:\\[^\s"'`]+""",
-    r"(?<![\w&#])#[A-Za-z][\w-]*"]))
+    r"(?<![\w&#])#[A-Za-z][\w-]*", r"""[^\s"'`]*\\[^\s"'`]+"""]))
 
 
 def links(text):
@@ -303,6 +303,9 @@ def restore_links(original, corrected):
         if link in text:
             continue
         cands = [c for c in links(text) if c not in typed]
+        if not cands and "\\" in link:
+            typed_tokens = set(original.split())
+            cands = [t for t in text.split() if t not in typed_tokens]
         if not cands:
             continue
         best = max(cands, key=lambda c: similarity(link.lower(), c.lower()))
@@ -677,6 +680,8 @@ def output_gate(original, output):
     orig = set(original)
     if any(unicodedata.category(c) == "Cc" and c not in "\n\t\r" and c not in orig for c in output):
         return "introducedControlCharacters"
+    if any(unicodedata.category(c) in ("Sc", "So") and c not in orig for c in output):
+        return "introducedSymbol"
     if len(original) >= 20 and len(output) > len(original) * 3:
         return "overExpansion"
     ow = gate_words(original)

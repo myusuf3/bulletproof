@@ -51,7 +51,8 @@ AppState.makeEngine(recordsStats:, instructions:)                               
    (`milk  \n`, 41% of its multi-line outputs, #77).
 5. `CodeSpanRestorer`: code is never proofread. Fenced ``` blocks come back verbatim (#78), then backticked spans
    are restored, re-quoted or re-wrapped.
-6. `LinkRestorer`: URLs, emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments) and hashtags are never
+6. `LinkRestorer`: URLs, emails, file paths (`/usr/…`, `C:\…`, API routes with 2+ segments), hashtags and any token
+   with a backslash (escapes, LaTeX, `¯\_(ツ)_/¯`, #100) are never
    proofread. An input literal missing from the output goes back over the closest-spelled new one
    (`exmaple.com`, `Documnets`, `#teh` stay as typed, #76, #85).
 7. `ApostropheFixer` (skipped when the text is confidently non-English, so German `im` and French `dont` stay, #73):
@@ -68,7 +69,8 @@ Replay over up to 10,962 stored outputs: every step had 0 pass→fail flips. `ha
 restorer changes a model echo (539 inputs) and that the chain is idempotent.
 
 ## 4. OutputGate (always on), first failing rule wins
-emptyOutput, replacementCharacter, introducedControlCharacters, overExpansion, lowOverlap,
+emptyOutput, replacementCharacter, introducedControlCharacters, **introducedSymbol** (a currency sign or
+symbol/emoji the writer didn't type: AI's "$€1,299.99", #100), overExpansion, lowOverlap,
 **introducedStructure** (new line breaks, `{}[]`, code fences, list or heading markers: answers rewritten as
 bullets or JSON, #27), **droppedContent** (a 4+ word sentence keeps < half its words, or a short line such as a
 sign-off vanishes in multi-line text, #39), **droppedMarkup** (an HTML/XML tag of the input is missing; Apple

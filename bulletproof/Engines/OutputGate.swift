@@ -10,6 +10,7 @@ nonisolated enum OutputGate {
         case emptyOutput
         case replacementCharacter
         case introducedControlCharacters
+        case introducedSymbol
         case overExpansion
         case lowOverlap
         case introducedStructure
@@ -42,6 +43,15 @@ nonisolated enum OutputGate {
         }
         if introducedControl {
             return .introducedControlCharacters
+        }
+        // A proofread never adds a currency sign or symbol/emoji the writer
+        // didn't type: Apple Intelligence wrote "$1,299.99" as "$€1,299.99".
+        let introducedSymbol = output.unicodeScalars.contains { scalar in
+            [.currencySymbol, .otherSymbol].contains(scalar.properties.generalCategory)
+                && !originalScalars.contains(scalar)
+        }
+        if introducedSymbol {
+            return .introducedSymbol
         }
         if original.count >= expansionMinimumCharacters, output.count > original.count * 3 {
             return .overExpansion

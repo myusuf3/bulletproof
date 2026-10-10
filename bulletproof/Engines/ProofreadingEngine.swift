@@ -37,7 +37,7 @@ nonisolated enum ProofreadingError: LocalizedError {
             switch reason {
             case .emptyOutput:
                 "The model returned nothing, so your text was left unchanged."
-            case .replacementCharacter, .introducedControlCharacters:
+            case .replacementCharacter, .introducedControlCharacters, .introducedSymbol:
                 "The model returned garbled text, so your selection was left unchanged."
             case .overExpansion, .lowOverlap, .introducedStructure:
                 "The model rewrote instead of correcting, so your selection was left unchanged."

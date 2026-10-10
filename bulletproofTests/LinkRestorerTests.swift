@@ -32,4 +32,10 @@ struct LinkRestorerTests {
         // Not literals: dates, and/or, single-segment slash commands, headings.
         #expect(LinkRestorer.links(in: "on 10/12, and/or /remind me\n# Notes").isEmpty)
     }
+
+    @Test func backslashEscapesAreNeverProofread() {
+        #expect(LinkRestorer.restore(original: "\u{AF}\\_(\u{30C4})_/\u{AF} idk", corrected: "\u{AF}_(\u{30C4})_/\u{AF} idk")
+                == "\u{AF}\\_(\u{30C4})_/\u{AF} idk")
+        #expect(LinkRestorer.restore(original: "use \\alpha and \\beta", corrected: "Use \\alpha and \\beta.") == "Use \\alpha and \\beta.")
+    }
 }

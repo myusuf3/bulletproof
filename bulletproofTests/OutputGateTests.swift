@@ -239,4 +239,12 @@ struct OutputGatedEngineTests {
         #expect(OutputGate.rejection(original: "if a < b and c > d we stop", output: "If a < b and c > d, we stop.") == nil)
         #expect(OutputGate.rejection(original: "mail me at <bo@example.com> pls", output: "mail me at <bo@example.com> pls") == nil)
     }
+
+    @Test func rejectsIntroducedSymbols() {
+        #expect(OutputGate.rejection(original: "It costs $1,299.99 (plus tax).", output: "It costs $\u{20AC}1,299.99 (plus tax).")
+                == .introducedSymbol)
+        #expect(OutputGate.rejection(original: "great job team", output: "great job team \u{1F389}") == .introducedSymbol)
+        // The writer's own symbols, skin tones and flags are fine.
+        #expect(OutputGate.rejection(original: "it's $5 \u{1F44D}\u{1F3FD} \u{1F1E8}\u{1F1E6}", output: "It's $5 \u{1F44D}\u{1F3FD} \u{1F1E8}\u{1F1E6}") == nil)
+    }
 }

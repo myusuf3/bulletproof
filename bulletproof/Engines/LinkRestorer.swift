@@ -1,6 +1,6 @@
 import Foundation
 
-/// URLs, email addresses, file paths and hashtags are never proofread: a
+/// URLs, email addresses, file paths, hashtags and backslash escapes are never proofread: a
 /// typo-looking domain ("exmaple.com"), folder ("Documnets") or tag ("#teh")
 /// is still the one the user meant, and a "fixed" one silently points
 /// somewhere else. Each input literal missing from the output is put back
@@ -12,14 +12,20 @@ nonisolated enum LinkRestorer {
         #"(?<![\w/:.])(?:~|\.{1,2})?/[\w.{}~-]+(?:/[\w.{}~-]*)+"#, // Unix path or route, 2+ segments
         #"\b[A-Za-z]:\\[^\s"'`]+"#,                              // Windows path
         #"(?<![\w&#])#[A-Za-z][\w-]*"#,                           // hashtag
+        #"[^\s"'`]*\\[^\s"'`]+"#,                                // any token with a backslash (escapes, ¯\_(ツ)_/¯, LaTeX)
     ].joined(separator: "|"))
 
     static func restore(original: String, corrected: String) -> String {
         let typed = links(in: original)
         guard !typed.isEmpty else { return corrected }
         var text = corrected
+        let typedTokens = Set(original.split(whereSeparator: \.isWhitespace).map(String.init))
         for link in typed where !text.contains(link) {
-            let candidates = links(in: text).filter { !typed.contains($0) }
+            var candidates = links(in: text).filter { !typed.contains($0) }
+            // A dropped backslash leaves no literal behind ("¯_(ツ)_/¯"): look at the new plain tokens.
+            if candidates.isEmpty, link.contains("\\") {
+                candidates = text.split(whereSeparator: \.isWhitespace).map(String.init).filter { !typedTokens.contains($0) }
+            }
             guard let replaced = candidates.max(by: { similarity(link, $0) < similarity(link, $1) }),
                   similarity(link, replaced) >= 0.8
                     || OutputGate.isCloseSpelling(link.lowercased(), replaced.lowercased()),
