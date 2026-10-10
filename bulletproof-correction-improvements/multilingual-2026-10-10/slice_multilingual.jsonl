@@ -8,3 +8,7 @@
 {"id": "s1-m08", "input": "Vielen Dank fur deine schnelle Antwort.", "expected": {"kind": "fix", "acceptableOutputs": ["Vielen Dank für deine schnelle Antwort."]}, "errors": ["fur -> für"], "mustPreserve": [], "tags": ["de"]}
 {"id": "s1-m09", "input": "Obrigado pela ajuda, foi muito util.", "expected": {"kind": "fix", "acceptableOutputs": ["Obrigado pela ajuda, foi muito útil."]}, "errors": ["util -> útil"], "mustPreserve": [], "tags": ["pt"]}
 {"id": "s1-m10", "input": "Voce pode me ligar amanha de manha?", "expected": {"kind": "fix", "acceptableOutputs": ["Você pode me ligar amanhã de manhã?"]}, "errors": ["Voce -> Você", "amanha -> amanhã", "manha -> manhã"], "mustPreserve": [], "tags": ["pt"]}
+{"id": "s1-m11", "input": "Ich bin im Büro und warte auf dich.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["de", "apostrophe-trap"]}
+{"id": "s1-m12", "input": "C'est le projet dont je t'ai parlé hier.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fr", "apostrophe-trap"]}
+{"id": "s1-m13", "input": "Im Sommer fahren wir nach Italien.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["de", "apostrophe-trap"]}
+{"id": "s1-m14", "input": "Le livre dont tu parles est très bon.", "expected": {"kind": "unchanged"}, "errors": [], "mustPreserve": [], "tags": ["fr", "apostrophe-trap"]}

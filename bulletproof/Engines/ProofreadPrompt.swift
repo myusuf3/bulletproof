@@ -101,7 +101,8 @@ nonisolated enum ProofreadPrompt {
             original: original, corrected: SlangRestorer.restore(original: original, corrected: restored))
         let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
         let recoded = CodeSpanRestorer.restore(original: original, corrected: rebroken)
-        let apostrophized = ApostropheFixer.fix(recoded)
+        // English-only: "dont" is French ("of which"), "im" German ("in the").
+        let apostrophized = TextLanguage.confidentNonEnglish(recoded) == nil ? ApostropheFixer.fix(recoded) : recoded
         if keepsLowercase { return keepAllLowercase(original: original, corrected: apostrophized) }
         return sentenceCases ? sentenceCase(apostrophized) : apostrophized
     }

@@ -107,7 +107,9 @@ _APOS = {"".join(c for c in f.lower() if c.isalpha()): f for f in _APOS_FORMS}
 
 
 def fix_apostrophes(text):
-    """ApostropheFixer.fix."""
+    """ApostropheFixer.fix, applied only when the text isn't confidently non-English (cleanResponse)."""
+    if any(w.lower() in _APOS for w in re.findall(r"[A-Za-z]+", text)) and text_dictionaries([text])[0]:
+        return text
     code = code_spans(text)
     out, i, n = [], 0, len(text)
     while i < n:
