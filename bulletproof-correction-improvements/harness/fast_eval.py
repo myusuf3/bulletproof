@@ -438,9 +438,75 @@ def restore_typography(original, text):
     return text
 
 
+def _uk_us_table():
+    """SpellingVariantRestorer.table, built the same way."""
+    t = {"grey": "gray", "greys": "grays", "cheque": "check", "cheques": "checks", "programme": "program",
+         "programmes": "programs", "mould": "mold", "plough": "plow", "aluminium": "aluminum", "tyre": "tire",
+         "tyres": "tires", "kerb": "curb", "sceptic": "skeptic", "sceptical": "skeptical", "jewellery": "jewelry",
+         "pyjamas": "pajamas", "manoeuvre": "maneuver", "catalogue": "catalog", "dialogue": "dialog",
+         "analogue": "analog", "enrol": "enroll", "enrolment": "enrollment", "fulfil": "fulfill",
+         "fulfilment": "fulfillment", "instalment": "installment", "judgement": "judgment", "ageing": "aging",
+         "licence": "license", "defence": "defense", "offence": "offense", "pretence": "pretense",
+         "practise": "practice", "marvellous": "marvelous", "woollen": "woolen", "towards": "toward",
+         "whilst": "while", "amongst": "among"}
+    for w in ["colour", "favour", "flavour", "honour", "humour", "labour", "neighbour", "harbour", "rumour",
+              "vapour", "vigour", "behaviour", "endeavour", "savour", "odour", "armour", "clamour", "glamour",
+              "parlour", "saviour", "splendour", "tumour", "valour"]:
+        for suf in ["", "s", "ed", "ing", "ite", "ites", "able", "ably", "er", "ers", "ful", "less"]:
+            t[w + suf] = w[:-3] + "or" + suf
+    for stem in ["organis", "realis", "recognis", "apologis", "analys", "emphasis", "criticis", "prioritis",
+                 "summaris", "categoris", "authoris", "customis", "minimis", "maximis", "optimis", "finalis",
+                 "standardis", "memoris", "utilis", "visualis", "mobilis", "personalis", "specialis",
+                 "familiaris", "paralys", "catalys"]:
+        for suf in ["e", "es", "ed", "ing", "ation", "ations", "er", "ers"]:
+            t[stem + suf] = stem[:-1] + "z" + suf
+    for w in ["centre", "metre", "litre", "theatre", "fibre", "calibre", "sombre", "spectre", "lustre", "meagre"]:
+        t[w] = w[:-2] + "er"
+        t[w + "s"] = w[:-2] + "ers"
+    for stem in ["travel", "cancel", "label", "model", "level", "fuel", "total", "signal", "channel", "dial",
+                 "marvel", "counsel", "jewel", "shovel", "tunnel"]:
+        for suf in ["ed", "ing", "er", "ers"]:
+            t[stem + "l" + suf] = stem + suf
+    return t
+
+
+_UK_US = _uk_us_table()
+
+
+def restore_spelling_variants(original, corrected):
+    """SpellingVariantRestorer.restore."""
+    _, typed = _word_tokens(original)
+    lead, out = _word_tokens(corrected)
+    if not typed or not out:
+        return corrected
+    key = lambda w: "".join(c for c in w.lower() if c.isalnum())
+    a, b = [key(w) for w, _ in typed], [key(w) for w, _ in out]
+    words = [w for w, _ in out]
+    pairs = [(i, j) for i0, i1, j0, j1 in _key_steps(a, b) if i1 - i0 == j1 - j0 for i, j in zip(range(i0, i1), range(j0, j1))]
+    for i0, j0 in pairs:
+        tl = "".join(c for c in typed[i0][0] if c.isalpha())
+        ow = words[j0]
+        ol = "".join(c for c in ow if c.isalpha())
+        if _UK_US.get(tl.lower()) != ol.lower():
+            continue
+        brit = tl.lower()
+        if ol[:1].isupper():
+            brit = brit[:1].upper() + brit[1:]
+        if len(ol) > 1 and ol.isupper():
+            brit = brit.upper()
+        k = 0
+        while k < len(ow) and not ow[k].isalpha():
+            k += 1
+        e = len(ow)
+        while e > k and not ow[e - 1].isalpha():
+            e -= 1
+        words[j0] = ow[:k] + brit + ow[e:]
+    return lead + "".join(w + t for w, (_, t) in zip(words, out))
+
+
 def post_process(original, cleaned, typed):
     """The restorer chain after edge-whitespace restore, as in cleanResponse."""
-    x = restore_typography(original, match_apostrophe_style(original, fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_slang(original, cleaned))))))))
+    x = restore_typography(original, match_apostrophe_style(original, fix_apostrophes(restore_links(original, restore_code_spans(original, restore_line_breaks(original, restore_contractions(original, restore_spelling_variants(original, restore_slang(original, cleaned)))))))))
     return keep_all_lowercase(original, x) if typed else sentence_case(x)
 
 

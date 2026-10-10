@@ -30,7 +30,7 @@ inputs += ["", "   ", "ok", "🙂", "`", "``", "a`b", "```\nlet x = 1\n```", "- 
            "U.S.A.", "e.g. this", "email me at bo@ex.com", "https://example.com/a_b?c=d", "\n\nhello\n\n",
            "tab\tseparated", "C'est", "rock 'n' roll", "‘quoted’ text", "dont_cache = 1"]
 
-restorers = [("slang", F.restore_slang), ("contraction", F.restore_contractions),
+restorers = [("slang", F.restore_slang), ("spelling-variant", F.restore_spelling_variants), ("contraction", F.restore_contractions),
              ("linebreak", F.restore_line_breaks), ("code", F.restore_code_spans),
              ("links", F.restore_links), ("typography", F.restore_typography),
              ("apostrophe-style", F.match_apostrophe_style), ("lowercase", F.keep_all_lowercase)]

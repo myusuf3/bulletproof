@@ -102,8 +102,8 @@ nonisolated enum ProofreadPrompt {
             output.removeLast("</text>".count)
         }
         let restored = restoreEdgeWhitespace(of: original, onto: output)
-        let recontracted = ContractionRestorer.restore(
-            original: original, corrected: SlangRestorer.restore(original: original, corrected: restored))
+        let recontracted = ContractionRestorer.restore(original: original, corrected: SpellingVariantRestorer.restore(
+            original: original, corrected: SlangRestorer.restore(original: original, corrected: restored)))
         let rebroken = LineBreakRestorer.restore(original: original, corrected: recontracted)
         let recoded = LinkRestorer.restore(
             original: original, corrected: CodeSpanRestorer.restore(original: original, corrected: rebroken))
