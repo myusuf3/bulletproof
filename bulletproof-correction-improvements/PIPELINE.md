@@ -70,4 +70,5 @@ are within 1 token of the same length) is exceeded. Qwen rejections on 400 cases
   `BULLETPROOF_EVAL_CORPUS=<dir>` (fresh-2026-10-10, long-2026-10-10).
 - Live: `SWIFT_VERIFY=1 ./.auto/measure.sh` (both engines, all 400, about 11 min). Both engines are deterministic, so one run is an exact A/B.
 - Latency: `BULLETPROOF_EVAL_LATENCY_AB=1 ./.auto/measure.sh` (paired, ABBA-interleaved).
+- Restorer invariants: `python3 harness/invariants.py` (echo no-op + idempotence over every stored output).
 - Gotcha: only run SWIFT_VERIFY while the `.auto/*.sh` scripts are committed and unedited (#32-#34).
