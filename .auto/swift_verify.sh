@@ -1,10 +1,15 @@
 #!/bin/bash
 # Verification: full Swift runner, both engines, 400 cases. Emits METRIC lines.
+# Body in a function: bash parses it all before running, so editing this file
+# mid-run can't make bash resume mid-line (#33 "tination: command not found").
+main() {
 set -euo pipefail
 cd /Users/myusuf3/workspace/bulletproof
 D=bulletproof-correction-improvements/baseline-2026-10-09
 OUT=/tmp/eval-both && rm -rf $OUT && mkdir -p $OUT
 cat $D/corpus/slice*.jsonl > $OUT/all.jsonl
+# Never share the build DB with a still-running xcodebuild (#32 crashed on that).
+while pgrep -x xcodebuild >/dev/null; do sleep 5; done
 cp $D/runner/ZZScratchCorrectionEval.swift bulletproofTests/
 trap 'rm -f bulletproofTests/ZZScratchCorrectionEval.swift' EXIT
 TEST_RUNNER_BULLETPROOF_EVAL_CORPUS=$OUT/all.jsonl TEST_RUNNER_BULLETPROOF_EVAL_OUT=$OUT/outputs.jsonl \
@@ -31,3 +36,6 @@ for split in ("dev", "holdout"):
                 if r.get(k) is not None:
                     print(f"METRIC {tag}_{k.split(' ')[0]}={r[k]}")
 PY
+}
+main "$@"
+exit $?

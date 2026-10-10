@@ -115,6 +115,11 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#31 verification (Swift, both engines, `run-2026-10-09-both-engines-30/`):** AI vs the original baseline, all 400:
+  pass .638 → .705, errors_fixed .826 → .885, lowercase .32 → .71, slang .42 → .67, linebreaks .67 → 1.0, rejections
+  4.75% → 1.25%. **Bug from #29:** the style `@Guide` also applies on the dictation path, so AI leaves transcripts
+  lowercase (s3 missed-caps fails 2 → 15, AI s3 .66 → .59). Fix next with a dictation-specific `@Generable`. Also AI
+  code_kept .65 (it strips or replaces backticks, 10 cases).
 - **#30 kept: `LineBreakRestorer`** (new `bulletproof/Engines/LineBreakRestorer.swift`, chained after ContractionRestorer
   in cleanResponse; Python mirror `restore_line_breaks`). Replay on #29's AI outputs: fired 9/400, 7 fail→pass, AI
   linebreaks .40 → .87, AI pass .698 → .715. It never fires on Qwen (Qwen keeps breaks).

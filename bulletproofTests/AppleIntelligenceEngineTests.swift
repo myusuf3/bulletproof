@@ -22,6 +22,11 @@ struct AppleIntelligenceEngineTests {
         }
     }
 
+    @Test func dictationPromptSelectsTheTranscriptGuide() {
+        #expect(!AppleIntelligenceEngine().isDictation)
+        #expect(AppleIntelligenceEngine(instructions: ProofreadPrompt.dictationInstructions).isDictation)
+    }
+
     @Test func oversizedInputThrowsBeforeAvailabilityCheck() async {
         // Runs on machines without Apple Intelligence (CI) - the cap must be
         // checked before availability or this throws engineUnavailable there.

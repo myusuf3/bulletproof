@@ -1,6 +1,9 @@
 #!/bin/bash
 # Fast eval of the current ProofreadPrompt.instructions on Qwen3-4B (temp 0).
 # Emits METRIC lines; writes .auto/runs/{dev,guard}.jsonl and last.json.
+# Body in a function: bash parses it all before running, so editing this file
+# mid-run can't make bash resume mid-line (#33 "tination: command not found").
+main() {
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Opt-in checkpoint: the real Swift runner on both engines (~15 min, not the fast loop).
@@ -15,3 +18,6 @@ python3 -c "import sys; sys.path.insert(0,'$B/harness'); import fast_eval as F; 
 $PY $B/harness/fast_eval.py --cases $B/splits/guard.jsonl --out .auto/runs/guard.jsonl 2> >(grep -v -i warn >&2)
 $PY $B/harness/fast_eval.py --split dev --out .auto/runs/dev.jsonl 2> >(grep -v -i warn >&2)
 python3 $B/harness/report.py .auto/runs/dev.jsonl .auto/runs/guard.jsonl --json .auto/runs/last.json
+}
+main "$@"
+exit $?

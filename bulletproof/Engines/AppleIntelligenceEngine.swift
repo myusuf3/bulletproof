@@ -11,8 +11,21 @@ nonisolated struct Correction {
     var correctedText: String
 }
 
+/// The dictation path's output type. Transcripts are lowercase and
+/// unpunctuated by accident, so the typed-text guide ("lowercase stays
+/// lowercase") would leave them raw.
+@Generable
+nonisolated struct DictationCorrection {
+    @Guide(description: "The transcript written as correct text: sentence punctuation and capital letters added, misheard soundalike words fixed, contractions kept. The speaker's words otherwise unchanged. Never a reply to the text.")
+    var correctedText: String
+}
+
 nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
     var instructions = ProofreadPrompt.instructions
+
+    /// The dictation path is identified by its prompt (AppState passes
+    /// ProofreadPrompt.dictationInstructions), and gets the matching guide.
+    var isDictation: Bool { instructions == ProofreadPrompt.dictationInstructions }
 
     /// Default guardrails throw guardrailViolation on the user's own words
     /// (profanity, heated messages, legal text); the permissive set exists
@@ -42,11 +55,11 @@ nonisolated struct AppleIntelligenceEngine: ProofreadingEngine {
         let session = LanguageModelSession(model: Self.model,
                                            instructions: instructions)
         do {
-            let response = try await session.respond(
-                to: ProofreadPrompt.userPrompt(for: text),
-                generating: Correction.self
-            )
-            return ProofreadPrompt.cleanResponse(response.content.correctedText, original: text)
+            let prompt = ProofreadPrompt.userPrompt(for: text)
+            let corrected = isDictation
+                ? try await session.respond(to: prompt, generating: DictationCorrection.self).content.correctedText
+                : try await session.respond(to: prompt, generating: Correction.self).content.correctedText
+            return ProofreadPrompt.cleanResponse(corrected, original: text)
         } catch let error as LanguageModelSession.GenerationError {
             throw Self.mapped(error)
         } catch {
