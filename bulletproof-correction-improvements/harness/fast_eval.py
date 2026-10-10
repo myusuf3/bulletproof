@@ -210,7 +210,36 @@ def output_gate(original, output):
     ow = gate_words(original)
     if len(ow) >= 8 and len(ow & gate_words(output)) * 2 < len(ow):
         return "lowOverlap"
+    if introduces_structure(original, output):
+        return "introducedStructure"
     return None
+
+
+_NEWLINES = "\n\r\u000b\u000c\u0085\u2028\u2029"
+
+
+def introduces_structure(original, output):
+    """OutputGate.introducesStructure: added line breaks, braces/brackets/fences, list or heading markers."""
+    breaks = lambda t: sum(c in _NEWLINES for c in t.strip())
+    if breaks(output) > breaks(original):
+        return True
+    if any(m in output and m not in original for m in ("{", "}", "[", "]", "```")):
+        return True
+
+    def starts(t):
+        res = set()
+        for line in re.split("[" + _NEWLINES + "]", t):
+            line = line.lstrip()
+            if not line:
+                continue
+            if line[0] in "-*•#":
+                res.add(line[0])
+            else:
+                m = re.match(r"\d+", line)
+                if m and line[m.end():].startswith(". "):
+                    res.add("1.")
+        return res
+    return bool(starts(output) - starts(original))
 
 
 def introduced_words(original, output):

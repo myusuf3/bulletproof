@@ -12,6 +12,7 @@ nonisolated enum OutputGate {
         case introducedControlCharacters
         case overExpansion
         case lowOverlap
+        case introducedStructure
         case introducedMisspelling
         case protectedWordRemoved
         case implausibleEdit
@@ -50,7 +51,34 @@ nonisolated enum OutputGate {
            originalWords.intersection(words(of: output)).count * 2 < originalWords.count {
             return .lowOverlap
         }
+        if introducesStructure(original: original, output: output) {
+            return .introducedStructure
+        }
         return nil
+    }
+
+    /// A correction never adds layout: new line breaks, list markers, JSON or
+    /// code fences mean the model *answered* request-like text ("summarize
+    /// this in bullets", "convert to JSON") - short answers like those slip
+    /// past lowOverlap because they reuse the input's words.
+    static func introducesStructure(original: String, output: String) -> Bool {
+        let lineBreaks = { (text: String) in
+            text.trimmingCharacters(in: .whitespacesAndNewlines).filter(\.isNewline).count
+        }
+        if lineBreaks(output) > lineBreaks(original) { return true }
+        for marker in ["{", "}", "[", "]", "```"] where output.contains(marker) && !original.contains(marker) {
+            return true
+        }
+        let lineStarts = { (text: String) -> Set<String> in
+            Set(text.split(whereSeparator: \.isNewline).compactMap { line in
+                let trimmed = line.drop(while: \.isWhitespace)
+                if let first = trimmed.first, "-*•#".contains(first) { return String(first) }
+                if trimmed.prefix(while: \.isNumber).count > 0,
+                   trimmed.drop(while: \.isNumber).hasPrefix(". ") { return "1." }
+                return nil
+            })
+        }
+        return !lineStarts(output).subtracting(lineStarts(original)).isEmpty
     }
 
     /// Case-preserved words the output contains that the original didn't -

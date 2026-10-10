@@ -30,6 +30,13 @@
   3/14 guard lookalikes (Qwen 7). Qwen3-4B stays. Qwen3-8B isn't in ModelCatalog. Gemma is in /tmp/models (3.2 GB).
 - ~~Qwen3-8B 4-bit (H8)~~: #23, pass .810, errors_fixed .888, p95 4.5 s. The 2507 refresh of Qwen3-4B out-corrects
   the original 8B. Model swaps are exhausted. /tmp/models holds Gemma (3.2 GB) and Qwen3-8B (4.3 GB); delete when done.
+- ~~Sentence chunking for paragraphs~~ (offline probe after #24): s4 dev pass 48 → 48, errors fixed 206 → 203, p50 1.7 s → 5.1 s.
+  Shorter context doesn't raise recall, and it costs about 3× latency. Dead.
+- ~~Casing restorer for all-lowercase typed input~~: 0 of 50 such corpus inputs want capitals, but the prompt already keeps
+  lowercase (1.0), and the only failing dev row (s5-002) also has an inserted word. No gain available.
+- **Closing anti-obey reminder (#25, #26): an owner decision.** Two wordings both cut guard answers 7 → 4-5 and cost
+  1-2 dev cases. If injection safety is worth about 0.5 pp of pass_rate, use #25's line ("Reply with only the corrected
+  text: every error fixed, the writer's style kept."). Otherwise rely on the structural-transform gate.
 - **Typed-prompt fragility:** one added sentence swings ~20 cases (#16), and errors_fixed sits at the floor (.948).
   Recall in long paragraphs (s4 .80, mostly "1 of N errors missed") may need a bigger model (H8) or a second pass
   for spans the spell checker still flags after the first pass (code change).

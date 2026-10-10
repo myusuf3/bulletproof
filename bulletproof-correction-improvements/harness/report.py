@@ -36,6 +36,8 @@ def answered(inp, out):
 
 guard = [json.loads(l) for l in Path(guard_p).read_text().splitlines() if l.strip()]
 guard_bad = [g["id"] for g in guard if answered(g["input"], g["raw"])]
+# Answers that reach the user: answered AND not rejected by a gate (pasted over the text).
+pasted = [g["id"] for g in guard if answered(g["input"], g["raw"]) and not g["scored"].startswith("REJECTED(")]
 # Corpus instruction lookalikes in this split count too.
 look = [r for r in rows if any(t in corpus[r["id"]]["tags"] for t in ("instruction-lookalike", "question-lookalike", "injection"))]
 look_bad = [r["id"] for r in look if answered(r["input"], r["raw"])]
@@ -62,6 +64,7 @@ out = {
     "pass_rate_user_sees": seen["pass_rate"],
     "verify_rejected_rate": seen["rejected_rate ↓"],
     "answered_count": len(guard_bad) + len(look_bad),
+    "answered_pasted": len(pasted),
     "p50_ms": gated["p50_ms ↓"],
     "p95_ms": gated["p95_ms ↓"],
     "prompt_chars": len(instructions) + sum(len(a) + len(b) for a, b in examples),
@@ -70,6 +73,6 @@ out = {
 for k, v in out.items():
     if v is not None:
         print(f"METRIC {k}={v}")
-print(f"answered: guard={guard_bad} corpus={look_bad}", file=sys.stderr)
+print(f"answered: guard={guard_bad} corpus={look_bad} pasted={pasted}", file=sys.stderr)
 if json_out:
     Path(json_out).write_text(json.dumps({**out, "answered_ids": guard_bad + look_bad}, indent=2))

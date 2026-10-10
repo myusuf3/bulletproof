@@ -115,6 +115,12 @@ Also look at `.auto/runs/guard.jsonl` raw outputs when `answered_count` moves.
 2. Record the result below. Don't tune on the holdout failures.
 
 ## What's Been Tried
+- **#24 kept: `ContractionRestorer`** (new `bulletproof/Engines/ContractionRestorer.swift`, called from
+  `ProofreadPrompt.cleanResponse`, so both engines get it; Python mirror `fast_eval.restore_contractions`). It re-contracts a
+  single typed contraction-shaped word that the model replaced with its expansion. +2 dev cases, and it fires on 3/400 rows, all correct.
+  Scope note: this is an app-code change outside the original "prompt only" scope, made because the prompt
+  couldn't hold the keep-contractions policy (#16). Deterministic post-fixes like this one only change the rows they
+  fire on, so judge them by exact flips, not the 3-case noise rule.
 - #20 (dictation v3, "misheard word: use the soundalike, never delete"): +1 incidental case, and the targeted
   misses (s3-034 dropped "to", s3-046 witch→What, s3-017 who's) didn't move. Both prompts have converged. Remaining
   levers are outside the loop's files (see ideas.md: structural-transform gate, second pass, bigger model, Apple Intelligence run).
