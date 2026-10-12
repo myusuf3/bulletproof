@@ -40,14 +40,15 @@ nonisolated enum HotkeySlot: CaseIterable {
             // of the practice drill. Transcripts need punctuation and
             // capitals that typed casual text must not get.
             AppState.shared.proofreadDictation
-                ? AppState.shared.makeEngine(recordsStats: false,
+                ? AppState.shared.makeEngine(choice: AppState.shared.effectiveDictationEngine,
+                                             recordsStats: false,
                                              instructions: ProofreadPrompt.dictationInstructions)
                 : nil
         },
         shortcutDisplay: { AppState.shared.dictationShortcut.displayString },
         surface: SystemDictationSurface(recorder: dictationRecorder,
                                         deviceUID: { AppState.shared.microphoneUID }),
-        engineLabel: { AppState.shared.engineChoice.telemetryLabel }
+        engineLabel: { AppState.shared.effectiveDictationEngine.telemetryLabel }
     )
 
     /// Set by the onboarding practice step while visible. While installed and

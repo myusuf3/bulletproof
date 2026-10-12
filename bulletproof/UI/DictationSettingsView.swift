@@ -19,10 +19,33 @@ struct DictationSettingsView: View {
                 }
                 SettingDivider()
                 SettingRow(title: "Proofread dictation",
-                           description: "Runs what you said through your proofreading engine before it's typed. Adds a moment.") {
+                           description: "Runs what you said through a proofreading engine before it's typed. Adds a moment.") {
                     Toggle("", isOn: $appState.proofreadDictation)
                         .labelsHidden()
                         .toggleStyle(.switch)
+                }
+                if appState.proofreadDictation {
+                    SettingDivider()
+                    SettingRow(title: "Dictation engine", description: dictationEngineDescription) {
+                        Picker("", selection: $appState.dictationEngineChoice) {
+                            Text("Same as Proofreading (\(Self.name(of: appState.engineChoice)))")
+                                .tag(EngineChoice?.none)
+                            Divider()
+                            Text("Apple Intelligence").tag(Optional(EngineChoice.appleIntelligence))
+                            ForEach(appState.downloads.installedProofreadingModelIDs, id: \.self) { id in
+                                Text(ModelCatalog.displayName(for: id))
+                                    .tag(Optional(EngineChoice.local(modelID: id)))
+                            }
+                            if case .local(let id) = appState.dictationEngineChoice,
+                               !appState.downloads.installedProofreadingModelIDs.contains(id) {
+                                Text("\(ModelCatalog.displayName(for: id)) (missing)")
+                                    .tag(Optional(EngineChoice.local(modelID: id)))
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .fixedSize()
+                    }
                 }
             }
 
@@ -93,6 +116,21 @@ struct DictationSettingsView: View {
                 microphoneStatus = MicrophonePermission.status
                 try? await Task.sleep(for: .seconds(1))
             }
+        }
+    }
+
+    private var dictationEngineDescription: String {
+        if case .local(let id) = appState.dictationEngineChoice,
+           !appState.downloads.installedProofreadingModelIDs.contains(id) {
+            return "This model's files are missing, so dictation uses your proofreading engine. Re-download it in Models or pick another."
+        }
+        return "The engine that fixes dictation. A local model runs on this Mac and loads while you speak."
+    }
+
+    private static func name(of choice: EngineChoice) -> String {
+        switch choice {
+        case .appleIntelligence: "Apple Intelligence"
+        case .local(let id): ModelCatalog.displayName(for: id)
         }
     }
 

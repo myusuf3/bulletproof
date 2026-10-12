@@ -65,12 +65,19 @@ private struct FakeSpeechEngine: SpeechToTextEngine {
     func prewarm() async {}
 }
 
+private final class DictationPrewarmCounter: @unchecked Sendable {
+    private(set) var count = 0
+    func increment() { count += 1 }
+}
+
 private struct FakeProofreader: ProofreadingEngine {
     var fails = false
+    var prewarms = DictationPrewarmCounter()
     func proofread(_ text: String) async throws -> String {
         if fails { throw ProofreadingError.timedOut }
         return text.capitalized
     }
+    func prewarm() async { prewarms.increment() }
 }
 
 @MainActor
@@ -204,6 +211,25 @@ struct DictationControllerTests {
         await dictate(controller, surface)
 
         #expect(surface.pastedText == "Hello World")
+    }
+
+    @Test func theProofreaderLoadsWhileTheUserIsStillTalking() async {
+        // A local model unloads when idle; loading it after the release
+        // would add seconds to the wait dictation exists to keep short.
+        let surface = FakeDictationSurface()
+        surface.recorded = speech
+        surface.holdsCap = true
+        let proofreader = FakeProofreader()
+        let controller = makeController(surface, proofreader: proofreader)
+
+        controller.keyDown()
+        for _ in 0..<100 where proofreader.prewarms.count == 0 { await Task.yield() }
+        #expect(proofreader.prewarms.count == 1)
+        #expect(surface.isRecording)
+        controller.keyUp()
+        while !controller.isIdle { await Task.yield() }
+        #expect(surface.pastedText == "Hello World")
+        surface.releaseOldestCap()
     }
 
     @Test func failedProofreadStillTypesWhatWasSaid() async {

@@ -82,9 +82,12 @@ nonisolated struct LocalModelEngine: ProofreadingEngine {
     }
 
     /// The residency cache is single-flight, so this coalesces with the real
-    /// request that follows it.
+    /// request that follows it. Building the instructions' prefix cache here
+    /// too keeps its prefill (~460 tokens) off the first request after a load.
     func prewarm() async {
-        _ = try? await runtime.resource(for: modelDirectory)
+        guard let container = try? await runtime.resource(for: modelDirectory) else { return }
+        _ = await PrefixCacheStore.shared.cache(for: instructions, container: container,
+                                                parameters: Self.parameters(for: ""))
     }
 
     /// The generation budget in tokens, or nil when the text can't fit. The
