@@ -86,10 +86,40 @@ struct ModelStoreTests {
 
     @Test @MainActor func deleteAllModelsFallsBackToAppleIntelligence() throws {
         try makeDirectory("mlx-community/model-x", files: ["config.json": "{}"])
-        let appState = AppState(store: store)
+        let appState = AppState(store: store, defaults: Self.scratchDefaults())
         appState.engineChoice = .local(modelID: "mlx-community/model-x")
+        appState.dictationEngineChoice = .local(modelID: "mlx-community/model-x")
         appState.deleteAllModels()
         #expect(appState.engineChoice == .appleIntelligence)
+        #expect(appState.dictationEngineChoice == nil)
         #expect(store.installedModelIDs().isEmpty)
+    }
+
+    /// Tests run inside bulletproof.app, so writing UserDefaults.standard here
+    /// used to overwrite the real app's engine and speech settings.
+    @Test @MainActor func appStatePersistsOnlyToItsOwnDefaults() {
+        let defaults = Self.scratchDefaults()
+        let before = UserDefaults.standard.dictionaryRepresentation()["speechModel"] as? String
+        let appState = AppState(store: store, defaults: defaults)
+        appState.speechModel = before == SpeechModelChoice.whistle.rawValue ? .appleSpeech : .whistle
+        appState.dictationEngineChoice = .appleIntelligence
+
+        #expect(defaults.string(forKey: "speechModel") == appState.speechModel.rawValue)
+        #expect(defaults.data(forKey: "dictationEngineChoice") != nil)
+        #expect(UserDefaults.standard.string(forKey: "speechModel") == before)
+        #expect(AppState(store: store, defaults: defaults).dictationEngineChoice == .appleIntelligence)
+    }
+
+    @Test @MainActor func sharedStateUsesScratchDefaultsUnderTheTestHost() {
+        let before = UserDefaults.standard.object(forKey: "playSoundOnFix") as? Bool
+        AppState.shared.playSoundOnFix.toggle()
+        defer { AppState.shared.playSoundOnFix.toggle() }
+        #expect(UserDefaults.standard.object(forKey: "playSoundOnFix") as? Bool == before)
+        #expect(UserDefaults(suiteName: AppState.testDefaultsSuite)!.object(forKey: "playSoundOnFix") as? Bool
+                == AppState.shared.playSoundOnFix)
+    }
+
+    private static func scratchDefaults() -> UserDefaults {
+        UserDefaults(suiteName: "ModelStoreTests-\(UUID().uuidString)")!
     }
 }

@@ -9,7 +9,20 @@ nonisolated enum EngineChoice: Codable, Hashable {
 
 @MainActor @Observable
 final class AppState {
-    static let shared = AppState()
+    /// Tests run inside bulletproof.app, which shares the bundle ID (and so
+    /// the preferences) of the copy in /Applications. Under the test host the
+    /// shared state gets a scratch domain, so no test can rewrite the user's
+    /// real engine, speech model, or dictation settings.
+    static let shared = AppState(defaults: AppDelegate.isTestHost(environment: ProcessInfo.processInfo.environment)
+        ? scratchDefaults() : .standard)
+
+    nonisolated static let testDefaultsSuite = "com.mahdiyusuf.bulletproof.tests"
+
+    private static func scratchDefaults() -> UserDefaults {
+        let defaults = UserDefaults(suiteName: testDefaultsSuite)!
+        defaults.removePersistentDomain(forName: testDefaultsSuite)
+        return defaults
+    }
 
     private static let engineChoiceKey = "engineChoice"
     private static let shortcutKey = "proofreadShortcut"
@@ -24,7 +37,7 @@ final class AppState {
     var engineChoice: EngineChoice {
         didSet {
             if let data = try? JSONEncoder().encode(engineChoice) {
-                UserDefaults.standard.set(data, forKey: Self.engineChoiceKey)
+                defaults.set(data, forKey: Self.engineChoiceKey)
             }
             // Switching engines frees the ~3 GB resident model immediately
             // instead of waiting out the idle timer.
@@ -36,7 +49,7 @@ final class AppState {
     var shortcut: KeyCombo {
         didSet {
             if let data = try? JSONEncoder().encode(shortcut) {
-                UserDefaults.standard.set(data, forKey: Self.shortcutKey)
+                defaults.set(data, forKey: Self.shortcutKey)
             }
             HotkeyDispatcher.shared.registerOrNotify(shortcut)
         }
@@ -45,35 +58,35 @@ final class AppState {
     /// Experimental scored gate (default off until tuned): double-check
     /// every correction with the local model before pasting.
     var verifyCorrectionsEnabled: Bool {
-        didSet { UserDefaults.standard.set(verifyCorrectionsEnabled, forKey: Self.verifyCorrectionsKey) }
+        didSet { defaults.set(verifyCorrectionsEnabled, forKey: Self.verifyCorrectionsKey) }
     }
 
     /// Subtle tick when a correction lands in place. Default on.
     var playSoundOnFix: Bool {
-        didSet { UserDefaults.standard.set(playSoundOnFix, forKey: Self.fixSoundKey) }
+        didSet { defaults.set(playSoundOnFix, forKey: Self.fixSoundKey) }
     }
 
     var dictationShortcut: KeyCombo {
         didSet {
             if let data = try? JSONEncoder().encode(dictationShortcut) {
-                UserDefaults.standard.set(data, forKey: Self.dictationShortcutKey)
+                defaults.set(data, forKey: Self.dictationShortcutKey)
             }
             HotkeyDispatcher.shared.registerOrNotify(dictationShortcut, for: .dictation)
         }
     }
 
     var speechModel: SpeechModelChoice {
-        didSet { UserDefaults.standard.set(speechModel.rawValue, forKey: Self.speechModelKey) }
+        didSet { defaults.set(speechModel.rawValue, forKey: Self.speechModelKey) }
     }
 
     /// CoreAudio UID of the chosen input; nil follows the system default.
     var microphoneUID: String? {
-        didSet { UserDefaults.standard.set(microphoneUID, forKey: Self.microphoneKey) }
+        didSet { defaults.set(microphoneUID, forKey: Self.microphoneKey) }
     }
 
     /// Run dictated text through the proofreading engine before inserting.
     var proofreadDictation: Bool {
-        didSet { UserDefaults.standard.set(proofreadDictation, forKey: Self.proofreadDictationKey) }
+        didSet { defaults.set(proofreadDictation, forKey: Self.proofreadDictationKey) }
     }
 
     /// The engine that proofreads dictation; nil follows engineChoice. Lets
@@ -82,9 +95,9 @@ final class AppState {
     var dictationEngineChoice: EngineChoice? {
         didSet {
             if let dictationEngineChoice, let data = try? JSONEncoder().encode(dictationEngineChoice) {
-                UserDefaults.standard.set(data, forKey: Self.dictationEngineChoiceKey)
+                defaults.set(data, forKey: Self.dictationEngineChoiceKey)
             } else {
-                UserDefaults.standard.removeObject(forKey: Self.dictationEngineChoiceKey)
+                defaults.removeObject(forKey: Self.dictationEngineChoiceKey)
             }
         }
     }
@@ -107,41 +120,45 @@ final class AppState {
         }
     }
 
-    let onboarding = OnboardingProgress()
+    let onboarding: OnboardingProgress
     let store: ModelStore
     let downloads: ModelDownloadManager
     let activity = MenuBarActivity()
-    let history = CorrectionHistory()
+    let history: CorrectionHistory
+    private let defaults: UserDefaults
 
-    init(store: ModelStore = ModelStore()) {
+    init(store: ModelStore = ModelStore(), defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        self.onboarding = OnboardingProgress(defaults: defaults)
+        self.history = CorrectionHistory(defaults: defaults)
         self.store = store
         self.downloads = ModelDownloadManager(store: store)
-        if let data = UserDefaults.standard.data(forKey: Self.engineChoiceKey),
+        if let data = defaults.data(forKey: Self.engineChoiceKey),
            let saved = try? JSONDecoder().decode(EngineChoice.self, from: data) {
             engineChoice = saved
         } else {
             engineChoice = Self.defaultEngineChoice(installed: store.installedModelIDs())
         }
-        if let data = UserDefaults.standard.data(forKey: Self.shortcutKey),
+        if let data = defaults.data(forKey: Self.shortcutKey),
            let saved = try? JSONDecoder().decode(KeyCombo.self, from: data) {
             shortcut = saved
         } else {
             shortcut = .default
         }
-        if let data = UserDefaults.standard.data(forKey: Self.dictationShortcutKey),
+        if let data = defaults.data(forKey: Self.dictationShortcutKey),
            let saved = try? JSONDecoder().decode(KeyCombo.self, from: data) {
             dictationShortcut = saved
         } else {
             dictationShortcut = .dictationDefault
         }
-        speechModel = UserDefaults.standard.string(forKey: Self.speechModelKey)
+        speechModel = defaults.string(forKey: Self.speechModelKey)
             .flatMap(SpeechModelChoice.init(rawValue:)) ?? .appleSpeech
-        microphoneUID = UserDefaults.standard.string(forKey: Self.microphoneKey)
-        proofreadDictation = UserDefaults.standard.bool(forKey: Self.proofreadDictationKey)
-        dictationEngineChoice = UserDefaults.standard.data(forKey: Self.dictationEngineChoiceKey)
+        microphoneUID = defaults.string(forKey: Self.microphoneKey)
+        proofreadDictation = defaults.bool(forKey: Self.proofreadDictationKey)
+        dictationEngineChoice = defaults.data(forKey: Self.dictationEngineChoiceKey)
             .flatMap { try? JSONDecoder().decode(EngineChoice.self, from: $0) }
-        verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
-        playSoundOnFix = UserDefaults.standard.object(forKey: Self.fixSoundKey) as? Bool ?? true
+        verifyCorrectionsEnabled = defaults.bool(forKey: Self.verifyCorrectionsKey)
+        playSoundOnFix = defaults.object(forKey: Self.fixSoundKey) as? Bool ?? true
         store.cleanupPartials()
         downloads.onInstalled = { [weak self] id in self?.adoptRecommendedModelIfUnchosen(id) }
     }
@@ -160,7 +177,7 @@ final class AppState {
     }
 
     private func adoptRecommendedModelIfUnchosen(_ id: String) {
-        let saved = UserDefaults.standard.data(forKey: Self.engineChoiceKey) != nil
+        let saved = defaults.data(forKey: Self.engineChoiceKey) != nil
         if Self.shouldAdopt(installedID: id, hasSavedChoice: saved) {
             engineChoice = .local(modelID: id)
         }
