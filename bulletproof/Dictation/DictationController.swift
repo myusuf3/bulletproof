@@ -47,8 +47,14 @@ nonisolated enum DictationOverlayPhase: Equatable {
     func frontmostAppID() -> pid_t? { system.frontmostAppID() }
     func heldModifiers() -> NSEvent.ModifierFlags { system.heldModifiers() }
     func postPaste() { system.postPaste() }
-    func show(_ phase: DictationOverlayPhase) { DictationOverlayController.shared.show(phase, levels: recorder.levels) }
-    func hideOverlay() { DictationOverlayController.shared.hide() }
+    func show(_ phase: DictationOverlayPhase) {
+        AppState.shared.activity.dictating = phase == .listening || phase == .transcribing
+        DictationOverlayController.shared.show(phase, levels: recorder.levels)
+    }
+    func hideOverlay() {
+        AppState.shared.activity.dictating = false
+        DictationOverlayController.shared.hide()
+    }
     func notify(title: String, body: String) { system.notify(title: title, body: body) }
     func sleep(for duration: Duration) async { await system.sleep(for: duration) }
 }

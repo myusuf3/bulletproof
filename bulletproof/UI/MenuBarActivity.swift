@@ -16,6 +16,9 @@ final class MenuBarActivity {
     /// per render, so the "pulse" must be driven by state changes - SwiftUI
     /// animations never tick in the status bar.
     private(set) var pulseTick = false
+    /// True while hold-to-talk is listening or transcribing; the menu bar shows
+    /// the dictation glyph (set by SystemDictationSurface).
+    var dictating = false
 
     let showDelay: Duration
     let minimumShow: Duration

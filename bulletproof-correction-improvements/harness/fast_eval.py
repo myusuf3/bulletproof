@@ -36,8 +36,11 @@ EDITSPAN_SWIFT = REPO / "bulletproof/Engines/EditSpan.swift"
 # dev/holdout split is ignored and every case in that corpus runs. Default: the 400-case corpus.
 CORPUS = Path(os.environ["BULLETPROOF_EVAL_CORPUS"]) if os.environ.get("BULLETPROOF_EVAL_CORPUS") \
     else ROOT / "baseline-2026-10-09/corpus"
-MODEL_DIR = Path.home() / "Library/Application Support/bulletproof/Models/mlx-community/Qwen3-4B-Instruct-2507-4bit"
-CACHE = HERE / "cache"
+# BULLETPROOF_EVAL_MODEL_DIR evaluates another MLX model directory (e.g. the fine-tune). Generations are
+# cached per prompt hash only, so also point the cache elsewhere when switching models.
+MODEL_DIR = Path(os.environ["BULLETPROOF_EVAL_MODEL_DIR"]) if os.environ.get("BULLETPROOF_EVAL_MODEL_DIR") \
+    else Path.home() / "Library/Application Support/bulletproof/Models/mlx-community/Qwen3-4B-Instruct-2507-4bit"
+CACHE = HERE / "cache" if not os.environ.get("BULLETPROOF_EVAL_MODEL_DIR") else HERE / "cache" / hashlib.sha1(str(MODEL_DIR).encode()).hexdigest()[:12]
 SPELLCHECK = HERE / "bin/spellcheck"
 MAX_KV = 4096
 MAX_SPANS_TO_SCORE = 4

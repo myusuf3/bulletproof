@@ -19,6 +19,25 @@ nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
     /// Repo files to fetch; nil downloads the whole snapshot. Speech repos
     /// ship training checkpoints ten times the size of the runtime model.
     var files: [String]? = nil
+    /// Repo folder holding the MLX build; only its files are fetched, and they
+    /// install at the model root. The fine-tune repo keeps bf16 weights (7.6 GB)
+    /// at its root and the 4-bit MLX model in `mlx-4bit/`.
+    var subfolder: String? = nil
+
+    /// (remote path, path inside the installed model directory, size) for each
+    /// file to download, after the `files` and `subfolder` filters.
+    func downloadPlan(_ listed: [HFFile]) -> [(remote: String, local: String, size: Int64?)] {
+        listed.compactMap { file in
+            var local = file.rfilename
+            if let subfolder {
+                let prefix = subfolder.hasSuffix("/") ? subfolder : subfolder + "/"
+                guard local.hasPrefix(prefix) else { return nil }
+                local.removeFirst(prefix.count)
+            }
+            guard files?.contains(local) ?? true, !local.isEmpty else { return nil }
+            return (file.rfilename, local, file.size)
+        }
+    }
 }
 
 /// Curated downloads: speech-to-text for dictation, and proofreading
@@ -28,7 +47,23 @@ nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
 /// can download but not run. Gemma 4 E4B joins once mlx-swift-lm registers
 /// the gemma4 architecture (ml-explore/mlx-swift-lm#282).
 nonisolated enum ModelCatalog {
+    /// The app's own fine-tune: listed first, and the default engine once installed.
+    static let recommendedProofreaderID = "myusuf3/bulletproof-qwen3-4b-finetune"
+
     static let all: [CatalogModel] = [
+        CatalogModel(
+            // Qwen3 4B fine-tuned for bulletproof (LoRA merged, MLX 4-bit, group 64;
+            // HF tag run5-final). Full app pipeline, 945-case eval: 96.3% pass vs
+            // 91.0% for the base Qwen, 0/14 request lookalikes answered. Model card
+            // has the details. The default proofreader once installed.
+            id: ModelCatalog.recommendedProofreaderID,
+            displayName: "Bulletproof Proofreader (Qwen3 4B, fine-tuned)",
+            blurb: "Tuned for this app: fixes errors, keeps your style",
+            approxDownloadBytes: 2_263_000_000,
+            speed: 4,
+            accuracy: 5,
+            subfolder: "mlx-4bit"
+        ),
         CatalogModel(
             id: "mlx-community/Qwen3-4B-Instruct-2507-4bit",
             displayName: "Qwen3 4B Instruct (4-bit)",

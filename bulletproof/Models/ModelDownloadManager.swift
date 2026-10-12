@@ -14,6 +14,9 @@ final class ModelDownloadManager {
     let store: ModelStore
     private let client: HuggingFaceClient
     private var tasks: [String: Task<Void, Never>] = [:]
+    /// Called with the repo id after a download installs (AppState adopts the
+    /// recommended proofreader this way).
+    var onInstalled: ((String) -> Void)?
 
     init(store: ModelStore, client: HuggingFaceClient = HuggingFaceClient()) {
         self.store = store
@@ -82,8 +85,7 @@ final class ModelDownloadManager {
         let store = store
         let partial = store.partialDirectory(for: model.id)
         do {
-            let files = try await client.listFiles(repo: model.id)
-                .filter { model.files?.contains($0.rfilename) ?? true }
+            let files = model.downloadPlan(try await client.listFiles(repo: model.id))
             let totalBytes = files.compactMap(\.size).reduce(0, +)
             try? FileManager.default.removeItem(at: partial)
             try FileManager.default.createDirectory(at: partial, withIntermediateDirectories: true)
@@ -98,13 +100,15 @@ final class ModelDownloadManager {
                         self.states[model.id] = .downloading(completedBytes: base + written, totalBytes: totalBytes)
                     }
                 }
+                let destination = partial.appendingPathComponent(file.local)
+                try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(),
+                                                        withIntermediateDirectories: true)
                 let download = FileDownload(
-                    destination: partial.appendingPathComponent(file.rfilename),
+                    destination: destination,
                     onBytesWritten: { throttle.update($0) }
                 )
-                try await download.run(from: HuggingFaceClient.downloadURL(repo: model.id, file: file.rfilename))
-                if let mismatch = DownloadIntegrity.sizeMismatch(
-                        at: partial.appendingPathComponent(file.rfilename), expected: file.size) {
+                try await download.run(from: HuggingFaceClient.downloadURL(repo: model.id, file: file.remote))
+                if let mismatch = DownloadIntegrity.sizeMismatch(at: destination, expected: file.size) {
                     throw URLError(.cannotWriteToFile, userInfo: [NSLocalizedDescriptionKey: mismatch])
                 }
                 completedBytes += file.size ?? 0
@@ -115,6 +119,7 @@ final class ModelDownloadManager {
             try Task.checkCancellation()
             try store.finalize(model.id)
             states[model.id] = .installed(bytes: store.sizeOnDisk(of: model.id))
+            onInstalled?(model.id)
         } catch {
             try? FileManager.default.removeItem(at: partial)
             if error is CancellationError || (error as? URLError)?.code == .cancelled {

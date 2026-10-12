@@ -1,36 +1,48 @@
 import SwiftUI
 
-/// The status item: blinks between outline and filled seal while a proofread
-/// is in flight, and shows an orange exclamation seal briefly on failure.
-/// The blink is state-driven (see MenuBarActivity.pulseTick) because SwiftUI
-/// animations never tick inside a MenuBarExtra label.
+/// The status item, drawn from the template images in Assets.xcassets:
+/// MenuBarDefault at rest, MenuBarDictation while hold-to-talk is listening or
+/// transcribing, and MenuBarProofreading alternating with the default glyph
+/// while a proofread is in flight. A failure shows an orange exclamation seal
+/// briefly. The blink is state-driven (see MenuBarActivity.pulseTick) because
+/// SwiftUI animations never tick inside a MenuBarExtra label.
 struct MenuBarIcon: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let activity = AppState.shared.activity
-        Image(systemName: symbolName(for: activity))
-            .foregroundStyle(activity.phase == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
-            .accessibilityLabel(accessibilityLabel(for: activity.phase))
+        Group {
+            if activity.phase == .failed {
+                Image(systemName: "exclamationmark.seal.fill").foregroundStyle(.orange)
+            } else {
+                Image(Self.imageName(for: activity, reduceMotion: reduceMotion))
+                    .renderingMode(.template)
+            }
+        }
+        .accessibilityLabel(Self.accessibilityLabel(for: activity))
     }
 
-    private func symbolName(for activity: MenuBarActivity) -> String {
-        switch activity.phase {
-        case .idle:
-            "checkmark.seal"
-        case .working:
-            // Reduce Motion: steady filled seal instead of blinking.
-            reduceMotion || activity.pulseTick ? "checkmark.seal.fill" : "checkmark.seal"
-        case .failed:
-            "exclamationmark.seal.fill"
+    static func imageName(for activity: MenuBarActivity, reduceMotion: Bool) -> String {
+        imageName(phase: activity.phase, dictating: activity.dictating,
+                  pulseTick: activity.pulseTick, reduceMotion: reduceMotion)
+    }
+
+    /// Pure mapping, unit-tested. Reduce Motion: a steady proofreading glyph instead of blinking.
+    nonisolated static func imageName(phase: MenuBarActivity.Phase, dictating: Bool,
+                                      pulseTick: Bool, reduceMotion: Bool) -> String {
+        if dictating { return "MenuBarDictation" }
+        switch phase {
+        case .working: return reduceMotion || pulseTick ? "MenuBarProofreading" : "MenuBarDefault"
+        case .idle, .failed: return "MenuBarDefault"
         }
     }
 
-    private func accessibilityLabel(for phase: MenuBarActivity.Phase) -> String {
-        switch phase {
-        case .idle: "bulletproof"
-        case .working: "bulletproof - proofreading"
-        case .failed: "bulletproof - proofread failed"
+    private static func accessibilityLabel(for activity: MenuBarActivity) -> String {
+        if activity.dictating { return "bulletproof - dictating" }
+        switch activity.phase {
+        case .idle: return "bulletproof"
+        case .working: return "bulletproof - proofreading"
+        case .failed: return "bulletproof - proofread failed"
         }
     }
 }
