@@ -17,14 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      # Latest Xcode on the runner (betas included): Icon Composer .icon files written by Xcode 27
-      # crash Xcode 26's actool ("Could not open bulletproof.icon").
-      - name: Select latest Xcode
+      # Pinned to the release Xcode that builds the shipped app (27.0, 27A266a).
+      # The app icon is an Xcode 27 Icon Composer file (Xcode 26's actool
+      # crashes on it), and the image's newest Xcode (27.2) is a beta.
+      - name: Select Xcode 27.0
         run: |
-          ls -d /Applications/Xcode*.app
-          DEVELOPER_DIR="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)/Contents/Developer"
+          DEVELOPER_DIR=/Applications/Xcode_27.0.app/Contents/Developer
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           "$DEVELOPER_DIR/usr/bin/xcodebuild" -version
+          "$DEVELOPER_DIR/usr/bin/xcodebuild" -version | grep -qx 'Build version 27A266a'
 
       # MLX compiles its Metal kernels from source; the toolchain component is
       # not preinstalled on runner images.
