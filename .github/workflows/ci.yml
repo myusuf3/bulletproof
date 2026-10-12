@@ -12,14 +12,17 @@ concurrency:
 
 jobs:
   build-and-test:
-    runs-on: macos-26
+    runs-on: xcode-27  # Xcode 27 image (public preview): the app icon is an Xcode 27 Icon Composer file
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - name: Select latest Xcode 26
+      # Latest Xcode on the runner (betas included): Icon Composer .icon files written by Xcode 27
+      # crash Xcode 26's actool ("Could not open bulletproof.icon").
+      - name: Select latest Xcode
         run: |
-          DEVELOPER_DIR="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)/Contents/Developer"
+          ls -d /Applications/Xcode*.app
+          DEVELOPER_DIR="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)/Contents/Developer"
           echo "DEVELOPER_DIR=$DEVELOPER_DIR" >> "$GITHUB_ENV"
           "$DEVELOPER_DIR/usr/bin/xcodebuild" -version
 

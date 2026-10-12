@@ -88,7 +88,7 @@ final class AppState {
            let saved = try? JSONDecoder().decode(EngineChoice.self, from: data) {
             engineChoice = saved
         } else {
-            engineChoice = .appleIntelligence
+            engineChoice = Self.defaultEngineChoice(installed: store.installedModelIDs())
         }
         if let data = UserDefaults.standard.data(forKey: Self.shortcutKey),
            let saved = try? JSONDecoder().decode(KeyCombo.self, from: data) {
@@ -109,6 +109,27 @@ final class AppState {
         verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
         playSoundOnFix = UserDefaults.standard.object(forKey: Self.fixSoundKey) as? Bool ?? true
         store.cleanupPartials()
+        downloads.onInstalled = { [weak self] id in self?.adoptRecommendedModelIfUnchosen(id) }
+    }
+
+    /// With no saved choice: the app's fine-tune when it's installed, otherwise
+    /// Apple Intelligence (which needs no download).
+    nonisolated static func defaultEngineChoice(installed: [String]) -> EngineChoice {
+        installed.contains(ModelCatalog.recommendedProofreaderID)
+            ? .local(modelID: ModelCatalog.recommendedProofreaderID) : .appleIntelligence
+    }
+
+    /// Downloading the recommended model switches to it unless the user has
+    /// ever picked an engine themselves (an explicit choice is never overridden).
+    nonisolated static func shouldAdopt(installedID: String, hasSavedChoice: Bool) -> Bool {
+        installedID == ModelCatalog.recommendedProofreaderID && !hasSavedChoice
+    }
+
+    private func adoptRecommendedModelIfUnchosen(_ id: String) {
+        let saved = UserDefaults.standard.data(forKey: Self.engineChoiceKey) != nil
+        if Self.shouldAdopt(installedID: id, hasSavedChoice: saved) {
+            engineChoice = .local(modelID: id)
+        }
     }
 
     /// The single seam the service provider and UI use to get an engine.

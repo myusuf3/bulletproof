@@ -102,4 +102,13 @@ struct MenuBarActivityTests {
         #expect(activity.failureShow == .seconds(2))
         #expect(activity.pulseInterval == .milliseconds(500))
     }
+
+    @Test func iconMapsEachStateToItsTemplateImage() {
+        #expect(MenuBarIcon.imageName(phase: .idle, dictating: false, pulseTick: false, reduceMotion: false) == "MenuBarDefault")
+        #expect(MenuBarIcon.imageName(phase: .working, dictating: false, pulseTick: true, reduceMotion: false) == "MenuBarProofreading")
+        #expect(MenuBarIcon.imageName(phase: .working, dictating: false, pulseTick: false, reduceMotion: false) == "MenuBarDefault")
+        #expect(MenuBarIcon.imageName(phase: .working, dictating: false, pulseTick: false, reduceMotion: true) == "MenuBarProofreading")
+        #expect(MenuBarIcon.imageName(phase: .idle, dictating: true, pulseTick: false, reduceMotion: false) == "MenuBarDictation")
+        #expect(MenuBarIcon.imageName(phase: .working, dictating: true, pulseTick: true, reduceMotion: false) == "MenuBarDictation")
+    }
 }
