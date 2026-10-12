@@ -68,7 +68,8 @@ nonisolated enum DictationOverlayPhase: Equatable {
 
     private enum State {
         case idle
-        case recording(session: Int, target: pid_t?, engine: any SpeechToTextEngine)
+        case recording(session: Int, target: pid_t?, engine: any SpeechToTextEngine,
+                       proofreader: (any ProofreadingEngine)?)
         case transcribing
     }
 
@@ -128,6 +129,11 @@ nonisolated enum DictationOverlayPhase: Equatable {
 
         let engine = makeEngine()
         Task { await engine.prewarm() }
+        // Load the proofreading model while the user talks - a local model
+        // unloads after idle minutes, and reloading it after the release
+        // would land on the wait dictation is meant to keep short.
+        let proofreader = makeProofreader()
+        if let proofreader { Task { await proofreader.prewarm() } }
         do {
             try surface.startRecording()
         } catch {
@@ -136,17 +142,18 @@ nonisolated enum DictationOverlayPhase: Equatable {
         }
         session += 1
         let current = session
-        state = .recording(session: current, target: surface.frontmostAppID(), engine: engine)
+        state = .recording(session: current, target: surface.frontmostAppID(), engine: engine,
+                           proofreader: proofreader)
         surface.show(.listening)
         Task {
             await surface.sleep(for: maximumRecording)
-            guard case .recording(current, _, _) = state else { return }
+            guard case .recording(current, _, _, _) = state else { return }
             keyUp()
         }
     }
 
     func keyUp() {
-        guard case .recording(_, let target, let engine) = state else { return }
+        guard case .recording(_, let target, let engine, let proofreader) = state else { return }
         let samples = surface.stopRecording()
         guard samples.count >= Self.minimumSamples else {
             state = .idle
@@ -157,11 +164,12 @@ nonisolated enum DictationOverlayPhase: Equatable {
         surface.show(.transcribing)
         Task {
             defer { state = .idle }
-            await finish(samples, engine: engine, target: target)
+            await finish(samples, engine: engine, proofreader: proofreader, target: target)
         }
     }
 
-    func finish(_ samples: [Float], engine: any SpeechToTextEngine, target: pid_t?) async {
+    func finish(_ samples: [Float], engine: any SpeechToTextEngine,
+                proofreader: (any ProofreadingEngine)?, target: pid_t?) async {
         let transcript: String
         do {
             transcript = try await engine.transcribe(samples)
@@ -179,7 +187,7 @@ nonisolated enum DictationOverlayPhase: Equatable {
         // must be counted: a silent fallback to the raw transcript used to be
         // invisible in proofreadStats (keys "dictation:<engine>|<outcome>").
         var text = transcript
-        if let proofreader = makeProofreader() {
+        if let proofreader {
             let start = ContinuousClock.now
             let outcome: ProofreadOutcome
             do {

@@ -70,6 +70,22 @@ struct ModelCatalogTests {
         #expect(!AppState.shouldAdopt(installedID: "mlx-community/gemma-3-4b-it-4bit", hasSavedChoice: false))
     }
 
+    @Test func dictationEngineFollowsProofreadingUnlessSetAndUsable() {
+        let fineTune = EngineChoice.local(modelID: ModelCatalog.recommendedProofreaderID)
+        let installed = [ModelCatalog.recommendedProofreaderID]
+        // Unset: whatever proofreads typed text.
+        #expect(AppState.dictationEngine(choice: nil, proofreading: .appleIntelligence, installed: installed)
+                == .appleIntelligence)
+        // Its own pick wins, in either direction.
+        #expect(AppState.dictationEngine(choice: fineTune, proofreading: .appleIntelligence, installed: installed)
+                == fineTune)
+        #expect(AppState.dictationEngine(choice: .appleIntelligence, proofreading: fineTune, installed: installed)
+                == .appleIntelligence)
+        // A deleted model falls back instead of failing every dictation.
+        #expect(AppState.dictationEngine(choice: fineTune, proofreading: .appleIntelligence, installed: [])
+                == .appleIntelligence)
+    }
+
     @Test func speechModelsNeverOfferThemselvesAsProofreaders() {
         let installed = [ModelCatalog.whistle.id, ModelCatalog.proofreading[0].id, "mlx-community/retired-model"]
         #expect(ModelCatalog.proofreadingIDs(installed: installed)

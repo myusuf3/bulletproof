@@ -19,6 +19,7 @@ final class AppState {
     private static let speechModelKey = "speechModel"
     private static let microphoneKey = "microphoneUID"
     private static let proofreadDictationKey = "proofreadDictation"
+    private static let dictationEngineChoiceKey = "dictationEngineChoice"
 
     var engineChoice: EngineChoice {
         didSet {
@@ -75,6 +76,37 @@ final class AppState {
         didSet { UserDefaults.standard.set(proofreadDictation, forKey: Self.proofreadDictationKey) }
     }
 
+    /// The engine that proofreads dictation; nil follows engineChoice. Lets
+    /// dictation run the fast local fine-tune while typed text stays on
+    /// another engine.
+    var dictationEngineChoice: EngineChoice? {
+        didSet {
+            if let dictationEngineChoice, let data = try? JSONEncoder().encode(dictationEngineChoice) {
+                UserDefaults.standard.set(data, forKey: Self.dictationEngineChoiceKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: Self.dictationEngineChoiceKey)
+            }
+        }
+    }
+
+    /// The engine dictation actually runs.
+    var effectiveDictationEngine: EngineChoice {
+        Self.dictationEngine(choice: dictationEngineChoice, proofreading: engineChoice,
+                             installed: store.installedModelIDs())
+    }
+
+    /// Dictation's own pick while it's usable; a local model whose files are
+    /// gone falls back to the proofreading engine rather than failing every
+    /// dictation into the raw transcript.
+    nonisolated static func dictationEngine(choice: EngineChoice?, proofreading: EngineChoice,
+                                            installed: [String]) -> EngineChoice {
+        switch choice {
+        case nil: proofreading
+        case .appleIntelligence: .appleIntelligence
+        case .local(let id): installed.contains(id) ? .local(modelID: id) : proofreading
+        }
+    }
+
     let onboarding = OnboardingProgress()
     let store: ModelStore
     let downloads: ModelDownloadManager
@@ -106,6 +138,8 @@ final class AppState {
             .flatMap(SpeechModelChoice.init(rawValue:)) ?? .appleSpeech
         microphoneUID = UserDefaults.standard.string(forKey: Self.microphoneKey)
         proofreadDictation = UserDefaults.standard.bool(forKey: Self.proofreadDictationKey)
+        dictationEngineChoice = UserDefaults.standard.data(forKey: Self.dictationEngineChoiceKey)
+            .flatMap { try? JSONDecoder().decode(EngineChoice.self, from: $0) }
         verifyCorrectionsEnabled = UserDefaults.standard.bool(forKey: Self.verifyCorrectionsKey)
         playSoundOnFix = UserDefaults.standard.object(forKey: Self.fixSoundKey) as? Bool ?? true
         store.cleanupPartials()
@@ -135,8 +169,9 @@ final class AppState {
     /// The single seam the service provider and UI use to get an engine.
     /// recordsStats is false only for the onboarding practice run, whose
     /// canned typos must not become drill material. Dictation passes
-    /// ProofreadPrompt.dictationInstructions.
-    func makeEngine(recordsStats: Bool = true,
+    /// ProofreadPrompt.dictationInstructions and its own engine choice.
+    func makeEngine(choice: EngineChoice? = nil,
+                    recordsStats: Bool = true,
                     instructions: String = ProofreadPrompt.instructions) -> any ProofreadingEngine {
         #if DEBUG
         // CI runners have no Apple Intelligence; end-to-end tests exercise the
@@ -146,7 +181,7 @@ final class AppState {
         }
         #endif
         // Gate inside the recorder so history only ever holds accepted output.
-        switch engineChoice {
+        switch choice ?? engineChoice {
         case .appleIntelligence:
             return RecordingEngine(wrapped: scoredIfEnabled(
                 OutputGatedEngine(wrapped: AppleIntelligenceEngine(instructions: instructions))),
@@ -195,6 +230,7 @@ final class AppState {
         } else {
             Task { await LocalModelRuntime.shared.evictNow() }
         }
+        if case .local = dictationEngineChoice { dictationEngineChoice = nil }
         speechModel = .appleSpeech
         for id in store.installedModelIDs() {
             downloads.delete(id: id)
