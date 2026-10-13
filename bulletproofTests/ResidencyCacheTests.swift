@@ -106,10 +106,10 @@ struct ResidencyCacheTests {
         let loader = FakeLoader()
         let cache = makeCache(loader)
         _ = try await cache.resource(for: dirA)
-        await cache.retainOnly(dirA)
+        await cache.retainOnly([dirA, dirB])
         _ = try await cache.resource(for: dirA)
         #expect(loader.loads == 1)
-        await cache.retainOnly(nil)
+        await cache.retainOnly([dirB])
         _ = try await cache.resource(for: dirA)
         #expect(loader.loads == 2)
     }

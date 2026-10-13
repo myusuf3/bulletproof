@@ -39,10 +39,7 @@ final class AppState {
             if let data = try? JSONEncoder().encode(engineChoice) {
                 defaults.set(data, forKey: Self.engineChoiceKey)
             }
-            // Switching engines frees the ~3 GB resident model immediately
-            // instead of waiting out the idle timer.
-            let keep: URL? = if case .local(let id) = engineChoice { store.directory(for: id) } else { nil }
-            Task { await LocalModelRuntime.shared.retainOnly(keep) }
+            releaseUnusedModels()
         }
     }
 
@@ -86,7 +83,10 @@ final class AppState {
 
     /// Run dictated text through the proofreading engine before inserting.
     var proofreadDictation: Bool {
-        didSet { defaults.set(proofreadDictation, forKey: Self.proofreadDictationKey) }
+        didSet {
+            defaults.set(proofreadDictation, forKey: Self.proofreadDictationKey)
+            releaseUnusedModels()
+        }
     }
 
     /// The engine that proofreads dictation; nil follows engineChoice. Lets
@@ -99,6 +99,7 @@ final class AppState {
             } else {
                 defaults.removeObject(forKey: Self.dictationEngineChoiceKey)
             }
+            releaseUnusedModels()
         }
     }
 
@@ -118,6 +119,22 @@ final class AppState {
         case .appleIntelligence: .appleIntelligence
         case .local(let id): installed.contains(id) ? .local(modelID: id) : proofreading
         }
+    }
+
+    /// Switching engines frees the ~3 GB resident model immediately instead
+    /// of waiting out the idle timer - unless the other feature still runs it.
+    private func releaseUnusedModels() {
+        let inUse = Self.localModelsInUse(proofreading: engineChoice,
+                                          dictation: proofreadDictation ? effectiveDictationEngine : nil)
+        let keep = Set(inUse.map(store.directory(for:)))
+        Task { await LocalModelRuntime.shared.retainOnly(keep) }
+    }
+
+    /// dictation is nil while dictation skips proofreading.
+    nonisolated static func localModelsInUse(proofreading: EngineChoice, dictation: EngineChoice?) -> Set<String> {
+        var ids: Set<String> = []
+        for case .local(let id) in [proofreading, dictation] { ids.insert(id) }
+        return ids
     }
 
     let onboarding: OnboardingProgress
