@@ -87,13 +87,14 @@ struct DictationControllerTests {
     private func makeController(_ surface: FakeDictationSurface,
                                 engine: FakeSpeechEngine = FakeSpeechEngine(),
                                 proofreader: FakeProofreader? = nil,
+                                engineLabel: @escaping () -> String = { "fake" },
                                 recordTelemetry: @escaping (ProofreadEvent) -> Void = { _ in }) -> DictationController {
         // Never the shared telemetry: it persists into the app's real defaults.
         DictationController(makeEngine: { engine },
                             makeProofreader: { proofreader },
                             shortcutDisplay: { "⌥Space" },
                             surface: surface,
-                            engineLabel: { "fake" },
+                            engineLabel: engineLabel,
                             recordTelemetry: recordTelemetry)
     }
 
@@ -258,6 +259,22 @@ struct DictationControllerTests {
         #expect(events.map(\.engine) == ["dictation:fake", "dictation:fake"])
         #expect(events.map(\.outcome) == [.engineError("timeout"), .applied])
         #expect(surface.pastedText == "hello world")
+    }
+
+    @Test func telemetryCreditsTheEngineThatProofreadNotALaterPick() async {
+        var events: [ProofreadEvent] = []
+        var label = "local"
+        let surface = FakeDictationSurface()
+        surface.recorded = speech
+        let controller = makeController(surface, proofreader: FakeProofreader(),
+                                        engineLabel: { label }, recordTelemetry: { events.append($0) })
+
+        controller.keyDown()
+        label = "appleIntelligence"
+        controller.keyUp()
+        while !controller.isIdle { await Task.yield() }
+
+        #expect(events.map(\.engine) == ["dictation:local"])
     }
 
     @Test func switchingAppsLeavesTheDictationOnTheClipboard() async {
