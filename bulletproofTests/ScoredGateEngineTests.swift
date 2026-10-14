@@ -118,6 +118,37 @@ struct ScoredGateEngineTests {
         #expect(scorer.scoredSpans.isEmpty)
     }
 
+    @Test func inflectionFixesSkipScoring() async throws {
+        // run8's grammar fixes read as less likely than the original to the scorer.
+        let scorer = FakeScorer(replacement: -99.0, original: -1.0)
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "my little brother eats cereal"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
+        #expect(try await engine.proofread("my little brother eat cereal") == "my little brother eats cereal")
+        #expect(scorer.scoredSpans.isEmpty)
+    }
+
+    @Test func reorderingsSkipScoring() async throws {
+        let scorer = FakeScorer(replacement: -99.0, original: -1.0)
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "we've seen that one already, pick another"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
+        #expect(try await engine.proofread("we've seen already that one, pick another")
+                == "we've seen that one already, pick another")
+        #expect(scorer.scoredSpans.isEmpty)
+    }
+
+    @Test func contractionSwapsAreStillScored() async {
+        let scorer = FakeScorer(replacement: -12.0, original: -2.0)
+        let engine = ScoredGateEngine(wrapped: CannedEngine(output: "is that you're car"),
+                                      scorer: scorer, thresholds: thresholds,
+                                      hasMisspelling: noMisspellings)
+        await #expect(throws: ProofreadingError.self) {
+            _ = try await engine.proofread("is that your car")
+        }
+        #expect(scorer.scoredSpans.count == 1)
+    }
+
     @Test func realWordSwapsAreStillScored() async {
         // "fucking" -> "broken": nothing misspelled, so the scorer decides.
         let scorer = FakeScorer(replacement: -12.6, original: -11.9, totals: (-40.0, -37.0))

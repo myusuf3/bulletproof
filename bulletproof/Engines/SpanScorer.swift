@@ -166,7 +166,8 @@ nonisolated struct ScoredGateEngine: ProofreadingEngine {
     func proofread(_ text: String) async throws -> String {
         let output = try await wrapped.proofread(text)
         let spans = EditDiff.spans(original: text, corrected: output)
-        guard !spans.isEmpty, spans.count <= Self.maxSpansToScore else { return output }
+        guard !spans.isEmpty, spans.count <= Self.maxSpansToScore,
+              !SpanTriage.isReordering(original: text, corrected: output) else { return output }
         for span in spans where !span.replacement.trimmingCharacters(in: .whitespaces).isEmpty {
             if await isAcceptedWithoutScoring(span) { continue }
             let scores = await scorer.scores(for: span)
@@ -180,10 +181,10 @@ nonisolated struct ScoredGateEngine: ProofreadingEngine {
         return output
     }
 
-    /// Cosmetic edits and non-word typo fixes are where the scorer's token-count
-    /// bias vetoes good corrections, and neither can be an absurd swap.
+    /// Cosmetic edits, inflection fixes and non-word typo fixes are where the
+    /// scorer vetoes good corrections, and none of them can be an absurd swap.
     func isAcceptedWithoutScoring(_ span: EditDiff.Span) async -> Bool {
-        if SpanTriage.isCosmetic(span) { return true }
+        if SpanTriage.isCosmetic(span) || SpanTriage.isInflection(span) { return true }
         let originalWords = OutputGate.wordTokens(in: span.original)
         guard await hasMisspelling(originalWords) else { return false }
         return SpanTriage.isTypoFix(span, originalHasMisspelling: true,

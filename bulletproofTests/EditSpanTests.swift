@@ -181,4 +181,37 @@ struct SpanTriageTests {
         #expect(!SpanTriage.isTypoFix(span("teh", "thhe"),
                                       originalHasMisspelling: true, replacementHasMisspelling: true))
     }
+
+    @Test func anotherFormOfTheSameWordIsAnInflection() {
+        #expect(SpanTriage.isInflection(span("eat", "eats")))
+        #expect(SpanTriage.isInflection(span("reopen", "reopened")))
+        #expect(SpanTriage.isInflection(span("endpoint", "endpoints")))
+        #expect(SpanTriage.isInflection(span("closing", "to close")))
+        #expect(SpanTriage.isInflection(span("to migrate", "migrating")))
+        #expect(SpanTriage.isInflection(span("stop", "stopped")))
+        #expect(SpanTriage.isInflection(span("study", "studies")))
+        #expect(SpanTriage.isInflection(span("return", "returns.")))
+    }
+
+    @Test func differentWordsAreNotInflections() {
+        #expect(!SpanTriage.isInflection(span("your", "you're")))
+        #expect(!SpanTriage.isInflection(span("breath", "breathe")))
+        #expect(!SpanTriage.isInflection(span("there", "there's a")))
+        #expect(!SpanTriage.isInflection(span("who", "whom")))
+        #expect(!SpanTriage.isInflection(span("past", "passed")))
+        #expect(!SpanTriage.isInflection(span("effect", "affect")))
+        #expect(!SpanTriage.isInflection(span("Jon", "John")))
+        #expect(!SpanTriage.isInflection(span("300", "3000")))
+        #expect(!SpanTriage.isInflection(span("can", "cannot")))
+        #expect(!SpanTriage.isInflection(span("eat", "eat")))
+        #expect(!SpanTriage.isInflection(span("big dog", "bigger dogs")))
+    }
+
+    @Test func movedWordsAreAReordering() {
+        #expect(SpanTriage.isReordering(original: "nah we've seen already that one, pick something else",
+                                        corrected: "nah we've seen that one already, pick something else"))
+        #expect(!SpanTriage.isReordering(original: "great!!! see you", corrected: "Great. See you."))
+        #expect(!SpanTriage.isReordering(original: "the effect was big", corrected: "the affect was big"))
+        #expect(!SpanTriage.isReordering(original: "we have seen it", corrected: "we have it seen it"))
+    }
 }
