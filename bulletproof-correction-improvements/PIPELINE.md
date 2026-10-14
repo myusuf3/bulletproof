@@ -94,8 +94,11 @@ sign-off vanishes in multi-line text, #39, or 2+ of the writer's words are delet
 not elsewhere in the output and not a close spelling, #119, or a typed link/email/path/mention/hashtag/identifier
 is still missing after LinkRestorer, i.e. deleted or rewritten, #123), **droppedMarkup** (an HTML/XML tag of the input is missing; Apple
 Intelligence strips markup, #93), **appendedContent** (the writer's whole text and then 3+ more non-punctuation
-characters after a word boundary: the model kept generating, #107), protectedWordRemoved, introducedMisspelling.
+characters after a word boundary: the model kept generating, #107), **changedNumber** (a number the writer typed is
+gone or changed: `300` -> `00`; separators may change and new numbers may appear, so dictation's `7 15 am` -> `7:15
+a.m.` passes), protectedWordRemoved, introducedMisspelling.
 - `SpellCheckGate`: on English systems a word is misspelled only if both the US and British dictionaries flag it (#46).
+  A lowercase word is spelled right if its capitalized form is (`wednesday`, `tyler's`).
   When the corrected text is confidently non-English (`NLLanguageRecognizer` ≥ 0.8), its own language's
   dictionary is used, so correct fixes like `très` or `Mittwoch` aren't rejected (#72).
 - `lowOverlap` and `droppedContent` count a word as surviving if it's kept verbatim or matched one-to-one to a
@@ -105,7 +108,9 @@ characters after a word boundary: the model kept generating, #107), protectedWor
   is accepted and the entry forgotten (#67). Capitalized names stay protected.
 
 ## 5. Verify-corrections gate (opt-in), `EditSpan.swift` + `SpanScorer.swift`
-Cosmetic spans and spell-checked typo fixes skip scoring (`SpanTriage`). Otherwise the gate vetoes when
+Cosmetic spans, spell-checked typo fixes, inflections (`eat` -> `eats`, `closing` -> `to close`; not
+`your` -> `you're` or contractions) and pure reorderings skip scoring (`SpanTriage`): the scorer read run8's grammar
+fixes as less likely than the original. Otherwise the gate vetoes when
 `originalVetoMargin` (4.5, per-token mean) or `totalVetoMargin` (1.0, summed log-prob, only when the two versions
 are within 1 token of the same length) is exceeded. Qwen rejections on 400 cases went from 15 to 1 (`analysis/gate-retune.md`).
 

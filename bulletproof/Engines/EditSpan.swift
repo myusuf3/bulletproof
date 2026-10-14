@@ -124,6 +124,50 @@ nonisolated enum SpanTriage {
 
     static let minimumTypoSimilarity = 0.6
 
+    /// One word swapped for another form of itself, give or take function
+    /// words: "eat" -> "eats", "reopen" -> "reopened", "closing" -> "to close".
+    /// The scorer was calibrated on a model that rarely made grammar fixes and
+    /// reads these as less likely than the original (no threshold separates
+    /// them from bad swaps), but a different form of the same word can't swap
+    /// meaning the way a different word can. A bare word plus "e" (your/you're,
+    /// breath/breathe) and contractions (there/there's) are different words.
+    static func isInflection(_ span: EditDiff.Span) -> Bool {
+        guard !(span.original + span.replacement).contains(where: { "'\u{2019}".contains($0) }) else { return false }
+        let content = { (text: String) in
+            text.split(whereSeparator: \.isWhitespace).map { letters(String($0)) }
+                .filter { !$0.isEmpty && !OutputGate.deletableFunctionWords.contains($0) }
+        }
+        let original = content(span.original), replacement = content(span.replacement)
+        guard original.count == 1, replacement.count == 1 else { return false }
+        return areForms(original[0], replacement[0])
+    }
+
+    static func areForms(_ a: String, _ b: String) -> Bool {
+        guard a != b, a.allSatisfy(\.isLetter), b.allSatisfy(\.isLetter) else { return false }
+        let stem = zip(a, b).prefix { $0 == $1 }.count
+        guard stem >= 3 else { return false }
+        let last = Array(a)[stem - 1]
+        let endings = [String(a.dropFirst(stem)), String(b.dropFirst(stem))]
+        // "stop" -> "stopped": a doubled final consonant before -ed/-ing.
+        let isEnding = { (ending: String) in
+            inflectionEndings.contains(ending) || (ending.first == last && ["ed", "ing"].contains(String(ending.dropFirst())))
+        }
+        return endings.allSatisfy(isEnding) && Set(endings) != ["", "e"]
+    }
+
+    private static let inflectionEndings: Set<String> = ["", "s", "es", "ed", "d", "ing", "e", "ies", "ied", "y", "ying"]
+
+    /// The same words in a new order, ignoring case and punctuation ("seen
+    /// already that one" -> "seen that one already"). Each moved piece is
+    /// scored out of context, and a reorder can't introduce a word.
+    static func isReordering(original: String, corrected: String) -> Bool {
+        let words = { (text: String) in
+            text.split(whereSeparator: \.isWhitespace).map { letters(String($0)) }.filter { !$0.isEmpty }
+        }
+        let before = words(original), after = words(corrected)
+        return before != after && before.sorted() == after.sorted()
+    }
+
     /// 2 * LCS / (|a| + |b|) over characters.
     static func similarity(_ a: String, _ b: String) -> Double {
         let a = Array(a), b = Array(b)
