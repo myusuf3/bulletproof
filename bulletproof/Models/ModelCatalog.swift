@@ -64,8 +64,8 @@ nonisolated enum ModelCatalog {
             // Qwen3 4B fine-tuned for bulletproof (LoRA merged, MLX 4-bit, group 64;
             // HF tag run8-final). Full app pipeline, 2,171-case eval: 93.4% pass vs
             // 85.9% for run5-final, 0/14 request lookalikes answered. Trained with
-            // ProofreadPrompt's current typed instructions. Model card has the
-            // details. The default proofreader once installed.
+            // ProofreadPrompt.fineTuneInstructions. Model card has the details.
+            // The default proofreader once installed.
             id: ModelCatalog.recommendedProofreaderID,
             displayName: "Bulletproof Proofreader (Qwen3 4B, fine-tuned)",
             blurb: "Tuned for this app: fixes errors, keeps your style",

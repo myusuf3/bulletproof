@@ -2,15 +2,22 @@ import Foundation
 import Testing
 @testable import bulletproof
 
-/// Real-inference checks against the installed fine-tune. Runs only on
-/// machines that have it downloaded (CI skips - no model there). Fails
-/// against snapshots before run7, which either miss the particle fix or
-/// reword the sentence around it.
-@Suite(.enabled(if: ModelStore().isInstalled(ModelCatalog.recommendedProofreaderID)),
-       .serialized)
+private var releasedFineTuneInstalled: Bool {
+    let id = ModelCatalog.recommendedProofreaderID
+    let fineTune = ModelCatalog.all.first { $0.id == id }!
+    return ModelStore().isInstalled(id) && !fineTune.needsUpdate(installedRevision: ModelStore().installedRevision(of: id))
+}
+
+/// Real-inference checks against the installed fine-tune, with the prompt the
+/// app picks for it. Runs only on machines that have the catalog's pinned
+/// release downloaded (CI skips - no model there); older snapshots either
+/// miss the particle fix or reword the sentence around it.
+@Suite(.enabled(if: releasedFineTuneInstalled), .serialized)
 struct FineTuneIntegrationTests {
+    private static let id = ModelCatalog.recommendedProofreaderID
     private static let engine = LocalModelEngine(
-        modelDirectory: ModelStore().directory(for: ModelCatalog.recommendedProofreaderID))
+        modelDirectory: ModelStore().directory(for: id),
+        instructions: AppState.typedInstructions(modelID: id, installedRevision: ModelStore().installedRevision(of: id)))
 
     @Test func fixesWrongParticleAndKeepsLowercase() async throws {
         let output = try await Self.engine.proofread(

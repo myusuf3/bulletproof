@@ -76,6 +76,18 @@ struct ModelCatalogTests {
         #expect(!unpinned.needsUpdate(installedRevision: nil))
     }
 
+    @Test func onlyTheReleasedFineTuneGetsThePromptItWasTrainedOn() {
+        let fineTune = ModelCatalog.proofreading.first { $0.id == ModelCatalog.recommendedProofreaderID }!
+        #expect(AppState.typedInstructions(modelID: fineTune.id, installedRevision: fineTune.revision)
+                == ProofreadPrompt.fineTuneInstructions)
+        // An older fine-tune (installed before revisions were recorded) and every
+        // other model keep the prompt they shipped with.
+        #expect(AppState.typedInstructions(modelID: fineTune.id, installedRevision: nil) == ProofreadPrompt.instructions)
+        #expect(AppState.typedInstructions(modelID: "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                                           installedRevision: nil) == ProofreadPrompt.instructions)
+        #expect(ProofreadPrompt.fineTuneInstructions != ProofreadPrompt.instructions)
+    }
+
     @Test func defaultEngineIsTheFineTuneOnlyWhenInstalled() {
         #expect(AppState.defaultEngineChoice(installed: []) == .appleIntelligence)
         #expect(AppState.defaultEngineChoice(installed: ["mlx-community/Qwen3-4B-Instruct-2507-4bit"]) == .appleIntelligence)
