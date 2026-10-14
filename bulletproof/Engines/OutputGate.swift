@@ -17,6 +17,7 @@ nonisolated enum OutputGate {
         case droppedContent
         case droppedMarkup
         case appendedContent
+        case changedNumber
         case introducedMisspelling
         case protectedWordRemoved
         case implausibleEdit
@@ -77,7 +78,29 @@ nonisolated enum OutputGate {
         if appendsContent(original: original, output: output) {
             return .appendedContent
         }
+        if losesNumber(original: original, output: output) {
+            return .changedNumber
+        }
         return nil
+    }
+
+    /// A proofread never changes a number the writer typed, but models drop a
+    /// digit ("300" -> "00", "12" -> "2") and reformat dates inside filenames
+    /// ("20240611" -> "2024-06-11"). Separators may change and new numbers may
+    /// appear: dictation turns "7 15 am" into "7:15 a.m." and "q three" into "Q3".
+    static func losesNumber(original: String, output: String) -> Bool {
+        let kept = numbers(in: output)
+        return numbers(in: original).contains { number, count in kept[number, default: 0] < count }
+    }
+
+    private static let number = try! NSRegularExpression(pattern: #"\d+(?:[.,: ]\d+)*"#)
+
+    private static func numbers(in text: String) -> [String: Int] {
+        let ns = text as NSString
+        return number.matches(in: text, range: NSRange(location: 0, length: ns.length))
+            .reduce(into: [:]) { counts, match in
+                counts[ns.substring(with: match.range).filter { !".,: ".contains($0) }, default: 0] += 1
+            }
     }
 
     /// A correction never deletes what the writer said, but models drop

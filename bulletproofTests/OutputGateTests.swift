@@ -62,6 +62,27 @@ struct OutputGateTests {
         #expect(OutputGate.rejection(original: "teh cat\n", output: "the cat\n") == nil)
     }
 
+    @Test func rejectsALostOrChangedNumber() {
+        #expect(OutputGate.rejection(original: "There was no data loss, but about 300 orders failed.",
+                                     output: "There was no data loss, but about 00 orders failed.") == .changedNumber)
+        #expect(OutputGate.rejection(original: "Four plots are free and 12 people are waiting.",
+                                     output: "Four plots are free and 2 people are waiting.") == .changedNumber)
+        #expect(OutputGate.rejection(original: "The total is 1\u{202F}200 kg.",
+                                     output: "The total is 1,200 kg.") == .changedNumber)
+        #expect(OutputGate.rejection(original: "tag the build 20240611 before lunch",
+                                     output: "Tag the build 2024-06-11 before lunch.") == .changedNumber)
+    }
+
+    @Test func numbersMayBeReformattedOrAdded() {
+        // Dictation writes spoken numbers as digits.
+        #expect(OutputGate.rejection(original: "the ferry departs at 7 15 am and the drive takes forty minutes",
+                                     output: "The ferry departs at 7:15 a.m., and the drive takes forty minutes.") == nil)
+        #expect(OutputGate.rejection(original: "we need a bigger budget for q three",
+                                     output: "We need a bigger budget for Q3.") == nil)
+        #expect(OutputGate.rejection(original: "the quote was 1,299.99 for 2 units",
+                                     output: "The quote was 1,299.99 for 2 units.") == nil)
+    }
+
     @MainActor @Test func spellingVariantsAreNotMisspellings() {
         // Models write American spelling; a British/Canadian system dictionary
         // must not turn a correct fix into an introducedMisspelling rejection.
