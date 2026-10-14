@@ -69,7 +69,7 @@ nonisolated enum DictationOverlayPhase: Equatable {
     private enum State {
         case idle
         case recording(session: Int, target: pid_t?, engine: any SpeechToTextEngine,
-                       proofreader: (any ProofreadingEngine)?)
+                       proofreader: (any ProofreadingEngine)?, proofreaderLabel: String)
         case transcribing
     }
 
@@ -133,6 +133,9 @@ nonisolated enum DictationOverlayPhase: Equatable {
         // unloads after idle minutes, and reloading it after the release
         // would land on the wait dictation is meant to keep short.
         let proofreader = makeProofreader()
+        // Read with the proofreader: a settings change mid-dictation must not
+        // credit this result to the newly picked engine.
+        let proofreaderLabel = engineLabel()
         if let proofreader { Task { await proofreader.prewarm() } }
         do {
             try surface.startRecording()
@@ -143,17 +146,19 @@ nonisolated enum DictationOverlayPhase: Equatable {
         session += 1
         let current = session
         state = .recording(session: current, target: surface.frontmostAppID(), engine: engine,
-                           proofreader: proofreader)
+                           proofreader: proofreader, proofreaderLabel: proofreaderLabel)
         surface.show(.listening)
         Task {
             await surface.sleep(for: maximumRecording)
-            guard case .recording(current, _, _, _) = state else { return }
+            guard case .recording(current, _, _, _, _) = state else { return }
             keyUp()
         }
     }
 
     func keyUp() {
-        guard case .recording(_, let target, let engine, let proofreader) = state else { return }
+        guard case .recording(_, let target, let engine, let proofreader, let proofreaderLabel) = state else {
+            return
+        }
         let samples = surface.stopRecording()
         guard samples.count >= Self.minimumSamples else {
             state = .idle
@@ -164,12 +169,14 @@ nonisolated enum DictationOverlayPhase: Equatable {
         surface.show(.transcribing)
         Task {
             defer { state = .idle }
-            await finish(samples, engine: engine, proofreader: proofreader, target: target)
+            await finish(samples, engine: engine, proofreader: proofreader,
+                         proofreaderLabel: proofreaderLabel, target: target)
         }
     }
 
     func finish(_ samples: [Float], engine: any SpeechToTextEngine,
-                proofreader: (any ProofreadingEngine)?, target: pid_t?) async {
+                proofreader: (any ProofreadingEngine)?, proofreaderLabel: String,
+                target: pid_t?) async {
         let transcript: String
         do {
             transcript = try await engine.transcribe(samples)
@@ -198,7 +205,7 @@ nonisolated enum DictationOverlayPhase: Equatable {
                 outcome = .from(error)
             }
             recordTelemetry(ProofreadEvent(
-                entryPoint: .dictation, engine: "dictation:" + engineLabel(),
+                entryPoint: .dictation, engine: "dictation:" + proofreaderLabel,
                 inputChars: transcript.count, outputChars: text.count, outcome: outcome, phases: [],
                 totalMs: (ContinuousClock.now - start) / .milliseconds(1)))
         }

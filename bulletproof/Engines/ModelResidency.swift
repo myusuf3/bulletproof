@@ -73,9 +73,9 @@ actor ResidencyCache<Resource: Sendable> {
         onEvict()
     }
 
-    /// Evicts unless the resident directory matches (nil keeps nothing).
-    func retainOnly(_ directory: URL?) {
-        guard let resident, resident.directory != directory else { return }
+    /// Evicts unless the resident directory is one of these (empty keeps nothing).
+    func retainOnly(_ directories: Set<URL>) {
+        guard let resident, !directories.contains(resident.directory) else { return }
         _ = resident
         evictNow()
     }

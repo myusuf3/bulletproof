@@ -86,6 +86,17 @@ struct ModelCatalogTests {
                 == .appleIntelligence)
     }
 
+    @Test func aModelStaysResidentWhileEitherFeatureRunsIt() {
+        let fineTune = EngineChoice.local(modelID: "org/fine-tune")
+        let other = EngineChoice.local(modelID: "org/other")
+        #expect(AppState.localModelsInUse(proofreading: .appleIntelligence, dictation: .appleIntelligence).isEmpty)
+        #expect(AppState.localModelsInUse(proofreading: .appleIntelligence, dictation: fineTune) == ["org/fine-tune"])
+        #expect(AppState.localModelsInUse(proofreading: fineTune, dictation: .appleIntelligence) == ["org/fine-tune"])
+        #expect(AppState.localModelsInUse(proofreading: fineTune, dictation: other) == ["org/fine-tune", "org/other"])
+        // Dictation without proofreading holds no model.
+        #expect(AppState.localModelsInUse(proofreading: .appleIntelligence, dictation: nil).isEmpty)
+    }
+
     @Test func speechModelsNeverOfferThemselvesAsProofreaders() {
         let installed = [ModelCatalog.whistle.id, ModelCatalog.proofreading[0].id, "mlx-community/retired-model"]
         #expect(ModelCatalog.proofreadingIDs(installed: installed)
