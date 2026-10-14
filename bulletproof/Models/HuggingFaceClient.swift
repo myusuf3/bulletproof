@@ -15,10 +15,10 @@ nonisolated struct HuggingFaceClient: Sendable {
         let siblings: [HFFile]
     }
 
-    /// Lists a repo's files with sizes (?blobs=true populates them), skipping
-    /// git metadata dotfiles.
-    func listFiles(repo: String) async throws -> [HFFile] {
-        let url = URL(string: "https://huggingface.co/api/models/\(repo)?blobs=true")!
+    /// Lists a repo's files at a branch or tag with sizes (?blobs=true
+    /// populates them), skipping git metadata dotfiles.
+    func listFiles(repo: String, revision: String = "main") async throws -> [HFFile] {
+        let url = URL(string: "https://huggingface.co/api/models/\(repo)/revision/\(revision)?blobs=true")!
         let (data, response) = try await fetch(URLRequest(url: url))
         if let http = response as? HTTPURLResponse, http.statusCode != 200 {
             throw URLError(.badServerResponse, userInfo: [
@@ -29,7 +29,7 @@ nonisolated struct HuggingFaceClient: Sendable {
         return info.siblings.filter { !$0.rfilename.hasPrefix(".") }
     }
 
-    static func downloadURL(repo: String, file: String) -> URL {
-        URL(string: "https://huggingface.co/\(repo)/resolve/main/\(file)")!
+    static func downloadURL(repo: String, file: String, revision: String = "main") -> URL {
+        URL(string: "https://huggingface.co/\(repo)/resolve/\(revision)/\(file)")!
     }
 }

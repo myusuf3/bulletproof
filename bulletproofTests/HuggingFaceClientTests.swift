@@ -40,8 +40,30 @@ struct HuggingFaceClientTests {
         }
     }
 
+    @Test func listsFilesAtTheRequestedRevision() async throws {
+        let requested = RequestLog()
+        var client = client(status: 200, json: #"{"siblings": []}"#)
+        let respond = client.fetch
+        client.fetch = { request in
+            await requested.append(request.url!.absoluteString)
+            return try await respond(request)
+        }
+        _ = try await client.listFiles(repo: "org/name", revision: "run8-final")
+        #expect(await requested.urls == ["https://huggingface.co/api/models/org/name/revision/run8-final?blobs=true"])
+    }
+
     @Test func buildsDownloadURL() {
         let url = HuggingFaceClient.downloadURL(repo: "mlx-community/Qwen3-8B-4bit", file: "model.safetensors")
         #expect(url.absoluteString == "https://huggingface.co/mlx-community/Qwen3-8B-4bit/resolve/main/model.safetensors")
     }
+
+    @Test func buildsDownloadURLAtARevision() {
+        let url = HuggingFaceClient.downloadURL(repo: "org/name", file: "mlx-4bit/config.json", revision: "run8-final")
+        #expect(url.absoluteString == "https://huggingface.co/org/name/resolve/run8-final/mlx-4bit/config.json")
+    }
+}
+
+private actor RequestLog {
+    private(set) var urls: [String] = []
+    func append(_ url: String) { urls.append(url) }
 }

@@ -187,6 +187,16 @@ final class AppState {
             ? .local(modelID: ModelCatalog.recommendedProofreaderID) : .appleIntelligence
     }
 
+    /// The typed prompt for a local model: the fine-tune gets the prompt it was
+    /// trained on only when it's the catalog's pinned release; anything else
+    /// keeps the shared prompt.
+    nonisolated static func typedInstructions(modelID: String, installedRevision: String?) -> String {
+        guard let model = ModelCatalog.all.first(where: { $0.id == modelID }),
+              model.id == ModelCatalog.recommendedProofreaderID,
+              !model.needsUpdate(installedRevision: installedRevision) else { return ProofreadPrompt.instructions }
+        return ProofreadPrompt.fineTuneInstructions
+    }
+
     /// Downloading the recommended model switches to it unless the user has
     /// ever picked an engine themselves (an explicit choice is never overridden).
     nonisolated static func shouldAdopt(installedID: String, hasSavedChoice: Bool) -> Bool {
@@ -221,9 +231,12 @@ final class AppState {
                 OutputGatedEngine(wrapped: AppleIntelligenceEngine(instructions: instructions))),
                 recordsStats: recordsStats)
         case .local(let modelID):
+            let prompt = instructions == ProofreadPrompt.instructions
+                ? Self.typedInstructions(modelID: modelID, installedRevision: store.installedRevision(of: modelID))
+                : instructions
             return RecordingEngine(wrapped: scoredIfEnabled(
                 OutputGatedEngine(wrapped: LocalModelEngine(modelDirectory: store.directory(for: modelID),
-                                                           instructions: instructions)),
+                                                           instructions: prompt)),
                 preferredModelID: modelID),
                 recordsStats: recordsStats)
         }

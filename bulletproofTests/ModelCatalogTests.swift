@@ -57,6 +57,37 @@ struct ModelCatalogTests {
         #expect(ModelCatalog.proofreading.first?.subfolder == "mlx-4bit")
     }
 
+    @Test func fineTuneIsPinnedToTheReleaseItsPromptWasTrainedWith() {
+        let fineTune = ModelCatalog.proofreading.first { $0.id == ModelCatalog.recommendedProofreaderID }!
+        #expect(fineTune.revision != "main")
+        for model in ModelCatalog.all where model.id != ModelCatalog.recommendedProofreaderID {
+            #expect(model.revision == "main")
+        }
+    }
+
+    @Test func onlyAPinnedModelFromAnotherReleaseNeedsAnUpdate() {
+        let pinned = CatalogModel(id: "org/name", displayName: "x", blurb: "x", approxDownloadBytes: 1,
+                                  speed: 1, accuracy: 1, revision: "run8-final")
+        #expect(pinned.needsUpdate(installedRevision: nil))  // installed before revisions were recorded
+        #expect(pinned.needsUpdate(installedRevision: "run5-final"))
+        #expect(!pinned.needsUpdate(installedRevision: "run8-final"))
+        let unpinned = CatalogModel(id: "org/name", displayName: "x", blurb: "x", approxDownloadBytes: 1,
+                                    speed: 1, accuracy: 1)
+        #expect(!unpinned.needsUpdate(installedRevision: nil))
+    }
+
+    @Test func onlyTheReleasedFineTuneGetsThePromptItWasTrainedOn() {
+        let fineTune = ModelCatalog.proofreading.first { $0.id == ModelCatalog.recommendedProofreaderID }!
+        #expect(AppState.typedInstructions(modelID: fineTune.id, installedRevision: fineTune.revision)
+                == ProofreadPrompt.fineTuneInstructions)
+        // An older fine-tune (installed before revisions were recorded) and every
+        // other model keep the prompt they shipped with.
+        #expect(AppState.typedInstructions(modelID: fineTune.id, installedRevision: nil) == ProofreadPrompt.instructions)
+        #expect(AppState.typedInstructions(modelID: "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                                           installedRevision: nil) == ProofreadPrompt.instructions)
+        #expect(ProofreadPrompt.fineTuneInstructions != ProofreadPrompt.instructions)
+    }
+
     @Test func defaultEngineIsTheFineTuneOnlyWhenInstalled() {
         #expect(AppState.defaultEngineChoice(installed: []) == .appleIntelligence)
         #expect(AppState.defaultEngineChoice(installed: ["mlx-community/Qwen3-4B-Instruct-2507-4bit"]) == .appleIntelligence)

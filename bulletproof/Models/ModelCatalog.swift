@@ -23,6 +23,15 @@ nonisolated struct CatalogModel: Identifiable, Sendable, Hashable {
     /// install at the model root. The fine-tune repo keeps bf16 weights (7.6 GB)
     /// at its root and the 4-bit MLX model in `mlx-4bit/`.
     var subfolder: String? = nil
+    /// Repo branch or tag to download. The fine-tune is pinned to a release tag
+    /// because each app version's prompt is trained into one exact model.
+    var revision: String = "main"
+
+    /// True when an install came from a different pinned release, including
+    /// installs that predate recorded revisions. Unpinned models never update.
+    func needsUpdate(installedRevision: String?) -> Bool {
+        revision != "main" && installedRevision != revision
+    }
 
     /// (remote path, path inside the installed model directory, size) for each
     /// file to download, after the `files` and `subfolder` filters.
@@ -53,16 +62,18 @@ nonisolated enum ModelCatalog {
     static let all: [CatalogModel] = [
         CatalogModel(
             // Qwen3 4B fine-tuned for bulletproof (LoRA merged, MLX 4-bit, group 64;
-            // HF tag run5-final). Full app pipeline, 945-case eval: 96.3% pass vs
-            // 91.0% for the base Qwen, 0/14 request lookalikes answered. Model card
-            // has the details. The default proofreader once installed.
+            // HF tag run8-final). Full app pipeline, 2,171-case eval: 93.4% pass vs
+            // 85.9% for run5-final, 0/14 request lookalikes answered. Trained with
+            // ProofreadPrompt.fineTuneInstructions. Model card has the details.
+            // The default proofreader once installed.
             id: ModelCatalog.recommendedProofreaderID,
             displayName: "Bulletproof Proofreader (Qwen3 4B, fine-tuned)",
             blurb: "Tuned for this app: fixes errors, keeps your style",
             approxDownloadBytes: 2_263_000_000,
             speed: 4,
             accuracy: 5,
-            subfolder: "mlx-4bit"
+            subfolder: "mlx-4bit",
+            revision: "run8-final"
         ),
         CatalogModel(
             id: "mlx-community/Qwen3-4B-Instruct-2507-4bit",

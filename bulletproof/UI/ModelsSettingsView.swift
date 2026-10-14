@@ -248,11 +248,13 @@ private struct ModelGridRow: View {
 
     private var isFailed: Bool {
         if case .failed = manager.state(of: model) { return true }
-        return false
+        return manager.updateError(for: model) != nil
     }
 
     private var subtitle: String {
         if case .failed(let message) = manager.state(of: model) { return message }
+        if let message = manager.updateError(for: model) { return "Update failed: \(message)" }
+        if manager.updateAvailable(for: model) { return "Update available - better proofreading for this version" }
         return model.blurb
     }
 
@@ -286,6 +288,12 @@ private struct ModelGridRow: View {
             HStack(spacing: 8) {
                 Text(format(bytes))
                     .monospacedDigit()
+                if manager.updateAvailable(for: model) {
+                    CircleIconButton(symbol: "arrow.down", label: "Update \(model.displayName) (\(format(model.approxDownloadBytes)))") {
+                        manager.download(model)
+                    }
+                    .help("Update (\(format(model.approxDownloadBytes)))")
+                }
                 CircleIconButton(symbol: "trash", label: "Delete \(model.displayName)") {
                     confirmingDelete = true
                 }
