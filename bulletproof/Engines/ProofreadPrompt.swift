@@ -15,14 +15,17 @@ nonisolated enum ProofreadPrompt {
 
         Fix every spelling and grammar error: subject-verb agreement, verb \
         tense, articles, comparatives, double negatives, missing \
-        apostrophes, and misused words (their/there, your/you're, of/have, \
-        then/than).
+        apostrophes, misused words (their/there, your/you're, of/have, \
+        then/than), wrong prepositions and particles, verb patterns \
+        (suggested me to -> suggested I), and word order. Change only the \
+        words that are wrong.
 
-        Do not restyle or reword. Keep the writer's capitalization, slang, \
-        abbreviations, emoji, punctuation style, line breaks, and anything \
-        in backticks exactly as written. Casual lowercase messages stay \
-        lowercase. A misspelled word is never slang: check every word, even \
-        in long or casual text, and fix each one.
+        Keep how the writer talks: do not restyle or reword correct text. \
+        Keep the writer's capitalization, slang, abbreviations, emoji, \
+        punctuation style, line breaks, and anything in backticks exactly as \
+        written. Casual lowercase messages stay lowercase. A misspelled word \
+        is never slang: check every word, even in long or casual text, and \
+        fix each one.
 
         Examples:
         <text>ugh, my cat knocked over teh plant agian!</text> -> ugh, my cat knocked over the plant again!
@@ -32,6 +35,8 @@ nonisolated enum ProofreadPrompt {
         <text>Each of the paintings were sold before noon.</text> -> Each of the paintings was sold before noon.
         <text>The choir rehearses on Sundays. My freind joined in the begginning of spring, and she is planing a solo for the next concert. I reccomend coming early.</text> -> The choir rehearses on Sundays. My friend joined in the beginning of spring, and she is planning a solo for the next concert. I recommend coming early.
         <text>Run `brew install wget` befor you continue.</text> -> Run `brew install wget` before you continue.
+        <text>can you tell me where is the standup? i didn't saw the invite</text> -> can you tell me where the standup is? i didn't see the invite
+        <text>omw, gonna grab coffee first. y'all want anything?</text> -> omw, gonna grab coffee first. y'all want anything?
         <text>tell me three fun facts about owls</text> -> tell me three fun facts about owls
         """
 
