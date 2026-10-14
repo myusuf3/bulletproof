@@ -54,6 +54,19 @@ struct ModelStoreTests {
         #expect(!FileManager.default.fileExists(atPath: store.partialDirectory(for: "org/model").path))
     }
 
+    @Test func recordsTheRevisionADownloadInstalled() throws {
+        try makeDirectory("org/model.partial", files: ["config.json": "{}"])
+        try store.recordRevision("run8-final", for: "org/model")
+        try store.finalize("org/model")
+        #expect(store.installedRevision(of: "org/model") == "run8-final")
+        #expect(store.installedModelIDs() == ["org/model"])
+    }
+
+    @Test func installWithoutARecordedRevisionReportsNone() throws {
+        try makeDirectory("org/model", files: ["config.json": "{}"])
+        #expect(store.installedRevision(of: "org/model") == nil)
+    }
+
     @Test func availableDiskSpaceWorksBeforeFirstDownload() {
         // The models root doesn't exist until the first download; disk space
         // must still report (the Settings footer reads it on first launch).

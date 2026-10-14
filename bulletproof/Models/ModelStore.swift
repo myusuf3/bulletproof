@@ -26,6 +26,20 @@ nonisolated struct ModelStore: Sendable {
         return exists && isDirectory.boolValue
     }
 
+    /// Marks an in-flight download with the repo revision it came from, so the
+    /// marker is promoted with the files by finalize().
+    func recordRevision(_ revision: String, for repoID: String) throws {
+        try Data(revision.utf8).write(to: partialDirectory(for: repoID).appendingPathComponent(Self.revisionFile))
+    }
+
+    /// The revision an install came from; nil for installs that predate the marker.
+    func installedRevision(of repoID: String) -> String? {
+        let marker = directory(for: repoID).appendingPathComponent(Self.revisionFile)
+        return (try? String(contentsOf: marker, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static let revisionFile = ".revision"
+
     func installedModelIDs() -> [String] {
         let fm = FileManager.default
         guard let orgs = try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else {
