@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 import unicodedata
+from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -923,7 +924,18 @@ def output_gate(original, output):
         return "droppedMarkup"
     if appends_content(original, output):
         return "appendedContent"
+    if loses_number(original, output):
+        return "changedNumber"
     return None
+
+
+_NUMBER = re.compile(r"\d+(?:[.,: ]\d+)*")
+
+
+def loses_number(original, output):
+    """OutputGate.losesNumber: a number the writer typed is gone or changed (separators may change, new numbers may appear)."""
+    count = lambda t: Counter(re.sub(r"[.,: ]", "", n) for n in _NUMBER.findall(t))
+    return bool(count(original) - count(output))
 
 
 def appends_content(original, output):
@@ -1233,9 +1245,42 @@ def similarity(a, b):
     return 2 * prev[-1] / (len(a) + len(b))
 
 
+_ENDINGS = {"", "s", "es", "ed", "d", "ing", "e", "ies", "ied", "y", "ying"}
+
+
+def are_forms(a, b):
+    """SpanTriage.areForms: eat/eats, reopen/reopened, close/closing, stop/stopped."""
+    if a == b or not (a.isalpha() and b.isalpha()):
+        return False
+    stem = 0
+    while stem < min(len(a), len(b)) and a[stem] == b[stem]:
+        stem += 1
+    if stem < 3:
+        return False
+    ends = [a[stem:], b[stem:]]
+    ok = lambda e: e in _ENDINGS or (e[:1] == a[stem - 1] and e[1:] in ("ed", "ing"))
+    return all(map(ok, ends)) and set(ends) != {"", "e"}
+
+
+def is_inflection(span):
+    """SpanTriage.isInflection."""
+    if any(q in span["original"] + span["replacement"] for q in "'\u2019"):
+        return False
+    content = lambda t: [w for w in (letters(x) for x in t.split()) if w and w not in DELETABLE_FUNCTION_WORDS]
+    o, r = content(span["original"]), content(span["replacement"])
+    return len(o) == 1 and len(r) == 1 and are_forms(o[0], r[0])
+
+
+def is_reordering(original, corrected):
+    """SpanTriage.isReordering: the same words, moved."""
+    words = lambda t: [w for w in (letters(x) for x in t.split()) if w]
+    a, b = words(original), words(corrected)
+    return a != b and sorted(a) == sorted(b)
+
+
 def triaged(span, bad_words, t):
     o = letters(span["original"])
-    if o and o == letters(span["replacement"]):
+    if o and o == letters(span["replacement"]) or is_inflection(span):
         return True
     if not any(w in bad_words for w in word_tokens(span["original"])):
         return False
@@ -1339,7 +1384,7 @@ def main():
         reason = p or ("introducedMisspelling" if any(flagged(w) for w in ws) else None)
         gated = f"REJECTED(GATE_REJECT({reason}))" if reason else raw
         span_rows = []
-        if 1 <= len(spans) <= MAX_SPANS_TO_SCORE:
+        if 1 <= len(spans) <= MAX_SPANS_TO_SCORE and not is_reordering(c["input"], raw):
             for sp in spans:
                 if not sp["replacement"].strip(" "):
                     continue

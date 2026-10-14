@@ -11,11 +11,15 @@ let automatic: [String?] = [nil]
 let forced: String? = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : nil
 let languages: [String?] = forced.map { $0 == "automatic" ? automatic : [$0] }
     ?? (checker.language().hasPrefix("en") && !english.isEmpty ? english : automatic)
+let misspelled = { (w: String) in
+    languages.allSatisfy({ checker.checkSpelling(of: w, startingAt: 0, language: $0, wrap: false,
+                                                 inSpellDocumentWithTag: tag, wordCount: nil).location != NSNotFound })
+}
 while let line = readLine() {
     let w = line.trimmingCharacters(in: .whitespaces)
     if w.isEmpty { continue }
-    if languages.allSatisfy({ checker.checkSpelling(of: w, startingAt: 0, language: $0, wrap: false,
-                                                    inSpellDocumentWithTag: tag, wordCount: nil).location != NSNotFound }) {
+    // Lowercase names and days ("wednesday") are spelled right if capitalized ones are.
+    if misspelled(w) && !(w.first?.isLowercase == true && !misspelled(w.prefix(1).uppercased() + w.dropFirst())) {
         print(w)
     }
 }
