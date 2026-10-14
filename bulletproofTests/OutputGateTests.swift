@@ -188,6 +188,12 @@ struct SpellCheckGateTests {
     @Test func gibberishIsCaught() {
         #expect(SpellCheckGate.firstMisspelled(in: ["xqzzrtl"], language: "en") == "xqzzrtl")
     }
+
+    @Test func lowercaseNamesAndDaysAreSpelledRight() {
+        #expect(SpellCheckGate.firstMisspelled(in: ["wednesday", "tyler's", "Wednesday"], language: "en") == nil)
+        #expect(SpellCheckGate.firstMisspelled(in: ["srly"], language: "en") == "srly")
+        #expect(SpellCheckGate.firstMisspelled(in: ["wendsday"], language: "en") == "wendsday")
+    }
 }
 
 struct OutputGatedEngineTests {

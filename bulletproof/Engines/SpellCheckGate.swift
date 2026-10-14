@@ -62,12 +62,18 @@ nonisolated enum TextLanguage {
         let automatic: [String?] = [nil]
         let languages: [String?] = language.map { $0 == automaticLanguage ? automatic : [$0] }
             ?? (checker.language().hasPrefix("en") && !english.isEmpty ? english : automatic)
-        return words.first { word in
+        let isMisspelled = { (word: String) in
             languages.allSatisfy { language in
                 checker.checkSpelling(of: word, startingAt: 0, language: language,
                                       wrap: false, inSpellDocumentWithTag: documentTag,
                                       wordCount: nil).location != NSNotFound
             }
+        }
+        // People who type in lowercase write names and days that way too:
+        // "wednesday" and "tyler's" are spelled right, just not capitalized.
+        return words.first { word in
+            isMisspelled(word)
+                && !(word.first?.isLowercase == true && !isMisspelled(word.prefix(1).uppercased() + word.dropFirst()))
         }
     }
 }
