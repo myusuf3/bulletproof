@@ -309,7 +309,7 @@ nonisolated enum OutputGate {
         let originalWords = Set(wordTokens(in: original).map { $0.lowercased() })
         var seen = Set<String>()
         return wordTokens(in: output).filter { word in
-            let bare = word.filter { !"''".contains($0) }
+            let bare = word.filter { $0 != "'" }
             let key = word.lowercased()
             guard bare.count >= 3, bare.allSatisfy(\.isLetter),
                   !originalWords.contains(key), !seen.contains(key) else { return false }
@@ -320,9 +320,12 @@ nonisolated enum OutputGate {
 
     /// Shared word tokenizer: contractions stay whole, edge apostrophes
     /// stripped. Also used by the vocabulary and the protected-word rule.
+    /// Curly apostrophes become straight so "doesn’t" and "doesn't" are one
+    /// token, never the non-word fragment "doesn".
     static func wordTokens(in text: String) -> [String] {
-        text.split(whereSeparator: { !$0.isLetter && !$0.isNumber && !"''".contains($0) })
-            .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "''")) }
+        text.replacingOccurrences(of: "\u{2019}", with: "'")
+            .split(whereSeparator: { !$0.isLetter && !$0.isNumber && $0 != "'" })
+            .map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: "'")) }
             .filter { !$0.isEmpty }
     }
 

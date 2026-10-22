@@ -166,6 +166,13 @@ struct OutputGateTests {
         #expect(introduced == ["shouldn't"])
     }
 
+    @Test func curlyContractionsStayWholeAndMatchStraightOnes() {
+        // Smart-quote writers get "doesn’t" back; the fragment "doesn" is a non-word.
+        #expect(OutputGate.introducedWords(original: "it doesnt work, it’s broken",
+                                           output: "It doesn’t work, it’s broken.") == ["doesn't"])
+        #expect(OutputGate.introducedWords(original: "it doesn't work", output: "It doesn’t work.").isEmpty)
+    }
+
     @Test func everyRejectionHasUserMessage() {
         for reason in OutputGate.Rejection.allCases {
             #expect(!ProofreadingError.unusableOutput(reason).localizedDescription.isEmpty)
@@ -229,6 +236,12 @@ struct OutputGatedEngineTests {
         } catch {
             Issue.record("unexpected error type: \(error)")
         }
+    }
+
+    @Test func fixedCurlyContractionIsNotAMisspelling() async throws {
+        let engine = OutputGatedEngine(wrapped: CannedEngine(output: "I didn’t know it wasn’t done."),
+                                       vocabulary: await isolatedVocabulary())
+        #expect(try await engine.proofread("I didnt know it wasn’t done") == "I didn’t know it wasn’t done.")
     }
 
     @Test func correctNonEnglishFixesAreNotMisspellings() async throws {
