@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import Testing
 @testable import bulletproof
 
@@ -110,5 +110,22 @@ struct MenuBarActivityTests {
         #expect(MenuBarIcon.imageName(phase: .working, dictating: false, pulseTick: false, reduceMotion: true) == "MenuBarProofreading")
         #expect(MenuBarIcon.imageName(phase: .idle, dictating: true, pulseTick: false, reduceMotion: false) == "MenuBarDictation")
         #expect(MenuBarIcon.imageName(phase: .working, dictating: true, pulseTick: true, reduceMotion: false) == "MenuBarDictation")
+        #expect(MenuBarIcon.imageName(phase: .failed, dictating: false, pulseTick: false, reduceMotion: false) == "MenuBarFailed")
+    }
+
+    @Test func everyIconImageIsInTheAssetCatalog() {
+        // A missing image renders empty and the status item vanishes from the menu bar.
+        let phases: [MenuBarActivity.Phase] = [.idle, .working, .failed]
+        let names = Set(phases.flatMap { phase in
+            [true, false].flatMap { dictating in
+                [true, false].map { pulseTick in
+                    MenuBarIcon.imageName(phase: phase, dictating: dictating, pulseTick: pulseTick, reduceMotion: false)
+                }
+            }
+        })
+        #expect(names.count == 4)
+        for name in names {
+            #expect(NSImage(named: name) != nil, "missing \(name)")
+        }
     }
 }
